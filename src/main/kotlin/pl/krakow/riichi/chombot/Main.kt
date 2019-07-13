@@ -3,7 +3,8 @@ package pl.krakow.riichi.chombot
 import discord4j.core.DiscordClientBuilder
 import discord4j.core.event.domain.lifecycle.ReadyEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
-import pl.krakow.riichi.chombot.commands.ChomboCommand
+import pl.krakow.riichi.chombot.commands.chombo.ChomboCommand
+import pl.krakow.riichi.chombot.commands.chombo.SimpleEmbedFormatter
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
@@ -21,7 +22,7 @@ fun main() {
         .subscribe { ready -> println("Logged in as " + ready.self.username) }
 
     val commandMap = mapOf(
-        "chombo" to ChomboCommand()
+        "chombo" to ChomboCommand(SimpleEmbedFormatter())
     )
 
     client.eventDispatcher.on(MessageCreateEvent::class.java)
