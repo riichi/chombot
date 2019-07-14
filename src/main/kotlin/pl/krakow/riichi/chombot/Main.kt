@@ -29,13 +29,10 @@ fun main() {
 
     client.eventDispatcher.on(MessageCreateEvent::class.java)
         .flatMap { event ->
-            Mono.justOrEmpty(event.message.content)
-                .flatMap {
-                    Flux.fromIterable(commandMap.entries)
-                        .filter { entry -> entry.value.isApplicable(event, entry.key) }
-                        .flatMap { entry -> entry.value.execute(event) }
-                        .next()
-                }
+            Flux.fromIterable(commandMap.entries)
+                .filter { entry -> entry.value.isApplicable(event, entry.key) }
+                .flatMap { entry -> entry.value.execute(event) }
+                .next()
         }
         .subscribe()
 
