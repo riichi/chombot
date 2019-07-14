@@ -32,16 +32,18 @@ class AkagiInflationRate : Command {
     }
 
     override fun execute(event: MessageCreateEvent): Mono<Void> {
-        val number: Long = findNumber(event.message.content.get())!!
-        return event.message.channel.flatMap { channel ->
-            channel.createMessage("This ${formatNumber(number)} in 1965 would equate to " +
-                                  "${formatNumber(number * 10)} today.")
-        }.then()
+        return event.message.content.orElse(null)?.let {
+            findNumber(it)?.let {
+                event.message.channel.flatMap { channel ->
+                    channel.createMessage(
+                        "This ${formatNumber(it)} in 1965 would equate to ${formatNumber(it * 10)} today."
+                    )
+                }.then()
+            }
+        } ?: Mono.empty()
     }
 
     override fun isApplicable(event: MessageCreateEvent, commandName: String): Boolean {
-        if (!event.message.content.isPresent)
-            return false
-        return findNumber(event.message.content.get()) != null
+        return event.message.content.orElse(null)?.let { findNumber(it) } != null
     }
 }
