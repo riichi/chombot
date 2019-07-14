@@ -3,7 +3,9 @@ package pl.krakow.riichi.chombot
 import discord4j.core.DiscordClientBuilder
 import discord4j.core.event.domain.lifecycle.ReadyEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
+import pl.krakow.riichi.chombot.commands.AkagiInflationRate
 import pl.krakow.riichi.chombot.commands.ChomboCommand
+import pl.krakow.riichi.chombot.commands.Command
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
@@ -20,16 +22,17 @@ fun main() {
     client.eventDispatcher.on(ReadyEvent::class.java)
         .subscribe { ready -> println("Logged in as " + ready.self.username) }
 
-    val commandMap = mapOf(
-        "chombo" to ChomboCommand()
+    val commandMap: Map<String, Command> = mapOf(
+        "chombo" to ChomboCommand(),
+        "_inflation" to AkagiInflationRate()
     )
 
     client.eventDispatcher.on(MessageCreateEvent::class.java)
         .flatMap { event ->
             Mono.justOrEmpty(event.message.content)
-                .flatMap { content ->
+                .flatMap {
                     Flux.fromIterable(commandMap.entries)
-                        .filter { entry -> content.startsWith('!' + entry.key) }
+                        .filter { entry -> entry.value.isApplicable(event, entry.key) }
                         .flatMap { entry -> entry.value.execute(event) }
                         .next()
                 }
