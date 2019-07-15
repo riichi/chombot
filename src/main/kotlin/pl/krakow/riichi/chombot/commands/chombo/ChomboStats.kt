@@ -1,6 +1,8 @@
 package pl.krakow.riichi.chombot.commands.chombo
 
 import kotlinx.serialization.Serializable
+import java.util.*
+import kotlin.collections.ArrayList
 
 @Serializable
 class ChomboStats {
@@ -13,4 +15,6 @@ class ChomboStats {
     val chomboCounter: Map<Long, Int>
         get() = list.map { event -> event.userId }.groupingBy { x -> x }.eachCount()
 
+    val chomboList: List<ChomboEvent>
+        get() = Collections.unmodifiableList(list)
 }
