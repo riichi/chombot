@@ -7,6 +7,7 @@ import pl.krakow.riichi.chombot.commands.AkagiInflationRate
 import pl.krakow.riichi.chombot.commands.chombo.ChomboCommand
 import pl.krakow.riichi.chombot.commands.chombo.SimpleEmbedFormatter
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 
 
 fun main() {
@@ -28,10 +29,14 @@ fun main() {
 
     client.eventDispatcher.on(MessageCreateEvent::class.java)
         .flatMap { event ->
-            Flux.fromIterable(commandMap.entries)
-                .filter { entry -> entry.value.isApplicable(event, entry.key) }
-                .flatMap { entry -> entry.value.execute(event) }
-                .next()
+            if (event.message.author.get().isBot) {
+                Mono.empty()
+            } else {
+                Flux.fromIterable(commandMap.entries)
+                    .filter { entry -> entry.value.isApplicable(event, entry.key) }
+                    .flatMap { entry -> entry.value.execute(event) }
+                    .next()
+            }
         }
         .subscribe()
 
