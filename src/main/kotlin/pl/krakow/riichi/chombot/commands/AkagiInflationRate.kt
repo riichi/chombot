@@ -37,7 +37,7 @@ class AkagiInflationRate : Command {
             findNumber(it)?.let {
                 event.message.channel.flatMap { channel ->
                     channel.createMessage(
-                        "This ${formatNumber(it)} in 1965 would equate to ${formatNumber(it * 10)} today."
+                        "`This ${formatNumber(it)} in 1965 would equate to ${formatNumber(it * 10)} today.`"
                     )
                 }.then()
             }
