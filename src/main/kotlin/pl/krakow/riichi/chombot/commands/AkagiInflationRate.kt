@@ -18,17 +18,18 @@ class AkagiInflationRate : Command {
     private fun roundDiv(p: Long, q: Long): Long {
         val div: Long = p / q
         val mod: Long = p % q
-        if (2 * mod >= q)
+        if (2 * mod >= q) {
             return div + 1
+        }
         return div
     }
 
     private fun formatNumber(number: Long): String {
-        if (number >= 1_000_000_000)
-            return "${roundDiv(number, 1_000_000_000)} billion"
-        if (number >= 1_000_000)
-            return "${roundDiv(number, 1_000_000)} million"
-        return "${roundDiv(number, 1_000)} thousand"
+        return when {
+            number >= 1_000_000_000 -> "${roundDiv(number, 1_000_000_000)} billion"
+            number >= 1_000_000 -> "${roundDiv(number, 1_000_000)} million"
+            else -> "${roundDiv(number, 1_000)} thousand"
+        }
     }
 
     override fun execute(event: MessageCreateEvent): Mono<Void> {
