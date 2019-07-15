@@ -2,12 +2,17 @@ package pl.krakow.riichi.chombot.commands
 
 import discord4j.core.event.domain.message.MessageCreateEvent
 import reactor.core.publisher.Mono
+import java.util.*
+import kotlin.random.asKotlinRandom
 
 class AkagiInflationRate : Command {
     companion object {
         const val MIN_VALUE: Long = 1000L
         const val MAX_VALUE: Long = 99_999_999_999L
+        const val RUN_PROBABILITY: Double = 0.61803
     }
+
+    private val random = Random().asKotlinRandom()
 
     private fun findNumber(message: String): Long? {
         return message.split(Regex("\\W+"))
@@ -45,6 +50,7 @@ class AkagiInflationRate : Command {
     }
 
     override fun isApplicable(event: MessageCreateEvent, commandName: String): Boolean {
-        return event.message.content.orElse(null)?.let { findNumber(it) } != null
+        return event.message.content.orElse(null)?.let { findNumber(it) } != null &&
+                random.nextDouble() < RUN_PROBABILITY
     }
 }
