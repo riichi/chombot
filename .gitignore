@@ -25,3 +25,6 @@ hs_err_pid*
 
 # Gradle
 .gradle/
+
+# Local files
+chombos.json

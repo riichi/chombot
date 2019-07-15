@@ -1,17 +1,16 @@
 package pl.krakow.riichi.chombot.commands.chombo
 
-import discord4j.core.`object`.util.Snowflake
-import reactor.core.publisher.Flux
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.serialization.Serializable
 
+@Serializable
 class ChomboStats {
-    private val counter = ConcurrentHashMap<Snowflake, AtomicInteger>()
+    private val list: ArrayList<ChomboEvent> = ArrayList()
 
-    fun applyChombo(users: Flux<Snowflake>) {
-        users.subscribe { user -> counter.getOrPut(user, { AtomicInteger(0) }).incrementAndGet() }
+    fun addEvent(event: ChomboEvent) {
+        list.add(event)
     }
 
-    val mapping: Map<Snowflake, Int>
-        get() = counter.mapValues { entry -> entry.value.get() }
+    val chomboCounter: Map<Long, Int>
+        get() = list.map { event -> event.userId }.groupingBy { x -> x }.eachCount()
+
 }
