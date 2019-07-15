@@ -12,6 +12,7 @@
 
 # Package Files #
 build/
+out/
 *.war
 *.nar
 *.ear

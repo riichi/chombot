@@ -4,6 +4,8 @@ import discord4j.core.DiscordClient
 import discord4j.core.`object`.entity.User
 import discord4j.core.`object`.util.Snowflake
 import discord4j.core.event.domain.message.MessageCreateEvent
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 import pl.krakow.riichi.chombot.commands.Command
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
@@ -26,5 +28,10 @@ class ChomboCommand(fmt: Formatter) : Command {
         return event.message.channel.flatMap { channel ->
             userToScore.flatMap { mapping -> channel.createEmbed(formatter.format(mapping)) }
         }.then()
+    }
+
+    private fun serializeChomboEvent(event: ChomboEvent): String {
+        val json = Json(JsonConfiguration.Stable)
+        return json.stringify(ChomboEvent.serializer(), event)
     }
 }
