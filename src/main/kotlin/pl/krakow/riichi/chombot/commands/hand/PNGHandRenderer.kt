@@ -25,9 +25,9 @@ class PNGHandRenderer {
                 2 -> "Nan.png"
                 3 -> "Shaa.png"
                 4 -> "Pei.png"
-                5 -> "Chun.png"
+                5 -> "Haku.png"
                 6 -> "Hatsu.png"
-                7 -> "Haku.png"
+                7 -> "Chun.png"
                 else -> throw Exception("Invalid honor tile value: ${tile.value}")
             }
 
