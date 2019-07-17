@@ -25,6 +25,16 @@ class DrawHandCommand : Command {
             's' to Suite.SOUZU,
             'z' to Suite.HONOR
         )
+
+        val specialHonorSymbolsMapping = mapOf(
+            'E' to 1,
+            'S' to 2,
+            'W' to 3,
+            'N' to 4,
+            'w' to 5,
+            'g' to 6,
+            'r' to 7
+        )
     }
 
     private fun parseArgs(message: String): List<Hand> {
@@ -97,6 +107,11 @@ class DrawHandCommand : Command {
                     tile.suite = suite
                 }
                 unknownSuite.clear()
+                continue
+            }
+            if (cur in specialHonorSymbolsMapping) {
+                skip = (i < description.length - 1 && description[i + 1] == '*')
+                currentGroup.add(Tile(Suite.HONOR, specialHonorSymbolsMapping.getValue(cur), skip))
                 continue
             }
             throw InvalidParameterException(description)
