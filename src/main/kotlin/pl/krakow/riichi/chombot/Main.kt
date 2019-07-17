@@ -6,6 +6,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import pl.krakow.riichi.chombot.commands.AkagiInflationRate
 import pl.krakow.riichi.chombot.commands.chombo.ChomboCommand
 import pl.krakow.riichi.chombot.commands.chombo.SimpleEmbedFormatter
+import pl.krakow.riichi.chombot.commands.hand.DrawHandCommand
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
@@ -24,6 +25,7 @@ fun main() {
 
     val commandMap = mapOf(
         "chombo" to ChomboCommand(SimpleEmbedFormatter()),
+        "hand" to DrawHandCommand(),
         "_inflation" to AkagiInflationRate()
     )
 
