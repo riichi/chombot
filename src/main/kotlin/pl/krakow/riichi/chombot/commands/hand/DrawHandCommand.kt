@@ -131,7 +131,7 @@ class DrawHandCommand : Command {
     }
 
     override fun execute(event: MessageCreateEvent): Mono<Void> {
-        if (event.message.content.isEmpty)
+        if (!event.message.content.isPresent)
             return Mono.empty()
         return try {
             val hands = parseArgs(event.message.content.get())
