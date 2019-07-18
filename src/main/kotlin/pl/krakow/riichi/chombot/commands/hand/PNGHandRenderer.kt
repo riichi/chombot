@@ -9,7 +9,7 @@ import javax.imageio.ImageIO
 class PNGHandRenderer {
     companion object {
         const val RESOURCE_PATH_PREFIX = "/riichi-mahjong-tiles/Export"
-        const val TILE_SYMBOLS_SCALE = 0.9
+        const val TILE_SYMBOLS_SCALE = 0.8
     }
 
     private fun getTileBasename(tile: Tile): String {
@@ -41,17 +41,17 @@ class PNGHandRenderer {
         return this::class.java.getResourceAsStream("$RESOURCE_PATH_PREFIX/${style.catalog}/Front.png")
     }
 
-    private fun getTileResourcePath(tile: Tile, style: TileStyle): String {
-        return "$RESOURCE_PATH_PREFIX/${style.catalog}/${getTileBasename(tile)}"
-    }
-
     private fun getTileImageInputStream(tile: Tile, style: TileStyle): InputStream {
         return this::class.java.getResourceAsStream(getTileResourcePath(tile, style))
     }
 
+    private fun getTileResourcePath(tile: Tile, style: TileStyle): String {
+        return "$RESOURCE_PATH_PREFIX/${style.catalog}/${getTileBasename(tile)}"
+    }
+
     private fun getTileTransform(scale: Double, rotated: Boolean, xOffset: Int): AffineTransform {
         val realScale = scale / 2
-        // We scale around the center and have to make up for it.
+        // We scale around the origin which moves tile center a bit – so we have to make up for it.
         val shiftH = 400 * (1.0 - scale) / 2
         val shiftW = 300 * (1.0 - scale) / 2
         return if (rotated)

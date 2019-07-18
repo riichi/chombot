@@ -126,7 +126,7 @@ class DrawHandCommand : Command {
     private fun sendHand(hand: Hand, channel: MessageChannel): Mono<Void> {
         val handBytes = PNGHandRenderer().renderHand(hand)
         return channel.createMessage { spec ->
-            spec.addFile("renka.png", handBytes.inputStream())
+            spec.addFile("hand.png", handBytes.inputStream())
         }.then()
     }
 
@@ -136,7 +136,7 @@ class DrawHandCommand : Command {
         return try {
             val hands = parseArgs(event.message.content.get())
             event.message.channel.flatMap { channel ->
-                hands.forEach { hand -> sendHand(hand, channel) }
+                hands.forEach { hand -> sendHand(hand, channel).block() }
                 Mono.empty<Void>()
             }
         } catch (e: InvalidParameterException) {
