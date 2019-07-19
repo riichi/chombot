@@ -4,6 +4,7 @@ import discord4j.core.DiscordClientBuilder
 import discord4j.core.event.domain.lifecycle.ReadyEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import pl.krakow.riichi.chombot.commands.AkagiInflationRate
+import pl.krakow.riichi.chombot.commands.AtEveryoneAngryReactions
 import pl.krakow.riichi.chombot.commands.chombo.ChomboCommand
 import pl.krakow.riichi.chombot.commands.chombo.SimpleEmbedFormatter
 import pl.krakow.riichi.chombot.commands.hand.DrawHandCommand
@@ -26,7 +27,8 @@ fun main() {
     val commandMap = mapOf(
         "chombo" to ChomboCommand(SimpleEmbedFormatter()),
         "hand" to DrawHandCommand(),
-        "_inflation" to AkagiInflationRate()
+        "_inflation" to AkagiInflationRate(),
+        "_everyone" to AtEveryoneAngryReactions()
     )
 
     client.eventDispatcher.on(MessageCreateEvent::class.java)
