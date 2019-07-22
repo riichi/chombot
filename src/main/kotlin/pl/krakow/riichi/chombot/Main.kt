@@ -37,6 +37,14 @@ fun main() {
                 Flux.fromIterable(commandMap.entries)
                     .filter { entry -> entry.value.isApplicable(event, entry.key) }
                     .flatMap { entry -> entry.value.execute(event) }
+                    .onErrorResume { error ->
+                        event.message.channel.flatMap { channel ->
+                            channel.createMessage("Error occurred when executing the command: `$error`")
+                        }.then()
+                    }
+                    .doOnError { error ->
+                        error.printStackTrace()
+                    }
                     .next()
             }
         }
