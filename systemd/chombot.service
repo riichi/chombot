@@ -7,7 +7,7 @@ Type=simple
 User=chombot
 WorkingDirectory=/home/chombot
 EnvironmentFile=/home/chombot/environment
-ExecStart=java -jar /home/chombot/chombot.jar
+ExecStart=/usr/bin/java -jar /home/chombot/chombot.jar
 Restart=on-failure
 
 [Install]
