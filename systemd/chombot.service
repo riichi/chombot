@@ -1,0 +1,14 @@
+[Unit]
+Description=Chombot
+After=network.target
+
+[Service]
+Type=simple
+User=chombot
+WorkingDirectory=/home/chombot
+EnvironmentFile=/home/chombot/environment
+ExecStart=java -jar /home/chombot/chombot.jar
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
