@@ -47,7 +47,12 @@ class DrawHandCommand : Command {
                     throw InvalidParameterException(it)
                 tileStyle = tileStyleMapping.getValue(it[1])
             } else {
-                ret.add(parseHandDescription(it, tileStyle))
+                val hand = parseHandDescription(it, tileStyle)
+                if (hand.isEmpty) {
+                    throw InvalidParameterException(it)
+                }
+
+                ret.add(hand)
             }
         }
 
