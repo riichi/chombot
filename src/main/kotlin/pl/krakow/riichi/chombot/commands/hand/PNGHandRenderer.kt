@@ -12,6 +12,18 @@ class PNGHandRenderer {
         const val TILE_SYMBOLS_SCALE = 0.8
     }
 
+    enum class TileRotation {
+        NONE,
+        ROTATED,
+        INVERTED,
+    }
+
+    private val Boolean.tileRotation: TileRotation
+        get() = if (this) TileRotation.ROTATED else TileRotation.NONE
+
+    private val Boolean.tileRotationInverted: TileRotation
+        get() = if (this) TileRotation.INVERTED else TileRotation.NONE
+
     private fun getTileBasename(tile: Tile): String {
         if (tile.suite == Suite.ANY)
             return "Back.png"
@@ -20,7 +32,7 @@ class PNGHandRenderer {
             throw Exception("Invalid tile suite: unknown")
 
         if (tile.suite == Suite.HONOR)
-            return when(tile.value) {
+            return when (tile.value) {
                 1 -> "Ton.png"
                 2 -> "Nan.png"
                 3 -> "Shaa.png"
@@ -49,23 +61,46 @@ class PNGHandRenderer {
         return "$RESOURCE_PATH_PREFIX/${style.catalog}/${getTileBasename(tile)}"
     }
 
-    private fun getTileTransform(scale: Double, rotated: Boolean, xOffset: Int): AffineTransform {
+    private fun getTileTransform(scale: Double, rotation: TileRotation, xOffset: Int): AffineTransform {
         val realScale = scale / 2
         // We scale around the origin which moves tile center a bit – so we have to make up for it.
         val shiftH = 400 * (1.0 - scale) / 2
         val shiftW = 300 * (1.0 - scale) / 2
-        return if (rotated)
-            AffineTransform(0.0, -realScale, realScale, 0.0, xOffset.toDouble() + shiftH, 400.0 - shiftW)
-        else
-            AffineTransform(realScale, 0.0, 0.0, realScale, xOffset.toDouble() + shiftW, shiftH)
+
+        return when (rotation) {
+            TileRotation.NONE -> AffineTransform(
+                realScale,
+                0.0,
+                0.0,
+                realScale,
+                xOffset.toDouble() + shiftW,
+                shiftH
+            )
+            TileRotation.ROTATED -> AffineTransform(
+                0.0,
+                -realScale,
+                realScale,
+                0.0,
+                xOffset.toDouble() + shiftH,
+                400.0 - shiftW
+            )
+            TileRotation.INVERTED -> AffineTransform(
+                0.0,
+                realScale,
+                realScale,
+                0.0,
+                xOffset.toDouble() + shiftH,
+                shiftW + 100.0
+            )
+        }
     }
 
-    private fun getTileTransform(tile:Tile, xOffset: Int): AffineTransform {
+    private fun getTileTransform(tile: Tile, xOffset: Int): AffineTransform {
         // Suite.ANY means here either back of a tile or a background (Front.png).
         return if (tile.suite == Suite.ANY)
-            getTileTransform(1.0, tile.rotated, xOffset)
+            getTileTransform(1.0, tile.rotated.tileRotation, xOffset)
         else
-            getTileTransform(TILE_SYMBOLS_SCALE, tile.rotated, xOffset)
+            getTileTransform(TILE_SYMBOLS_SCALE, tile.rotated.tileRotation, xOffset)
     }
 
     fun renderHand(hand: Hand): ByteArray {
@@ -82,7 +117,11 @@ class PNGHandRenderer {
             for (tile in group) {
                 if (tile.suite != Suite.ANY) {
                     val frontImage = ImageIO.read(getFrontImageInputStream(hand.style))
-                    graphics.drawImage(frontImage, getTileTransform(1.0, tile.rotated, xOffset), null)
+                    graphics.drawImage(
+                        frontImage,
+                        getTileTransform(1.0, tile.rotated.tileRotationInverted, xOffset),
+                        null
+                    )
                 }
                 val tileImage = ImageIO.read(getTileImageInputStream(tile, hand.style))
                 graphics.drawImage(tileImage, getTileTransform(tile, xOffset), null)
