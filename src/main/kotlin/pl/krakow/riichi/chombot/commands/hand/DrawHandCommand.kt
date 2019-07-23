@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono
  *  - -b sets style to black.
  */
 class DrawHandCommand : Command {
-    class InvalidParameterException(parameter: String) : Exception("Invalid parameter: '$parameter'")
+    class InvalidParameterException(parameter: String) : Exception("Invalid parameter: `$parameter`")
 
     companion object {
         const val MAX_TILES = 50
@@ -43,7 +43,7 @@ class DrawHandCommand : Command {
         var tileStyle = TileStyle.REGULAR
         val ret = ArrayList<Hand>()
 
-        message.split(Regex("\\s+")).drop(1).forEach {
+        message.split(Regex("[`\\s]+")).drop(1).filterNot(String::isEmpty).forEach {
             if (it.startsWith('-')) {
                 if (it.length != 2 || !tileStyleMapping.containsKey(it[1]))
                     throw InvalidParameterException(it)
@@ -127,7 +127,13 @@ class DrawHandCommand : Command {
             throw InvalidParameterException(description)
         if (currentGroup.isNotEmpty())
             groups.add(currentGroup)
-        return Hand(style, groups)
+        if (groups.all { group -> group.isEmpty() })
+            throw InvalidParameterException(description)
+        val groupsTrimmed = groups.subList(
+            groups.indexOfFirst { group -> group.isNotEmpty() },
+            groups.indexOfLast { group -> group.isNotEmpty() } + 1
+        )
+        return Hand(style, groupsTrimmed)
     }
 
     private fun sendHand(hand: Hand, channel: MessageChannel): Mono<Void> {
