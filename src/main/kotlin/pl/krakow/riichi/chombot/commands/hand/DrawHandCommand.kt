@@ -14,6 +14,8 @@ class DrawHandCommand : Command {
     class InvalidParameterException(parameter: String) : Exception("Invalid parameter: '$parameter'")
 
     companion object {
+        const val MAX_TILES = 50
+
         val tileStyleMapping = mapOf(
             'w' to TileStyle.REGULAR,
             'b' to TileStyle.BLACK
@@ -42,13 +44,13 @@ class DrawHandCommand : Command {
         val ret = ArrayList<Hand>()
 
         message.split(Regex("\\s+")).drop(1).forEach {
-            if(it.startsWith('-')) {
+            if (it.startsWith('-')) {
                 if (it.length != 2 || !tileStyleMapping.containsKey(it[1]))
                     throw InvalidParameterException(it)
                 tileStyle = tileStyleMapping.getValue(it[1])
             } else {
                 val hand = parseHandDescription(it, tileStyle)
-                if (hand.isEmpty) {
+                if (hand.isEmpty || hand.numberOfTiles >= MAX_TILES) {
                     throw InvalidParameterException(it)
                 }
 
@@ -60,7 +62,7 @@ class DrawHandCommand : Command {
     }
 
     private fun isTileValid(value: Int, suite: Suite): Boolean {
-        return when(suite) {
+        return when (suite) {
             Suite.MANZU -> value in 0..9
             Suite.PINZU -> value in 0..9
             Suite.SOUZU -> value in 0..9

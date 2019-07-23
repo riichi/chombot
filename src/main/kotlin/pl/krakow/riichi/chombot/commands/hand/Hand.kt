@@ -17,6 +17,9 @@ enum class Suite(val filenamePrefix: String) {
 data class Tile(var suite: Suite, var value: Int, var rotated: Boolean)
 
 data class Hand(var style: TileStyle, var groups: List<List<Tile>>) {
+    val numberOfTiles: Int
+        get() = groups.map { x -> x.size }.sum()
+
     val isEmpty: Boolean
-        get() = groups.map { x -> x.size }.sum() == 0
+        get() = this.numberOfTiles == 0
 }
