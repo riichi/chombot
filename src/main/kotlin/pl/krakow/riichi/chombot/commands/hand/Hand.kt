@@ -1,8 +1,9 @@
 package pl.krakow.riichi.chombot.commands.hand
 
 enum class TileStyle(val catalog: String) {
-    REGULAR("Regular"),
-    BLACK("Black")
+    RED("Red"),
+    BLACK("Black"),
+    YELLOW("Yellow")
 }
 
 enum class Suite(val filenamePrefix: String) {

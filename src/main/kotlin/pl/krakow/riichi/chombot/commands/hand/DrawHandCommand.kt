@@ -17,8 +17,9 @@ class DrawHandCommand : Command {
         const val MAX_TILES = 50
 
         val tileStyleMapping = mapOf(
-            'w' to TileStyle.REGULAR,
-            'b' to TileStyle.BLACK
+            'r' to TileStyle.RED,
+            'b' to TileStyle.BLACK,
+            'y' to TileStyle.YELLOW
         )
 
         val tileSuiteMapping = mapOf(
@@ -40,7 +41,7 @@ class DrawHandCommand : Command {
     }
 
     private fun parseArgs(message: String): List<Hand> {
-        var tileStyle = TileStyle.REGULAR
+        var tileStyle = TileStyle.RED
         val ret = ArrayList<Hand>()
 
         message.split(Regex("[`\\s]+")).drop(1).filterNot(String::isEmpty).forEach {
