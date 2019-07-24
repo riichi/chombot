@@ -1,3 +1,3 @@
-[submodule "src/main/resources/riichi-mahjong-tiles"]
-	path = src/main/resources/riichi-mahjong-tiles
+[submodule "riichi-mahjong-tiles"]
+	path = riichi-mahjong-tiles
 	url = https://github.com/FluffyStuff/riichi-mahjong-tiles.git

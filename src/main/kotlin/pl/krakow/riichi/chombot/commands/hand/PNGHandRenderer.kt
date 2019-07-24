@@ -8,7 +8,7 @@ import javax.imageio.ImageIO
 
 class PNGHandRenderer {
     companion object {
-        const val RESOURCE_PATH_PREFIX = "/riichi-mahjong-tiles/Export"
+        const val RESOURCE_PATH_PREFIX = "/tiles"
         const val TILE_SYMBOLS_SCALE = 0.8
     }
 
