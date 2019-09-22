@@ -1,30 +1,18 @@
 package pl.krakow.riichi.chombot.commands.chombo
 
-import discord4j.core.DiscordClient
-import discord4j.core.`object`.entity.User
 import discord4j.core.event.domain.message.MessageCreateEvent
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.UnstableDefault
 import pl.krakow.riichi.chombot.commands.Command
+import pl.krakow.riichi.chombot.commands.kcc3client.Chombo
+import pl.krakow.riichi.chombot.commands.kcc3client.Kcc3Client
 import reactor.core.publisher.Mono
-import java.io.File
-import java.util.*
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
-class ChomboCommand(private val formatter: Formatter) : Command {
+@UnstableDefault
+class ChomboCommand(private val formatter: Formatter, private val kcc3Client: Kcc3Client) : Command {
     companion object {
-        private const val CHOMBOS_FILENAME = "chombos.json"
-    }
-
-    private val stats = if (File(CHOMBOS_FILENAME).exists()) {
-        loadState()
-    } else {
-        ChomboStats()
-    }
-
-    private fun prepareMapping(mapping: Map<Long, Int>, client: DiscordClient): Mono<Map<User, Int>> {
-        return client.users
-            .filter { user -> mapping.containsKey(user.id.asLong()) }
-            .collectMap({ user -> user }, { user -> mapping.getValue(user.id.asLong()) })
+        private val DATE_FORMATTER = DateTimeFormatter.ofPattern("EEE, yyyy-MM-dd HH:mm")
     }
 
     override fun execute(event: MessageCreateEvent): Mono<Void> {
@@ -42,46 +30,58 @@ class ChomboCommand(private val formatter: Formatter) : Command {
     }
 
     private fun addChombo(event: MessageCreateEvent): Mono<Void> {
-        val user = event.message.userMentionIds.first()
-        val comment = event.message.content.get().substringAfter("<@${user.asLong()}>").trim()
+        val discordId = event.message.userMentionIds.first().asString()
+        val players = kcc3Client.getPlayers()
+        val player = players.find { it.discordId == discordId }
+        val comment = event.message.content.get().substringAfter("<@$discordId>").trim()
 
-        stats.addEvent(
-            ChomboEvent(
-                Calendar.getInstance().time,
-                user.asLong(),
+        if (player == null) {
+            return event.message.channel.flatMap { channel ->
+                channel.createMessage("Mentioned Discord user (ID $discordId) is not a player (yet)!")
+            }.then()
+        }
+
+        kcc3Client.addChombo(
+            Chombo(
+                ZonedDateTime.now(),
+                player.id,
                 comment
             )
         )
 
-        saveState()
-
         return displayCounter(event)
     }
 
+    private fun getChomboCounter(): Map<String, Int> =
+        kcc3Client.getChombos().map { event -> event.player }.groupingBy { x -> x }.eachCount()
+
     private fun displayCounter(event: MessageCreateEvent): Mono<Void> {
-        val userToScore = prepareMapping(stats.chomboCounter, event.client)
+        val counter = getChomboCounter()
+        val players = kcc3Client.getPlayerMap()
+        val mapping = counter.mapKeys { (key, _) -> players.getValue(key) }
+
         return event.message.channel.flatMap { channel ->
-            userToScore.flatMap { mapping -> channel.createEmbed(formatter.format(mapping)) }
+            channel.createEmbed(formatter.format(mapping))
         }.then()
     }
 
     private fun listChombos(event: MessageCreateEvent): Mono<Void> {
+        val chombos = kcc3Client.getChombos()
+        val players = kcc3Client.getPlayerMap()
+
         return event.message.channel.flatMap { channel ->
-            channel.createMessage(stats.chomboList.joinToString("\n") { chombo ->
-                "<@${chombo.userId}> at ${chombo.timestamp}: ${chombo.comment}"
+            channel.createMessage(chombos.joinToString("\n") { chombo ->
+                val playerName = players[chombo.player]?.name
+                val timestampString = DATE_FORMATTER.format(chombo.timestamp)
+                val comment = chombo.comment
+
+                var s = "**$playerName** at $timestampString"
+                if (comment.isNotEmpty()) {
+                    s += ": *$comment*"
+                }
+
+                s
             })
         }.then()
-    }
-
-    private fun loadState(): ChomboStats {
-        val json = Json(JsonConfiguration.Stable)
-        val jsonString = File(CHOMBOS_FILENAME).readText()
-        return json.parse(ChomboStats.serializer(), jsonString)
-    }
-
-    private fun saveState() {
-        val json = Json(JsonConfiguration.Stable)
-        val jsonString = json.stringify(ChomboStats.serializer(), stats)
-        File(CHOMBOS_FILENAME).writeText(jsonString)
     }
 }

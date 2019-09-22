@@ -1,12 +1,12 @@
 package pl.krakow.riichi.chombot.commands.chombo
 
-import discord4j.core.`object`.entity.User
 import discord4j.core.spec.EmbedCreateSpec
+import pl.krakow.riichi.chombot.commands.kcc3client.Player
 import java.awt.Color
 import java.util.function.Consumer
 
 class SimpleEmbedFormatter : Formatter {
-    override fun format(stats: Map<User, Int>): Consumer<EmbedCreateSpec> {
+    override fun format(stats: Map<Player, Int>): Consumer<EmbedCreateSpec> {
         return Consumer { spec ->
             spec.setTitle("**CHOMBO COUNTER**")
             spec.setColor(Color.RED)
@@ -14,7 +14,7 @@ class SimpleEmbedFormatter : Formatter {
             stats
                 .toList()
                 .sortedByDescending { pair -> pair.second }
-                .forEach { pair -> spec.addField("**${pair.first.username}**", pair.second.toString(), true) }
+                .forEach { (player, num) -> spec.addField("**${player.shortName}**", num.toString(), true) }
         }
     }
 }

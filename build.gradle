@@ -29,6 +29,9 @@ dependencies {
 
     implementation 'com.discord4j:discord4j-core:3.0.7'
     implementation 'com.discord4j:discord4j-command:3.0.7'
+
+    implementation 'com.github.kittinunf.fuel:fuel:2.2.1'
+    implementation 'com.github.kittinunf.fuel:fuel-kotlinx-serialization:2.2.1'
 }
 
 compileKotlin {
