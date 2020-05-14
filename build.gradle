@@ -13,6 +13,7 @@ plugins {
     id "com.github.johnrengelman.shadow" version "4.0.4"
 }
 
+apply plugin: 'application'
 apply plugin: 'kotlinx-serialization'
 
 group 'pl.krakow.riichi'
@@ -41,6 +42,7 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 
+mainClassName = 'pl.krakow.riichi.chombot.MainKt'
 jar {
     manifest {
         attributes 'Main-Class': 'pl.krakow.riichi.chombot.MainKt'
