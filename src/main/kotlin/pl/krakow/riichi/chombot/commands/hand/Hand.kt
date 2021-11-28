@@ -15,7 +15,13 @@ enum class Suite(val filenamePrefix: String) {
     UNKNOWN("Unknown")
 }
 
-data class Tile(var suite: Suite, var value: Int, var rotated: Boolean)
+enum class TilePosition {
+    NORMAL,
+    ROTATED,
+    ROTATED_SHIFTED
+}
+
+data class Tile(var suite: Suite, var value: Int, var position: TilePosition)
 
 data class Hand(var style: TileStyle, var groups: List<List<Tile>>) {
     val numberOfTiles: Int

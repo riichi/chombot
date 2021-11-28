@@ -10,6 +10,9 @@ class PNGHandRenderer {
     companion object {
         const val RESOURCE_PATH_PREFIX = "/tiles"
         const val TILE_SYMBOLS_SCALE = 0.8
+        const val TILE_WIDTH = 300
+        const val TILE_HEIGHT = 400
+        const val GROUP_SKIP = 100
     }
 
     enum class TileRotation {
@@ -18,11 +21,11 @@ class PNGHandRenderer {
         INVERTED,
     }
 
-    private val Boolean.tileRotation: TileRotation
-        get() = if (this) TileRotation.ROTATED else TileRotation.NONE
+    private val TilePosition.tileRotation: TileRotation
+        get() = if (this != TilePosition.NORMAL) TileRotation.ROTATED else TileRotation.NONE
 
-    private val Boolean.tileRotationInverted: TileRotation
-        get() = if (this) TileRotation.INVERTED else TileRotation.NONE
+    private val TilePosition.tileRotationInverted: TileRotation
+        get() = if (this != TilePosition.NORMAL) TileRotation.INVERTED else TileRotation.NONE
 
     private fun getTileBasename(tile: Tile): String {
         if (tile.suite == Suite.ANY)
@@ -61,11 +64,11 @@ class PNGHandRenderer {
         return "$RESOURCE_PATH_PREFIX/${style.catalog}/${getTileBasename(tile)}"
     }
 
-    private fun getTileTransform(scale: Double, rotation: TileRotation, xOffset: Int): AffineTransform {
+    private fun getTileTransform(scale: Double, rotation: TileRotation, position: TilePosition, xOffset: Int, yOffset: Int): AffineTransform {
         val realScale = scale / 2
         // We scale around the origin which moves tile center a bit – so we have to make up for it.
-        val shiftH = 400 * (1.0 - scale) / 2
-        val shiftW = 300 * (1.0 - scale) / 2
+        val shiftH = TILE_HEIGHT * (1.0 - scale) / 2
+        val shiftW = TILE_WIDTH * (1.0 - scale) / 2
 
         return when (rotation) {
             TileRotation.NONE -> AffineTransform(
@@ -74,7 +77,7 @@ class PNGHandRenderer {
                 0.0,
                 realScale,
                 xOffset.toDouble() + shiftW,
-                shiftH
+                yOffset.toDouble() + shiftH
             )
             TileRotation.ROTATED -> AffineTransform(
                 0.0,
@@ -82,7 +85,7 @@ class PNGHandRenderer {
                 realScale,
                 0.0,
                 xOffset.toDouble() + shiftH,
-                400.0 - shiftW
+                yOffset.toDouble() + TILE_WIDTH.toDouble() - shiftW
             )
             TileRotation.INVERTED -> AffineTransform(
                 0.0,
@@ -90,44 +93,93 @@ class PNGHandRenderer {
                 realScale,
                 0.0,
                 xOffset.toDouble() + shiftH,
-                shiftW + 100.0
+                yOffset.toDouble() + shiftW
             )
         }
     }
 
-    private fun getTileTransform(tile: Tile, xOffset: Int): AffineTransform {
+    private fun getTileTransform(tile: Tile, xOffset: Int, yOffset: Int): AffineTransform {
         // Suite.ANY means here either back of a tile or a background (Front.png).
         return if (tile.suite == Suite.ANY)
-            getTileTransform(1.0, tile.rotated.tileRotation, xOffset)
+            getTileTransform(1.0, tile.position.tileRotation, tile.position, xOffset, yOffset)
         else
-            getTileTransform(TILE_SYMBOLS_SCALE, tile.rotated.tileRotation, xOffset)
+            getTileTransform(TILE_SYMBOLS_SCALE, tile.position.tileRotation, tile.position, xOffset, yOffset)
+    }
+
+    private fun needToStartNewGroup(tilePosition: TilePosition, lower: Boolean, upper: Boolean): Boolean {
+        return when (tilePosition) {
+            TilePosition.NORMAL -> lower or upper
+            TilePosition.ROTATED -> lower
+            TilePosition.ROTATED_SHIFTED -> upper
+        }
+    }
+
+    private fun groupWidth(group: List<Tile>): Int {
+        var lowerRotated = false
+        var upperRotated = false
+        var width = 0
+        for (tile in group) {
+            if (needToStartNewGroup(tile.position, lowerRotated, upperRotated)) {
+                width += TILE_HEIGHT
+                lowerRotated = false
+                upperRotated = false
+            }
+            when (tile.position) {
+                TilePosition.NORMAL -> width += TILE_WIDTH
+                TilePosition.ROTATED -> lowerRotated = true
+                TilePosition.ROTATED_SHIFTED -> upperRotated = true
+            }
+        }
+        if (lowerRotated or upperRotated)
+            width += TILE_HEIGHT
+        return width
     }
 
     fun renderHand(hand: Hand): ByteArray {
-        var width: Int = 100 * (hand.groups.size - 1)
-        val height = 400
-        for (group in hand.groups) {
-            width += group.map { tile -> if (tile.rotated) 400 else 300 }.sum()
-        }
+        val width: Int = GROUP_SKIP * (hand.groups.size - 1) + hand.groups.map { g -> groupWidth(g) }.sum()
+        val height = (
+                if (hand.groups.any { g -> g.any { t -> t.position == TilePosition.ROTATED_SHIFTED } })
+                    2 * TILE_WIDTH
+                else
+                    TILE_HEIGHT
+                )
         val bi = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
         val graphics = bi.createGraphics()
 
         var xOffset = 0
         for (group in hand.groups) {
+            var lowerRotated = false
+            var upperRotated = false
             for (tile in group) {
+                if (needToStartNewGroup(tile.position, lowerRotated, upperRotated)) {
+                    lowerRotated = false
+                    upperRotated = false
+                    xOffset += TILE_HEIGHT
+                }
+                val yOffset = when(tile.position) {
+                    TilePosition.NORMAL -> height - TILE_HEIGHT
+                    TilePosition.ROTATED -> height - TILE_WIDTH
+                    TilePosition.ROTATED_SHIFTED -> 0
+                };
                 if (tile.suite != Suite.ANY) {
                     val frontImage = ImageIO.read(getFrontImageInputStream(hand.style))
                     graphics.drawImage(
                         frontImage,
-                        getTileTransform(1.0, tile.rotated.tileRotationInverted, xOffset),
+                        getTileTransform(1.0, tile.position.tileRotationInverted, tile.position, xOffset, yOffset),
                         null
                     )
                 }
                 val tileImage = ImageIO.read(getTileImageInputStream(tile, hand.style))
-                graphics.drawImage(tileImage, getTileTransform(tile, xOffset), null)
-                xOffset += if (tile.rotated) 400 else 300
+                graphics.drawImage(tileImage, getTileTransform(tile, xOffset, yOffset), null)
+                when (tile.position) {
+                    TilePosition.NORMAL -> xOffset += TILE_WIDTH
+                    TilePosition.ROTATED -> lowerRotated = true
+                    TilePosition.ROTATED_SHIFTED -> upperRotated = true
+                }
             }
-            xOffset += 100
+            if (lowerRotated or upperRotated)
+                xOffset += TILE_HEIGHT
+            xOffset += GROUP_SKIP
         }
         val out = ByteArrayOutputStream()
         ImageIO.write(bi, "PNG", out)
