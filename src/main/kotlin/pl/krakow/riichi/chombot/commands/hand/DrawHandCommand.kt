@@ -29,6 +29,12 @@ class DrawHandCommand : Command {
             'z' to Suite.HONOR
         )
 
+        val tilePositionMapping = mapOf(
+            0 to TilePosition.NORMAL,
+            1 to TilePosition.ROTATED,
+            2 to TilePosition.ROTATED_SHIFTED
+        )
+
         val specialHonorSymbolsMapping = mapOf(
             'E' to 1,
             'S' to 2,
@@ -78,28 +84,34 @@ class DrawHandCommand : Command {
         // at the end of the group. When suite type is encountered,
         // we set it for elements of the list and clear the list.
         val unknownSuite = ArrayList<Tile>()
-        // Whether to skip current iteration. This is necessary for
-        // parsing [0-9]\* tiles - with classic for loop we'd just
-        // increment the variable once.
-        var skip = false
+        // How many future iterations should be skipped. This is necessary for
+        // parsing [0-9]\*{1,2} tiles - with classic for loop we'd just
+        // increase the loop counter.
+        var skip = 0
         val groups = ArrayList<ArrayList<Tile>>()
         var currentGroup = ArrayList<Tile>()
         for (i in 0 until description.length) {
-            if (skip) {
-                skip = false
+            if (skip > 0) {
+                --skip
                 continue
             }
             val cur = description[i]
             if (cur in '0'..'9') {
-                skip = (i < description.length - 1 && description[i + 1] == '*')
-                val tile = Tile(Suite.UNKNOWN, cur - '0', skip)
+                while (i + skip + 1 < description.length && description[i + skip + 1] == '*')
+                    ++skip
+                if (skip > 2)
+                    throw InvalidParameterException(description)
+                val tile = Tile(Suite.UNKNOWN, cur - '0', tilePositionMapping.getValue(skip))
                 unknownSuite.add(tile)
                 currentGroup.add(tile)
                 continue
             }
             if (cur == '?') {
-                skip = (i < description.length - 1 && description[i + 1] == '*')
-                currentGroup.add(Tile(Suite.ANY, 0, skip))
+                while (i + skip + 1 < description.length && description[i + skip + 1] == '*')
+                    ++skip
+                if (skip > 2)
+                    throw InvalidParameterException(description)
+                currentGroup.add(Tile(Suite.ANY, 0, tilePositionMapping.getValue(skip)))
                 continue
             }
             if (cur == '_') {
@@ -118,8 +130,11 @@ class DrawHandCommand : Command {
                 continue
             }
             if (cur in specialHonorSymbolsMapping) {
-                skip = (i < description.length - 1 && description[i + 1] == '*')
-                currentGroup.add(Tile(Suite.HONOR, specialHonorSymbolsMapping.getValue(cur), skip))
+                while (i + skip + 1 < description.length && description[i + skip + 1] == '*')
+                    ++skip
+                if (skip > 2)
+                    throw InvalidParameterException(description)
+                currentGroup.add(Tile(Suite.HONOR, specialHonorSymbolsMapping.getValue(cur), tilePositionMapping.getValue(skip)))
                 continue
             }
             throw InvalidParameterException(description)
