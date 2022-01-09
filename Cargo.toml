@@ -1,0 +1,11 @@
+[package]
+name = "chombot"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+chrono = "0.4"
+reqwest = "0.11"
+serde = "1.0"
+serenity = { version = "0.10", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "unstable_discord_api"] }
+tokio = { version = "1.15", features = ["macros", "rt-multi-thread"] }
