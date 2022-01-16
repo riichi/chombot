@@ -1,20 +1,22 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug)]
+pub type PlayerId = String;
+
+#[derive(Clone, Deserialize, Debug)]
 pub struct Player {
-    id: String,
+    pub id: PlayerId,
     #[serde(default)]
-    first_name: String,
+    pub first_name: String,
     #[serde(default)]
-    last_name: String,
+    pub last_name: String,
     #[serde(default)]
-    nickname: String,
-    discord_id: String,
+    pub nickname: String,
+    pub discord_id: String,
 }
 
 impl Player {
-    fn name(&self) -> String {
+    pub fn name(&self) -> String {
         if !self.first_name.is_empty() && !self.last_name.is_empty() {
             let mut s = format!("{} {}", self.first_name, self.last_name);
             if !self.nickname.is_empty() {
@@ -27,7 +29,7 @@ impl Player {
         }
     }
 
-    fn short_name(&self) -> String {
+    pub fn short_name(&self) -> String {
         if !self.nickname.is_empty() {
             self.nickname.clone()
         } else {
@@ -36,12 +38,12 @@ impl Player {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Chombo {
-    timestamp: DateTime<Utc>,
-    player: String,
+    pub timestamp: DateTime<Utc>,
+    pub player: PlayerId,
     #[serde(default)]
-    comment: String,
+    pub comment: String,
 }
 
 impl Chombo {
