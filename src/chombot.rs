@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter};
 
 use tokio::try_join;
 
-use crate::kcc3::data_types::{Player, PlayerId};
+use crate::kcc3::data_types::{Chombo, Player, PlayerId};
 use crate::kcc3::Kcc3ClientError;
 use crate::Kcc3Client;
 
@@ -45,7 +45,7 @@ impl Chombot {
         }
     }
 
-    pub async fn list_chombos_by_count(&self) -> ChombotResult<Vec<(Player, usize)>> {
+    pub async fn create_chombo_ranking(&self) -> ChombotResult<Vec<(Player, usize)>> {
         let players_fut = self.kcc3client.get_players();
         let chombos_fut = self.kcc3client.get_chombos();
         let (players, chombos) = try_join!(players_fut, chombos_fut)?;
@@ -65,5 +65,22 @@ impl Chombot {
         result.sort_by(|(_, num_1), (_, num_2)| num_2.cmp(num_1));
 
         Ok(result)
+    }
+
+    pub async fn get_chombo_list(&self) -> ChombotResult<Vec<(Player, Chombo)>> {
+        let players_fut = self.kcc3client.get_players();
+        let chombos_fut = self.kcc3client.get_chombos();
+        let (players, mut chombos) = try_join!(players_fut, chombos_fut)?;
+
+        let mut player_map: HashMap<PlayerId, Player> = players.into_iter()
+            .map(|x| (x.id.clone(), x))
+            .collect();
+        chombos.sort_by_key(|chombo| chombo.timestamp);
+        chombos.reverse();
+        let chombos = chombos.into_iter()
+            .map(|chombo| (player_map.get(&chombo.player).unwrap().clone(), chombo))
+            .collect();
+
+        Ok(chombos)
     }
 }
