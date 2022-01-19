@@ -61,6 +61,10 @@ impl Kcc3Client {
         self.api_call_get(PLAYERS_ENDPOINT).await
     }
 
+    pub async fn add_player(&self, player: &Player) -> Kcc3ClientResult<Player> {
+        self.api_call_post(PLAYERS_ENDPOINT, player).await
+    }
+
     pub async fn get_chombos(&self) -> Kcc3ClientResult<Vec<Chombo>> {
         self.api_call_get(CHOMBOS_ENDPOINT).await
     }
@@ -76,7 +80,11 @@ impl Kcc3Client {
             .send()
             .await?;
 
-        response.json().await.map_err(|x| x.into())
+        response
+            .error_for_status()?
+            .json()
+            .await
+            .map_err(|x| x.into())
     }
 
     async fn api_call_post<T: DeserializeOwned, P: Serialize>(&self, endpoint: &str, payload: P) -> Kcc3ClientResult<T> {
@@ -87,6 +95,10 @@ impl Kcc3Client {
             .send()
             .await?;
 
-        response.json().await.map_err(|x| x.into())
+        response
+            .error_for_status()?
+            .json()
+            .await
+            .map_err(|x| x.into())
     }
 }

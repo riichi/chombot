@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
+use chrono::Utc;
 
 use tokio::try_join;
 
@@ -43,6 +44,24 @@ impl Chombot {
         Self {
             kcc3client,
         }
+    }
+
+    pub async fn add_chombo_for_player<P, F>(&self, predicate: P, create_new: F, comment: &str) -> ChombotResult<Chombo> where
+        P: Fn(&Player) -> bool,
+        F: Fn() -> Player,
+    {
+        let players = self.kcc3client.get_players().await?;
+        let maybe_player = players.into_iter()
+            .find(predicate);
+
+        let player = if let Some(player) = maybe_player {
+            player
+        } else {
+            self.kcc3client.add_player(&create_new()).await?
+        };
+
+        let chombo = Chombo::new(Utc::now(), &player.id, comment);
+        Ok(self.kcc3client.add_chombo(&chombo).await?)
     }
 
     pub async fn create_chombo_ranking(&self) -> ChombotResult<Vec<(Player, usize)>> {

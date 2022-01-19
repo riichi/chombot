@@ -1,9 +1,20 @@
+use std::fmt::{Debug, Display, Formatter};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-pub type PlayerId = String;
+#[derive(Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
+pub struct PlayerId(pub String);
 
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
+pub struct DiscordId(pub String);
+
+impl Display for DiscordId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Player {
     pub id: PlayerId,
     #[serde(default)]
@@ -12,10 +23,20 @@ pub struct Player {
     pub last_name: String,
     #[serde(default)]
     pub nickname: String,
-    pub discord_id: String,
+    pub discord_id: DiscordId,
 }
 
 impl Player {
+    pub fn new_from_discord(id: PlayerId, nickname: String, discord_id: DiscordId) -> Self {
+        Self {
+            id,
+            first_name: Default::default(),
+            last_name: Default::default(),
+            nickname,
+            discord_id,
+        }
+    }
+
     pub fn name(&self) -> String {
         if !self.first_name.is_empty() && !self.last_name.is_empty() {
             let mut s = format!("{} {}", self.first_name, self.last_name);
@@ -47,7 +68,7 @@ pub struct Chombo {
 }
 
 impl Chombo {
-    pub fn new(timestamp: DateTime<Utc>, player: &str, comment: &str) -> Self {
+    pub fn new(timestamp: DateTime<Utc>, player: &PlayerId, comment: &str) -> Self {
         Self {
             timestamp,
             player: player.to_owned(),
