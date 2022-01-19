@@ -1,4 +1,5 @@
 use std::fmt::{Debug, Display, Formatter};
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -84,11 +85,11 @@ mod tests {
     #[test]
     fn name_should_return_full_name_with_nickname() {
         let player = Player {
-            id: "".to_string(),
+            id: Default::default(),
             first_name: "A".to_string(),
             last_name: "B".to_string(),
             nickname: "C".to_string(),
-            discord_id: "".to_string(),
+            discord_id: Default::default(),
         };
         assert_eq!(player.name(), "A B (C)");
     }
@@ -96,11 +97,11 @@ mod tests {
     #[test]
     fn name_should_return_full_name() {
         let player = Player {
-            id: "".to_string(),
+            id: Default::default(),
             first_name: "A".to_string(),
             last_name: "B".to_string(),
             nickname: "".to_string(),
-            discord_id: "".to_string(),
+            discord_id: Default::default(),
         };
         assert_eq!(player.name(), "A B");
     }
@@ -108,11 +109,11 @@ mod tests {
     #[test]
     fn name_should_return_nickname() {
         let player = Player {
-            id: "".to_string(),
+            id: Default::default(),
             first_name: "".to_string(),
             last_name: "".to_string(),
             nickname: "C".to_string(),
-            discord_id: "".to_string(),
+            discord_id: Default::default(),
         };
         assert_eq!(player.name(), "C");
     }
@@ -120,11 +121,11 @@ mod tests {
     #[test]
     fn short_name_should_return_nickname() {
         let player = Player {
-            id: "".to_string(),
+            id: Default::default(),
             first_name: "A".to_string(),
             last_name: "B".to_string(),
             nickname: "C".to_string(),
-            discord_id: "".to_string(),
+            discord_id: Default::default(),
         };
         assert_eq!(player.short_name(), "C");
     }
@@ -132,11 +133,11 @@ mod tests {
     #[test]
     fn short_name_should_return_full_name() {
         let player = Player {
-            id: "".to_string(),
+            id: Default::default(),
             first_name: "A".to_string(),
             last_name: "B".to_string(),
             nickname: "".to_string(),
-            discord_id: "".to_string(),
+            discord_id: Default::default(),
         };
         assert_eq!(player.short_name(), "A B");
     }

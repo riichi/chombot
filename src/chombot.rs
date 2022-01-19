@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
-use chrono::Utc;
 
+use chrono::Utc;
 use tokio::try_join;
 
 use crate::kcc3::data_types::{Chombo, Player, PlayerId};
@@ -91,7 +91,7 @@ impl Chombot {
         let chombos_fut = self.kcc3client.get_chombos();
         let (players, mut chombos) = try_join!(players_fut, chombos_fut)?;
 
-        let mut player_map: HashMap<PlayerId, Player> = players.into_iter()
+        let player_map: HashMap<PlayerId, Player> = players.into_iter()
             .map(|x| (x.id.clone(), x))
             .collect();
         chombos.sort_by_key(|chombo| chombo.timestamp);

@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+async-trait = "0.1.52"
 chrono = "0.4"
 reqwest = "0.11"
 serde = "1.0"
