@@ -2,9 +2,9 @@
 Discord bot with many features built for Riichi Mahjong servers.
 
 ## Building
-The project is written in Kotlin and uses Gradle build system.
+The project is written in Rust and uses Cargo build system.
 ```
-./gradlew build
+cargo build --release
 ```
 
 ## Running
@@ -19,8 +19,5 @@ Example:
 export CHOMBOT_TOKEN=yourdiscordtoken
 export KCC3_URL=https://fanpai.chombo.club
 export KCC3_TOKEN=yourkcc3token
-./gradlew run
+cargo run --release
 ```
-
-## Attribution
-This project uses modified [riichi-mahjong-tiles](https://github.com/FluffyStuff/riichi-mahjong-tiles) by [FluffyStuff](https://github.com/FluffyStuff), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
