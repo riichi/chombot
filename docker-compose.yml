@@ -1,0 +1,7 @@
+version: "3"
+services:
+  chombot:
+    image: chombot:latest
+    env_file:
+      - .env
+    restart: always
