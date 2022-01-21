@@ -3,6 +3,7 @@ use serenity::builder::{CreateApplicationCommand, CreateEmbed};
 use serenity::client::Context;
 use serenity::model::interactions::application_command::{ApplicationCommandInteraction, ApplicationCommandInteractionDataOption, ApplicationCommandInteractionDataOptionValue, ApplicationCommandOptionType};
 use serenity::model::interactions::InteractionResponseType;
+use serenity::model::prelude::User;
 use serenity::utils::Colour;
 use slug::slugify;
 
@@ -25,18 +26,29 @@ impl ChomboCommand {
         Self {}
     }
 
-    async fn create_chombos_embed(chombot: &Chombot) -> CreateEmbed {
-        let chombos = chombot.create_chombo_ranking().await.unwrap();
-        let chombos = chombos.into_iter()
-            .map(|(player, num)| (player.short_name(), num, true));
+    async fn handle_list_subcommand(
+        &self,
+        ctx: Context,
+        command: &ApplicationCommandInteraction,
+        _subcommand: &ApplicationCommandInteractionDataOption,
+        chombot: &Chombot,
+    ) {
+        let chombos = Self::create_chombos_list(chombot).await;
 
-        let mut embed = CreateEmbed::default();
-        embed
-            .title("**CHOMBO COUNTER**")
-            .color(Colour::RED)
-            .thumbnail("https://cdn.discordapp.com/attachments/591385176685281293/597292309792686090/1562356453777.png")
-            .fields(chombos);
-        embed
+        if let Err(why) = command
+            .create_interaction_response(&ctx.http, |response| {
+                response
+                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                    .interaction_response_data(|message| {
+                        message
+                            .content(chombos)
+                            .allowed_mentions(|mentions| mentions.empty_parse())
+                    })
+            })
+            .await
+        {
+            println!("Cannot respond to slash command: {}", why);
+        }
     }
 
     async fn create_chombos_list(chombot: &Chombot) -> String {
@@ -65,7 +77,13 @@ impl ChomboCommand {
         format!("<@!{}> at {}{}\n", player.discord_id, timestamp, comment)
     }
 
-    async fn react_to_chombo_ranking_subcommand(&self, ctx: Context, command: &ApplicationCommandInteraction, _subcommand: &ApplicationCommandInteractionDataOption, chombot: &Chombot) {
+    async fn handle_ranking_subcommand(
+        &self,
+        ctx: Context,
+        command: &ApplicationCommandInteraction,
+        _subcommand: &ApplicationCommandInteractionDataOption,
+        chombot: &Chombot,
+    ) {
         let embed = Self::create_chombos_embed(chombot).await;
 
         if let Err(why) = command
@@ -80,26 +98,13 @@ impl ChomboCommand {
         }
     }
 
-    async fn react_to_chombo_list_subcommand(&self, ctx: Context, command: &ApplicationCommandInteraction, _subcommand: &ApplicationCommandInteractionDataOption, chombot: &Chombot) {
-        let chombos = Self::create_chombos_list(chombot).await;
-
-        if let Err(why) = command
-            .create_interaction_response(&ctx.http, |response| {
-                response
-                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|message| {
-                        message
-                            .content(chombos)
-                            .allowed_mentions(|mentions| mentions.empty_parse())
-                    })
-            })
-            .await
-        {
-            println!("Cannot respond to slash command: {}", why);
-        }
-    }
-
-    async fn react_to_chombo_add_subcommand(&self, ctx: Context, command: &ApplicationCommandInteraction, subcommand: &ApplicationCommandInteractionDataOption, chombot: &Chombot) {
+    async fn handle_add_subcommand(
+        &self,
+        ctx: Context,
+        command: &ApplicationCommandInteraction,
+        subcommand: &ApplicationCommandInteractionDataOption,
+        chombot: &Chombot,
+    ) {
         let user_option = subcommand.options.iter()
             .find(|option| option.name == CHOMBO_ADD_SUBCOMMAND_USER_OPTION)
             .unwrap()
@@ -126,9 +131,8 @@ impl ChomboCommand {
             description,
         ).await.unwrap();
 
-        let message_content = format!("Adding chombo for <@!{}>: *{}*", user.id, description);
+        let message_content = Self::format_add_message(user, description);
         let embed = Self::create_chombos_embed(chombot).await;
-
 
         if let Err(why) = command
             .create_interaction_response(&ctx.http, |response| {
@@ -143,6 +147,24 @@ impl ChomboCommand {
             println!("Cannot respond to slash command: {}", why);
         }
     }
+
+    fn format_add_message(user: &User, description: &str) -> String {
+        format!("Adding chombo for <@!{}>: *{}*", user.id, description)
+    }
+
+    async fn create_chombos_embed(chombot: &Chombot) -> CreateEmbed {
+        let chombos = chombot.create_chombo_ranking().await.unwrap();
+        let chombos = chombos.into_iter()
+            .map(|(player, num)| (player.short_name(), num, true));
+
+        let mut embed = CreateEmbed::default();
+        embed
+            .title("**CHOMBO COUNTER**")
+            .color(Colour::RED)
+            .thumbnail("https://cdn.discordapp.com/attachments/591385176685281293/597292309792686090/1562356453777.png")
+            .fields(chombos);
+        embed
+    }
 }
 
 #[async_trait]
@@ -153,7 +175,6 @@ impl SlashCommand for ChomboCommand {
 
     fn add_application_command(&self, command: &mut CreateApplicationCommand) {
         command
-            .name(CHOMBO_COMMAND)
             .description("List all chombos")
             .create_option(|option| {
                 option
@@ -196,9 +217,9 @@ impl SlashCommand for ChomboCommand {
             .unwrap();
 
         match subcommand.name.as_str() {
-            CHOMBO_RANKING_SUBCOMMAND => self.react_to_chombo_ranking_subcommand(ctx, &command, subcommand, chombot).await,
-            CHOMBO_LIST_SUBCOMMAND => self.react_to_chombo_list_subcommand(ctx, &command, subcommand, chombot).await,
-            CHOMBO_ADD_SUBCOMMAND => self.react_to_chombo_add_subcommand(ctx, &command, subcommand, chombot).await,
+            CHOMBO_RANKING_SUBCOMMAND => self.handle_ranking_subcommand(ctx, &command, subcommand, chombot).await,
+            CHOMBO_LIST_SUBCOMMAND => self.handle_list_subcommand(ctx, &command, subcommand, chombot).await,
+            CHOMBO_ADD_SUBCOMMAND => self.handle_add_subcommand(ctx, &command, subcommand, chombot).await,
             &_ => {}
         }
     }
