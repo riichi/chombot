@@ -2,6 +2,10 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 use chrono::Utc;
+use image::RgbaImage;
+use riichi_hand::parser::{HandParseError, HandParser};
+use riichi_hand::raster_renderer::fluffy_stuff_tile_sets::{BLACK_FLUFFY_STUFF_TILE_SET, RED_FLUFFY_STUFF_TILE_SET, YELLOW_FLUFFY_STUFF_TILE_SET};
+use riichi_hand::raster_renderer::{RasterRenderer, RenderOptions};
 use tokio::try_join;
 
 use crate::kcc3::data_types::{Chombo, Player, PlayerId};
@@ -9,31 +13,39 @@ use crate::kcc3::Kcc3ClientError;
 use crate::Kcc3Client;
 
 #[derive(Debug)]
-pub struct ChombotError {
-    kcc3_client_error: Kcc3ClientError,
-}
-
-impl ChombotError {
-    fn new(kcc3_client_error: Kcc3ClientError) -> Self {
-        Self {
-            kcc3_client_error,
-        }
-    }
+pub enum ChombotError {
+    Kcc3ClientError(Kcc3ClientError),
+    HandParserError(HandParseError),
 }
 
 impl From<Kcc3ClientError> for ChombotError {
     fn from(e: Kcc3ClientError) -> Self {
-        Self::new(e)
+        Self::Kcc3ClientError(e)
+    }
+}
+
+impl From<HandParseError> for ChombotError {
+    fn from(e: HandParseError) -> Self {
+        Self::HandParserError(e)
     }
 }
 
 impl Display for ChombotError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Chombot error: {}", self.kcc3_client_error)
+        match self {
+            ChombotError::Kcc3ClientError(e) => write!(f, "KCC3 client error: {}", e),
+            ChombotError::HandParserError(e) => write!(f, "Hand parse error: {}", e),
+        }
     }
 }
 
 type ChombotResult<T> = Result<T, ChombotError>;
+
+pub enum TileStyle {
+    Yellow,
+    Red,
+    Black,
+}
 
 pub struct Chombot {
     kcc3client: Kcc3Client,
@@ -101,5 +113,18 @@ impl Chombot {
             .collect();
 
         Ok(chombos)
+    }
+
+    pub async fn render_hand(&self, hand: &str, tile_style: TileStyle) -> ChombotResult<RgbaImage> {
+        let tile_set = match tile_style {
+            TileStyle::Yellow => &*YELLOW_FLUFFY_STUFF_TILE_SET,
+            TileStyle::Red => &*RED_FLUFFY_STUFF_TILE_SET,
+            TileStyle::Black => &*BLACK_FLUFFY_STUFF_TILE_SET,
+        };
+
+        let hand = HandParser::parse(hand)?;
+        let image = RasterRenderer::render(&hand, tile_set, RenderOptions::default());
+
+        Ok(image)
     }
 }

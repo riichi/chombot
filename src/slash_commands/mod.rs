@@ -6,8 +6,10 @@ use serenity::model::interactions::Interaction;
 
 use crate::Chombot;
 use crate::slash_commands::chombo::ChomboCommand;
+use crate::slash_commands::hand::HandCommand;
 
 mod chombo;
+mod hand;
 
 #[async_trait]
 pub trait SlashCommand: Send + Sync {
@@ -29,7 +31,8 @@ impl SlashCommands {
 
     fn get_slash_commands() -> Vec<Box<dyn SlashCommand>> {
         vec![
-            Box::new(ChomboCommand::new())
+            Box::new(ChomboCommand::new()),
+            Box::new(HandCommand::new()),
         ]
     }
 
