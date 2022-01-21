@@ -1,7 +1,7 @@
 version: "3"
 services:
   chombot:
-    image: chombot:latest
+    image: ghcr.io/riichi/chombot:master
     env_file:
       - .env
     restart: always

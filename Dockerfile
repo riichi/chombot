@@ -11,7 +11,8 @@ RUN cargo build --release
 FROM debian:bullseye-slim
 ARG APP=/app
 
-EXPOSE 8000
+RUN apt-get update \
+    && apt-get install -y ca-certificates
 
 ENV APP_USER=chombot
 
