@@ -9,7 +9,7 @@ use serenity::model::interactions::application_command::{
 use serenity::model::interactions::InteractionResponseType;
 
 use crate::chombot::TileStyle;
-use crate::slash_commands::SlashCommand;
+use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::Chombot;
 
 const HAND_COMMAND: &'static str = "hand";
@@ -59,10 +59,10 @@ impl SlashCommand for HandCommand {
 
     async fn handle(
         &self,
-        ctx: Context,
-        command: ApplicationCommandInteraction,
+        ctx: &Context,
+        command: &ApplicationCommandInteraction,
         chombot: &Chombot,
-    ) {
+    ) -> SlashCommandResult {
         let hand = command
             .data
             .options
@@ -97,16 +97,13 @@ impl SlashCommand for HandCommand {
             _ => unreachable!(),
         };
 
-        if let Err(why) = command
+        command
             .create_interaction_response(&ctx.http, |response| {
                 response.kind(InteractionResponseType::DeferredChannelMessageWithSource)
             })
-            .await
-        {
-            println!("Cannot respond to slash command: {}", why);
-        }
+            .await?;
 
-        let image = chombot.render_hand(hand, render_tile_set).await.unwrap();
+        let image = chombot.render_hand(hand, render_tile_set).await?;
         let mut buf = Vec::new();
         DynamicImage::ImageRgba8(image)
             .write_to(&mut buf, image::ImageOutputFormat::Png)
@@ -116,17 +113,15 @@ impl SlashCommand for HandCommand {
         let image_message = command
             .channel_id
             .send_files(&ctx.http, files, |m| m)
-            .await
-            .unwrap();
+            .await?;
         let link = image_message.link_ensured(&ctx.http).await;
 
-        if let Err(why) = command
+        command
             .edit_original_interaction_response(&ctx.http, |response| {
                 response.content(format!("Rendered hand: `{}`: {}", hand, link))
             })
-            .await
-        {
-            println!("Cannot respond to slash command: {}", why);
-        }
+            .await?;
+
+        Ok(())
     }
 }

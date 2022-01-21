@@ -9,8 +9,9 @@ use serenity::model::interactions::InteractionResponseType;
 use serenity::model::prelude::User;
 use serenity::utils::Colour;
 use slug::slugify;
+use std::error::Error;
 
-use crate::slash_commands::SlashCommand;
+use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::{Chombo, Chombot, DiscordId, Player, PlayerId};
 
 const DISCORD_MESSAGE_SIZE_LIMIT: usize = 2000;
@@ -31,14 +32,14 @@ impl ChomboCommand {
 
     async fn handle_list_subcommand(
         &self,
-        ctx: Context,
+        ctx: &Context,
         command: &ApplicationCommandInteraction,
         _subcommand: &ApplicationCommandInteractionDataOption,
         chombot: &Chombot,
-    ) {
-        let chombos = Self::create_chombos_list(chombot).await;
+    ) -> SlashCommandResult {
+        let chombos = Self::create_chombos_list(chombot).await?;
 
-        if let Err(why) = command
+        command
             .create_interaction_response(&ctx.http, |response| {
                 response
                     .kind(InteractionResponseType::ChannelMessageWithSource)
@@ -48,14 +49,13 @@ impl ChomboCommand {
                             .allowed_mentions(|mentions| mentions.empty_parse())
                     })
             })
-            .await
-        {
-            println!("Cannot respond to slash command: {}", why);
-        }
+            .await?;
+
+        Ok(())
     }
 
-    async fn create_chombos_list(chombot: &Chombot) -> String {
-        let chombos = chombot.get_chombo_list().await.unwrap();
+    async fn create_chombos_list(chombot: &Chombot) -> Result<String, Box<dyn Error>> {
+        let chombos = chombot.get_chombo_list().await?;
         let mut result = String::new();
         for (player, chombo) in &chombos {
             let entry = Self::format_chombo_entry(player, chombo);
@@ -66,7 +66,7 @@ impl ChomboCommand {
             }
         }
 
-        result
+        Ok(result)
     }
 
     fn format_chombo_entry(player: &Player, chombo: &Chombo) -> String {
@@ -82,32 +82,31 @@ impl ChomboCommand {
 
     async fn handle_ranking_subcommand(
         &self,
-        ctx: Context,
+        ctx: &Context,
         command: &ApplicationCommandInteraction,
         _subcommand: &ApplicationCommandInteractionDataOption,
         chombot: &Chombot,
-    ) {
-        let embed = Self::create_chombos_embed(chombot).await;
+    ) -> SlashCommandResult {
+        let embed = Self::create_chombos_embed(chombot).await?;
 
-        if let Err(why) = command
+        command
             .create_interaction_response(&ctx.http, |response| {
                 response
                     .kind(InteractionResponseType::ChannelMessageWithSource)
                     .interaction_response_data(|message| message.add_embed(embed))
             })
-            .await
-        {
-            println!("Cannot respond to slash command: {}", why);
-        }
+            .await?;
+
+        Ok(())
     }
 
     async fn handle_add_subcommand(
         &self,
-        ctx: Context,
+        ctx: &Context,
         command: &ApplicationCommandInteraction,
         subcommand: &ApplicationCommandInteractionDataOption,
         chombot: &Chombot,
-    ) {
+    ) -> SlashCommandResult {
         let user_option = subcommand
             .options
             .iter()
@@ -144,13 +143,12 @@ impl ChomboCommand {
                 },
                 description,
             )
-            .await
-            .unwrap();
+            .await?;
 
         let message_content = Self::format_add_message(user, description);
-        let embed = Self::create_chombos_embed(chombot).await;
+        let embed = Self::create_chombos_embed(chombot).await?;
 
-        if let Err(why) = command
+        command
             .create_interaction_response(&ctx.http, |response| {
                 response
                     .kind(InteractionResponseType::ChannelMessageWithSource)
@@ -158,18 +156,17 @@ impl ChomboCommand {
                         message.content(message_content).add_embed(embed)
                     })
             })
-            .await
-        {
-            println!("Cannot respond to slash command: {}", why);
-        }
+            .await?;
+
+        Ok(())
     }
 
     fn format_add_message(user: &User, description: &str) -> String {
         format!("Adding chombo for <@!{}>: *{}*", user.id, description)
     }
 
-    async fn create_chombos_embed(chombot: &Chombot) -> CreateEmbed {
-        let chombos = chombot.create_chombo_ranking().await.unwrap();
+    async fn create_chombos_embed(chombot: &Chombot) -> Result<CreateEmbed, Box<dyn Error>> {
+        let chombos = chombot.create_chombo_ranking().await?;
         let chombos = chombos
             .into_iter()
             .map(|(player, num)| (player.short_name(), num, true));
@@ -180,7 +177,8 @@ impl ChomboCommand {
             .color(Colour::RED)
             .thumbnail("https://cdn.discordapp.com/attachments/591385176685281293/597292309792686090/1562356453777.png")
             .fields(chombos);
-        embed
+
+        Ok(embed)
     }
 }
 
@@ -229,10 +227,10 @@ impl SlashCommand for ChomboCommand {
 
     async fn handle(
         &self,
-        ctx: Context,
-        command: ApplicationCommandInteraction,
+        ctx: &Context,
+        command: &ApplicationCommandInteraction,
         chombot: &Chombot,
-    ) {
+    ) -> SlashCommandResult {
         let subcommand = command
             .data
             .options
@@ -243,17 +241,19 @@ impl SlashCommand for ChomboCommand {
         match subcommand.name.as_str() {
             CHOMBO_RANKING_SUBCOMMAND => {
                 self.handle_ranking_subcommand(ctx, &command, subcommand, chombot)
-                    .await
+                    .await?
             }
             CHOMBO_LIST_SUBCOMMAND => {
                 self.handle_list_subcommand(ctx, &command, subcommand, chombot)
-                    .await
+                    .await?
             }
             CHOMBO_ADD_SUBCOMMAND => {
                 self.handle_add_subcommand(ctx, &command, subcommand, chombot)
-                    .await
+                    .await?
             }
             &_ => {}
         }
+
+        Ok(())
     }
 }

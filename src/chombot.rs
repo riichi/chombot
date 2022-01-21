@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::error::Error;
 use std::fmt::{Display, Formatter};
 
 use chrono::Utc;
@@ -37,6 +38,15 @@ impl Display for ChombotError {
         match self {
             ChombotError::Kcc3ClientError(e) => write!(f, "KCC3 client error: {}", e),
             ChombotError::HandParserError(e) => write!(f, "Hand parse error: {}", e),
+        }
+    }
+}
+
+impl Error for ChombotError {
+    fn cause(&self) -> Option<&dyn Error> {
+        match self {
+            ChombotError::Kcc3ClientError(e) => Some(e),
+            ChombotError::HandParserError(e) => Some(e),
         }
     }
 }

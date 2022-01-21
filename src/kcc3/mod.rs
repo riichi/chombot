@@ -1,7 +1,8 @@
+use std::error::Error;
 use std::fmt::{Display, Formatter};
 
 use reqwest::header::{HeaderMap, HeaderValue};
-use reqwest::{Client, Error};
+use reqwest::Client;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -16,6 +17,12 @@ const CHOMBOS_ENDPOINT: &'static str = "chombos/";
 #[derive(Debug)]
 pub struct Kcc3ClientError {
     inner_error: reqwest::Error,
+}
+
+impl Error for Kcc3ClientError {
+    fn cause(&self) -> Option<&dyn Error> {
+        Some(&self.inner_error)
+    }
 }
 
 impl Kcc3ClientError {
@@ -33,7 +40,7 @@ impl Display for Kcc3ClientError {
 }
 
 impl From<reqwest::Error> for Kcc3ClientError {
-    fn from(e: Error) -> Self {
+    fn from(e: reqwest::Error) -> Self {
         Self::new(e)
     }
 }
