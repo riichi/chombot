@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
-use reqwest::{Client, Error};
 use reqwest::header::{HeaderMap, HeaderValue};
+use reqwest::{Client, Error};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -20,9 +20,7 @@ pub struct Kcc3ClientError {
 
 impl Kcc3ClientError {
     fn new(inner_error: reqwest::Error) -> Self {
-        return Self {
-            inner_error,
-        };
+        return Self { inner_error };
     }
 }
 
@@ -48,13 +46,16 @@ pub struct Kcc3Client {
 impl Kcc3Client {
     pub fn new(kcc3_url: String, auth_token: &str) -> Kcc3ClientResult<Self> {
         let mut headers = HeaderMap::new();
-        headers.insert("Authorization", HeaderValue::from_str(&format!("Token {}", auth_token)).expect("Invalid auth token value"));
-        let client = reqwest::ClientBuilder::new().default_headers(headers).build()?;
+        headers.insert(
+            "Authorization",
+            HeaderValue::from_str(&format!("Token {}", auth_token))
+                .expect("Invalid auth token value"),
+        );
+        let client = reqwest::ClientBuilder::new()
+            .default_headers(headers)
+            .build()?;
 
-        Ok(Self {
-            kcc3_url,
-            client,
-        })
+        Ok(Self { kcc3_url, client })
     }
 
     pub async fn get_players(&self) -> Kcc3ClientResult<Vec<Player>> {
@@ -75,10 +76,7 @@ impl Kcc3Client {
 
     async fn api_call_get<T: DeserializeOwned>(&self, endpoint: &str) -> Kcc3ClientResult<T> {
         let request_url = format!("{}{}{}", self.kcc3_url, API_PREFIX, endpoint);
-        let response = self.client
-            .get(&request_url)
-            .send()
-            .await?;
+        let response = self.client.get(&request_url).send().await?;
 
         response
             .error_for_status()?
@@ -87,13 +85,13 @@ impl Kcc3Client {
             .map_err(|x| x.into())
     }
 
-    async fn api_call_post<T: DeserializeOwned, P: Serialize>(&self, endpoint: &str, payload: P) -> Kcc3ClientResult<T> {
+    async fn api_call_post<T: DeserializeOwned, P: Serialize>(
+        &self,
+        endpoint: &str,
+        payload: P,
+    ) -> Kcc3ClientResult<T> {
         let request_url = format!("{}{}{}", self.kcc3_url, API_PREFIX, endpoint);
-        let response = self.client
-            .post(&request_url)
-            .json(&payload)
-            .send()
-            .await?;
+        let response = self.client.post(&request_url).json(&payload).send().await?;
 
         response
             .error_for_status()?

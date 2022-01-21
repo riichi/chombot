@@ -1,14 +1,17 @@
 use async_trait::async_trait;
 use serenity::builder::{CreateApplicationCommand, CreateEmbed};
 use serenity::client::Context;
-use serenity::model::interactions::application_command::{ApplicationCommandInteraction, ApplicationCommandInteractionDataOption, ApplicationCommandInteractionDataOptionValue, ApplicationCommandOptionType};
+use serenity::model::interactions::application_command::{
+    ApplicationCommandInteraction, ApplicationCommandInteractionDataOption,
+    ApplicationCommandInteractionDataOptionValue, ApplicationCommandOptionType,
+};
 use serenity::model::interactions::InteractionResponseType;
 use serenity::model::prelude::User;
 use serenity::utils::Colour;
 use slug::slugify;
 
-use crate::{Chombo, Chombot, DiscordId, Player, PlayerId};
 use crate::slash_commands::SlashCommand;
+use crate::{Chombo, Chombot, DiscordId, Player, PlayerId};
 
 const DISCORD_MESSAGE_SIZE_LIMIT: usize = 2000;
 
@@ -105,7 +108,9 @@ impl ChomboCommand {
         subcommand: &ApplicationCommandInteractionDataOption,
         chombot: &Chombot,
     ) {
-        let user_option = subcommand.options.iter()
+        let user_option = subcommand
+            .options
+            .iter()
             .find(|option| option.name == CHOMBO_ADD_SUBCOMMAND_USER_OPTION)
             .unwrap()
             .resolved
@@ -113,10 +118,12 @@ impl ChomboCommand {
             .unwrap();
         let user = match user_option {
             ApplicationCommandInteractionDataOptionValue::User(user, _) => user,
-            _ => panic!("Invalid option value")
+            _ => panic!("Invalid option value"),
         };
 
-        let description = subcommand.options.iter()
+        let description = subcommand
+            .options
+            .iter()
             .find(|option| option.name == CHOMBO_ADD_SUBCOMMAND_DESCRIPTION_OPTION)
             .unwrap()
             .value
@@ -125,11 +132,20 @@ impl ChomboCommand {
             .as_str()
             .unwrap();
 
-        chombot.add_chombo_for_player(
-            |player| player.discord_id.0 == user.id.to_string(),
-            || Player::new_from_discord(PlayerId(slugify(&user.name)), user.name.clone(), DiscordId(user.id.to_string())),
-            description,
-        ).await.unwrap();
+        chombot
+            .add_chombo_for_player(
+                |player| player.discord_id.0 == user.id.to_string(),
+                || {
+                    Player::new_from_discord(
+                        PlayerId(slugify(&user.name)),
+                        user.name.clone(),
+                        DiscordId(user.id.to_string()),
+                    )
+                },
+                description,
+            )
+            .await
+            .unwrap();
 
         let message_content = Self::format_add_message(user, description);
         let embed = Self::create_chombos_embed(chombot).await;
@@ -138,9 +154,9 @@ impl ChomboCommand {
             .create_interaction_response(&ctx.http, |response| {
                 response
                     .kind(InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|message| message
-                        .content(message_content)
-                        .add_embed(embed))
+                    .interaction_response_data(|message| {
+                        message.content(message_content).add_embed(embed)
+                    })
             })
             .await
         {
@@ -154,7 +170,8 @@ impl ChomboCommand {
 
     async fn create_chombos_embed(chombot: &Chombot) -> CreateEmbed {
         let chombos = chombot.create_chombo_ranking().await.unwrap();
-        let chombos = chombos.into_iter()
+        let chombos = chombos
+            .into_iter()
             .map(|(player, num)| (player.short_name(), num, true));
 
         let mut embed = CreateEmbed::default();
@@ -210,16 +227,32 @@ impl SlashCommand for ChomboCommand {
             });
     }
 
-    async fn handle(&self, ctx: Context, command: ApplicationCommandInteraction, chombot: &Chombot) {
-        let subcommand = command.data.options
+    async fn handle(
+        &self,
+        ctx: Context,
+        command: ApplicationCommandInteraction,
+        chombot: &Chombot,
+    ) {
+        let subcommand = command
+            .data
+            .options
             .iter()
             .find(|x| x.kind == ApplicationCommandOptionType::SubCommand)
             .unwrap();
 
         match subcommand.name.as_str() {
-            CHOMBO_RANKING_SUBCOMMAND => self.handle_ranking_subcommand(ctx, &command, subcommand, chombot).await,
-            CHOMBO_LIST_SUBCOMMAND => self.handle_list_subcommand(ctx, &command, subcommand, chombot).await,
-            CHOMBO_ADD_SUBCOMMAND => self.handle_add_subcommand(ctx, &command, subcommand, chombot).await,
+            CHOMBO_RANKING_SUBCOMMAND => {
+                self.handle_ranking_subcommand(ctx, &command, subcommand, chombot)
+                    .await
+            }
+            CHOMBO_LIST_SUBCOMMAND => {
+                self.handle_list_subcommand(ctx, &command, subcommand, chombot)
+                    .await
+            }
+            CHOMBO_ADD_SUBCOMMAND => {
+                self.handle_add_subcommand(ctx, &command, subcommand, chombot)
+                    .await
+            }
             &_ => {}
         }
     }

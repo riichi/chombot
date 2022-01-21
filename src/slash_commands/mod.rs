@@ -3,10 +3,11 @@ use serenity::builder::{CreateApplicationCommand, CreateApplicationCommands};
 use serenity::client::Context;
 use serenity::model::interactions::application_command::ApplicationCommandInteraction;
 use serenity::model::interactions::Interaction;
+use std::error::Error;
 
-use crate::Chombot;
 use crate::slash_commands::chombo::ChomboCommand;
 use crate::slash_commands::hand::HandCommand;
+use crate::Chombot;
 
 mod chombo;
 mod hand;
@@ -30,26 +31,24 @@ impl SlashCommands {
     }
 
     fn get_slash_commands() -> Vec<Box<dyn SlashCommand>> {
-        vec![
-            Box::new(ChomboCommand::new()),
-            Box::new(HandCommand::new()),
-        ]
+        vec![Box::new(ChomboCommand::new()), Box::new(HandCommand::new())]
     }
 
     pub fn register_commands(&self, commands: &mut CreateApplicationCommands) {
         for slash_command in &self.commands {
-            commands
-                .create_application_command(|command| {
-                    slash_command.add_application_command(command);
-                    command.name(slash_command.get_name())
-                });
+            commands.create_application_command(|command| {
+                slash_command.add_application_command(command);
+                command.name(slash_command.get_name())
+            });
         }
     }
 
     pub async fn handle(&self, ctx: Context, interaction: Interaction, chombot: &Chombot) {
         if let Interaction::ApplicationCommand(command) = interaction {
             let requested_command_name = command.data.name.as_str();
-            let command_option = self.commands.iter()
+            let command_option = self
+                .commands
+                .iter()
                 .find(|command| command.get_name() == requested_command_name);
 
             if let Some(slash_command) = command_option {

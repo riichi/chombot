@@ -4,7 +4,9 @@ use std::fmt::{Display, Formatter};
 use chrono::Utc;
 use image::RgbaImage;
 use riichi_hand::parser::{HandParseError, HandParser};
-use riichi_hand::raster_renderer::fluffy_stuff_tile_sets::{BLACK_FLUFFY_STUFF_TILE_SET, RED_FLUFFY_STUFF_TILE_SET, YELLOW_FLUFFY_STUFF_TILE_SET};
+use riichi_hand::raster_renderer::fluffy_stuff_tile_sets::{
+    BLACK_FLUFFY_STUFF_TILE_SET, RED_FLUFFY_STUFF_TILE_SET, YELLOW_FLUFFY_STUFF_TILE_SET,
+};
 use riichi_hand::raster_renderer::{RasterRenderer, RenderOptions};
 use tokio::try_join;
 
@@ -53,18 +55,21 @@ pub struct Chombot {
 
 impl Chombot {
     pub fn new(kcc3client: Kcc3Client) -> Self {
-        Self {
-            kcc3client,
-        }
+        Self { kcc3client }
     }
 
-    pub async fn add_chombo_for_player<P, F>(&self, predicate: P, create_new: F, comment: &str) -> ChombotResult<Chombo> where
+    pub async fn add_chombo_for_player<P, F>(
+        &self,
+        predicate: P,
+        create_new: F,
+        comment: &str,
+    ) -> ChombotResult<Chombo>
+    where
         P: Fn(&Player) -> bool,
         F: Fn() -> Player,
     {
         let players = self.kcc3client.get_players().await?;
-        let maybe_player = players.into_iter()
-            .find(predicate);
+        let maybe_player = players.into_iter().find(predicate);
 
         let player = if let Some(player) = maybe_player {
             player
@@ -81,9 +86,8 @@ impl Chombot {
         let chombos_fut = self.kcc3client.get_chombos();
         let (players, chombos) = try_join!(players_fut, chombos_fut)?;
 
-        let mut player_map: HashMap<PlayerId, Player> = players.into_iter()
-            .map(|x| (x.id.clone(), x))
-            .collect();
+        let mut player_map: HashMap<PlayerId, Player> =
+            players.into_iter().map(|x| (x.id.clone(), x)).collect();
         let mut chombo_counts: HashMap<PlayerId, usize> = HashMap::new();
         for chombo in chombos {
             let entry = chombo_counts.entry(chombo.player).or_insert(0);
@@ -103,12 +107,12 @@ impl Chombot {
         let chombos_fut = self.kcc3client.get_chombos();
         let (players, mut chombos) = try_join!(players_fut, chombos_fut)?;
 
-        let player_map: HashMap<PlayerId, Player> = players.into_iter()
-            .map(|x| (x.id.clone(), x))
-            .collect();
+        let player_map: HashMap<PlayerId, Player> =
+            players.into_iter().map(|x| (x.id.clone(), x)).collect();
         chombos.sort_by_key(|chombo| chombo.timestamp);
         chombos.reverse();
-        let chombos = chombos.into_iter()
+        let chombos = chombos
+            .into_iter()
             .map(|chombo| (player_map.get(&chombo.player).unwrap().clone(), chombo))
             .collect();
 

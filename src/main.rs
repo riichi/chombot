@@ -1,23 +1,19 @@
 use std::env;
 
+use serenity::model::channel::Message;
 use serenity::{
     async_trait,
-    model::{
-        gateway::Ready,
-        id::GuildId,
-        interactions::Interaction,
-    },
+    model::{gateway::Ready, id::GuildId, interactions::Interaction},
     prelude::*,
 };
-use serenity::model::channel::Message;
 
 use crate::chombot::Chombot;
 use crate::kcc3::data_types::{Chombo, DiscordId, Player, PlayerId};
 use crate::kcc3::Kcc3Client;
 use crate::slash_commands::SlashCommands;
 
-mod kcc3;
 mod chombot;
+mod kcc3;
 mod slash_commands;
 
 const AT_EVERYONE_REACTIONS: [&'static str; 2] = ["Ichiangry", "Mikiknife"];
@@ -44,7 +40,8 @@ impl EventHandler for Handler {
         }
 
         let emojis = message.guild_id.unwrap().emojis(&ctx.http).await.unwrap();
-        let emojis: Vec<_> = emojis.into_iter()
+        let emojis: Vec<_> = emojis
+            .into_iter()
             .filter(|x| AT_EVERYONE_REACTIONS.contains(&x.name.as_str()))
             .collect();
 
@@ -54,7 +51,9 @@ impl EventHandler for Handler {
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        self.slash_commands.handle(ctx, interaction, &self.chombot).await;
+        self.slash_commands
+            .handle(ctx, interaction, &self.chombot)
+            .await;
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
@@ -67,14 +66,12 @@ impl EventHandler for Handler {
                 .expect("GUILD_ID must be an integer"),
         );
 
-        GuildId::set_application_commands(
-            &guild_id,
-            &ctx.http,
-            |commands| {
-                self.slash_commands.register_commands(commands);
-                commands
-            },
-        ).await.unwrap();
+        GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+            self.slash_commands.register_commands(commands);
+            commands
+        })
+        .await
+        .unwrap();
     }
 }
 
@@ -87,10 +84,8 @@ async fn main() {
         .parse()
         .expect("application id is not a valid id");
 
-    let kcc3_url = env::var("KCC3_URL")
-        .expect("Expected KCC3 URL in the environment");
-    let kcc3_token = env::var("KCC3_TOKEN")
-        .expect("Expected KCC3 token in the environment");
+    let kcc3_url = env::var("KCC3_URL").expect("Expected KCC3 URL in the environment");
+    let kcc3_token = env::var("KCC3_TOKEN").expect("Expected KCC3 token in the environment");
     let kcc3client = kcc3::Kcc3Client::new(kcc3_url, &kcc3_token).unwrap();
     let chombot = chombot::Chombot::new(kcc3client);
 
