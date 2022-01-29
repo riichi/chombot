@@ -11,6 +11,7 @@ use crate::Chombot;
 
 mod chombo;
 mod hand;
+mod utils;
 
 pub type SlashCommandResult = Result<(), Box<dyn Error>>;
 
@@ -23,7 +24,7 @@ pub trait SlashCommand: Send + Sync {
         ctx: &Context,
         command: &ApplicationCommandInteraction,
         chombot: &Chombot,
-    ) -> Result<(), Box<dyn Error>>;
+    ) -> SlashCommandResult;
 }
 
 pub struct SlashCommands {
@@ -50,41 +51,49 @@ impl SlashCommands {
         }
     }
 
+    fn get_command(&self, command_name: &str) -> Option<&Box<dyn SlashCommand>> {
+        self.commands.iter().find(|command| command.get_name() == command_name)
+    }
+
+    async fn send_error_message(ctx: &Context, command: &ApplicationCommandInteraction, error_message: &str) {
+        let error_response_result = command
+            .create_interaction_response(&ctx.http, |response| {
+                response
+                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                    .interaction_response_data(|data| data.content(error_message))
+            })
+            .await;
+
+        if let Err(err) = error_response_result {
+            println!("Could not send error response: {:?}", err);
+        }
+    }
+
+    async fn handle_slash_command(
+        slash_command: &Box<dyn SlashCommand>,
+        ctx: &Context,
+        command: &ApplicationCommandInteraction,
+        chombot: &Chombot,
+        requested_command_name: &str,
+    ) -> Result<(), String> {
+        if let Err(e) = slash_command.handle(&ctx, &command, chombot).await {
+            println!("Handler error for command {}: {:?}", requested_command_name, e);
+            Err(String::from(format!("Could not generate response:\n```\n{}\n```", e)))
+        } else {
+            Ok(())
+        }
+    }
+
     pub async fn handle(&self, ctx: Context, interaction: Interaction, chombot: &Chombot) {
         if let Interaction::ApplicationCommand(command) = interaction {
             let requested_command_name = command.data.name.as_str();
-            let command_option = self
-                .commands
-                .iter()
-                .find(|command| command.get_name() == requested_command_name);
 
-            if let Some(slash_command) = command_option {
-                let channel_id = command.channel_id;
-                let http = ctx.http.clone();
-
-                let error_message =
-                    if let Err(e) = slash_command.handle(&ctx, &command, chombot).await {
-                        println!("Could not respond: {:?}", e);
-                        format!("Could not generate response:\n```\n{}\n```", e)
-                    } else {
-                        "".to_owned()
-                    };
-                if !error_message.is_empty() {
-                    // Try to create message (if not exists) and then edit it (if existed already)
-                    command
-                        .create_interaction_response(&ctx.http, |response| {
-                            response.kind(InteractionResponseType::ChannelMessageWithSource)
-                        })
-                        .await;
-
-                    command
-                        .edit_original_interaction_response(&ctx.http, |response| {
-                            response.content(error_message)
-                        })
-                        .await;
+            if let Some(slash_command) = self.get_command(requested_command_name) {
+                if let Err(msg) = Self::handle_slash_command(slash_command, &ctx, &command, chombot, requested_command_name).await {
+                    Self::send_error_message(&ctx, &command, msg.as_str()).await;
                 }
             } else {
-                println!("Invalid command received");
+                println!("Invalid command received: {}", requested_command_name);
             }
         }
     }
