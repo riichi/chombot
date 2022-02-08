@@ -11,8 +11,8 @@ use serenity::utils::Colour;
 use slug::slugify;
 use std::error::Error;
 
-use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::slash_commands::utils::{get_string_option, get_user_option};
+use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::{Chombo, Chombot, DiscordId, Player, PlayerId};
 
 const DISCORD_MESSAGE_SIZE_LIMIT: usize = 2000;
@@ -108,8 +108,13 @@ impl ChomboCommand {
         subcommand: &ApplicationCommandInteractionDataOption,
         chombot: &Chombot,
     ) -> SlashCommandResult {
-        let (user, _) = get_user_option(&subcommand.options, CHOMBO_ADD_SUBCOMMAND_USER_OPTION).ok_or("Missing user")?;
-        let description = get_string_option(&subcommand.options, CHOMBO_ADD_SUBCOMMAND_DESCRIPTION_OPTION).ok_or("Missing description")?;
+        let (user, _) = get_user_option(&subcommand.options, CHOMBO_ADD_SUBCOMMAND_USER_OPTION)
+            .ok_or("Missing user")?;
+        let description = get_string_option(
+            &subcommand.options,
+            CHOMBO_ADD_SUBCOMMAND_DESCRIPTION_OPTION,
+        )
+        .ok_or("Missing description")?;
 
         chombot
             .add_chombo_for_player(

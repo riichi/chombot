@@ -52,20 +52,22 @@ impl SlashCommands {
     }
 
     fn get_command(&self, command_name: &str) -> Option<&Box<dyn SlashCommand>> {
-        self.commands.iter().find(|command| command.get_name() == command_name)
+        self.commands
+            .iter()
+            .find(|command| command.get_name() == command_name)
     }
 
-    async fn send_error_message(ctx: &Context, command: &ApplicationCommandInteraction, error_message: &str) {
+    async fn set_error_message(
+        ctx: &Context,
+        command: &ApplicationCommandInteraction,
+        error_message: &str,
+    ) {
         let error_response_result = command
-            .create_interaction_response(&ctx.http, |response| {
-                response
-                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|data| data.content(error_message))
-            })
+            .edit_original_interaction_response(&ctx.http, |data| data.content(error_message))
             .await;
 
         if let Err(err) = error_response_result {
-            println!("Could not send error response: {:?}", err);
+            println!("Could not set error response: {:?}", err);
         }
     }
 
@@ -77,8 +79,11 @@ impl SlashCommands {
         requested_command_name: &str,
     ) -> Result<(), String> {
         if let Err(e) = slash_command.handle(&ctx, &command, chombot).await {
-            println!("Handler error for command {}: {:?}", requested_command_name, e);
-            Err(String::from(format!("Could not generate response:\n```\n{}\n```", e)))
+            println!(
+                "Handler error for command {}: {:?}",
+                requested_command_name, e
+            );
+            Err(format!("Could not generate response:\n```\n{}\n```", e))
         } else {
             Ok(())
         }
@@ -86,11 +91,29 @@ impl SlashCommands {
 
     pub async fn handle(&self, ctx: Context, interaction: Interaction, chombot: &Chombot) {
         if let Interaction::ApplicationCommand(command) = interaction {
+            let deferred_result = command
+                .create_interaction_response(&ctx.http, |response| {
+                    response.kind(InteractionResponseType::DeferredChannelMessageWithSource)
+                })
+                .await;
+            if let Err(e) = deferred_result {
+                println!("Could not create deferred response: {:?}", e);
+                return;
+            }
+
             let requested_command_name = command.data.name.as_str();
 
             if let Some(slash_command) = self.get_command(requested_command_name) {
-                if let Err(msg) = Self::handle_slash_command(slash_command, &ctx, &command, chombot, requested_command_name).await {
-                    Self::send_error_message(&ctx, &command, msg.as_str()).await;
+                if let Err(msg) = Self::handle_slash_command(
+                    slash_command,
+                    &ctx,
+                    &command,
+                    chombot,
+                    requested_command_name,
+                )
+                .await
+                {
+                    Self::set_error_message(&ctx, &command, msg.as_str()).await;
                 }
             } else {
                 println!("Invalid command received: {}", requested_command_name);

@@ -9,8 +9,8 @@ use serenity::model::interactions::application_command::{
 use serenity::model::interactions::InteractionResponseType;
 
 use crate::chombot::TileStyle;
-use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::slash_commands::utils::get_string_option;
+use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::Chombot;
 
 const HAND_COMMAND: &'static str = "hand";
@@ -64,8 +64,10 @@ impl SlashCommand for HandCommand {
         command: &ApplicationCommandInteraction,
         chombot: &Chombot,
     ) -> SlashCommandResult {
-        let hand = get_string_option(&command.data.options, HAND_OPTION).ok_or("Missing hand description")?;
-        let tile_set = get_string_option(&command.data.options, TILE_STYLE_OPTION).unwrap_or(DEFAULT_TILE_SET);
+        let hand = get_string_option(&command.data.options, HAND_OPTION)
+            .ok_or("Missing hand description")?;
+        let tile_set =
+            get_string_option(&command.data.options, TILE_STYLE_OPTION).unwrap_or(DEFAULT_TILE_SET);
         let render_tile_set = match tile_set {
             YELLOW_TILE_SET => Ok(TileStyle::Yellow),
             RED_TILE_SET => Ok(TileStyle::Red),
@@ -81,8 +83,7 @@ impl SlashCommand for HandCommand {
 
         let image = chombot.render_hand(hand, render_tile_set).await?;
         let mut buf = Vec::new();
-        DynamicImage::ImageRgba8(image)
-            .write_to(&mut buf, image::ImageOutputFormat::Png)?;
+        DynamicImage::ImageRgba8(image).write_to(&mut buf, image::ImageOutputFormat::Png)?;
 
         let files: Vec<AttachmentType> = vec![(buf.as_slice(), "hand.png").into()];
         let image_message = command
