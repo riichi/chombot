@@ -6,7 +6,6 @@ use serenity::http::AttachmentType;
 use serenity::model::interactions::application_command::{
     ApplicationCommandInteraction, ApplicationCommandOptionType,
 };
-use serenity::model::interactions::InteractionResponseType;
 
 use crate::chombot::TileStyle;
 use crate::slash_commands::utils::get_string_option;
@@ -74,12 +73,6 @@ impl SlashCommand for HandCommand {
             BLACK_TILE_SET => Ok(TileStyle::Black),
             _ => Err(format!("Invalid tile set: {}", tile_set)),
         }?;
-
-        command
-            .create_interaction_response(&ctx.http, |response| {
-                response.kind(InteractionResponseType::DeferredChannelMessageWithSource)
-            })
-            .await?;
 
         let image = chombot.render_hand(hand, render_tile_set).await?;
         let mut buf = Vec::new();
