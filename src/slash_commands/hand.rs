@@ -6,9 +6,9 @@ use serenity::http::AttachmentType;
 use serenity::model::interactions::application_command::{
     ApplicationCommandInteraction, ApplicationCommandOptionType,
 };
-use serenity::model::interactions::InteractionResponseType;
 
 use crate::chombot::TileStyle;
+use crate::slash_commands::utils::get_string_option;
 use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::Chombot;
 
@@ -63,51 +63,20 @@ impl SlashCommand for HandCommand {
         command: &ApplicationCommandInteraction,
         chombot: &Chombot,
     ) -> SlashCommandResult {
-        let hand = command
-            .data
-            .options
-            .iter()
-            .find(|option| option.name == HAND_OPTION)
-            .unwrap()
-            .value
-            .as_ref()
-            .unwrap()
-            .as_str()
-            .unwrap();
-        let tile_set_option = command
-            .data
-            .options
-            .iter()
-            .find(|option| option.name == TILE_STYLE_OPTION)
-            .cloned();
-        let tile_set = if let Some(tile_set_option_value) = tile_set_option {
-            tile_set_option_value
-                .value
-                .unwrap()
-                .as_str()
-                .unwrap()
-                .to_owned()
-        } else {
-            DEFAULT_TILE_SET.to_owned()
-        };
-        let render_tile_set = match tile_set.as_str() {
-            YELLOW_TILE_SET => TileStyle::Yellow,
-            RED_TILE_SET => TileStyle::Red,
-            BLACK_TILE_SET => TileStyle::Black,
-            _ => unreachable!(),
-        };
-
-        command
-            .create_interaction_response(&ctx.http, |response| {
-                response.kind(InteractionResponseType::DeferredChannelMessageWithSource)
-            })
-            .await?;
+        let hand = get_string_option(&command.data.options, HAND_OPTION)
+            .ok_or("Missing hand description")?;
+        let tile_set =
+            get_string_option(&command.data.options, TILE_STYLE_OPTION).unwrap_or(DEFAULT_TILE_SET);
+        let render_tile_set = match tile_set {
+            YELLOW_TILE_SET => Ok(TileStyle::Yellow),
+            RED_TILE_SET => Ok(TileStyle::Red),
+            BLACK_TILE_SET => Ok(TileStyle::Black),
+            _ => Err(format!("Invalid tile set: {}", tile_set)),
+        }?;
 
         let image = chombot.render_hand(hand, render_tile_set).await?;
         let mut buf = Vec::new();
-        DynamicImage::ImageRgba8(image)
-            .write_to(&mut buf, image::ImageOutputFormat::Png)
-            .expect("Unable to write");
+        DynamicImage::ImageRgba8(image).write_to(&mut buf, image::ImageOutputFormat::Png)?;
 
         let files: Vec<AttachmentType> = vec![(buf.as_slice(), "hand.png").into()];
         let image_message = command

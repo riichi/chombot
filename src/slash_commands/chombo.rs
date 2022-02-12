@@ -3,7 +3,7 @@ use serenity::builder::{CreateApplicationCommand, CreateEmbed};
 use serenity::client::Context;
 use serenity::model::interactions::application_command::{
     ApplicationCommandInteraction, ApplicationCommandInteractionDataOption,
-    ApplicationCommandInteractionDataOptionValue, ApplicationCommandOptionType,
+    ApplicationCommandOptionType,
 };
 use serenity::model::interactions::InteractionResponseType;
 use serenity::model::prelude::User;
@@ -11,6 +11,7 @@ use serenity::utils::Colour;
 use slug::slugify;
 use std::error::Error;
 
+use crate::slash_commands::utils::{get_string_option, get_user_option};
 use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::{Chombo, Chombot, DiscordId, Player, PlayerId};
 
@@ -40,14 +41,10 @@ impl ChomboCommand {
         let chombos = Self::create_chombos_list(chombot).await?;
 
         command
-            .create_interaction_response(&ctx.http, |response| {
+            .edit_original_interaction_response(&ctx.http, |response| {
                 response
-                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|message| {
-                        message
-                            .content(chombos)
-                            .allowed_mentions(|mentions| mentions.empty_parse())
-                    })
+                    .content(chombos)
+                    .allowed_mentions(|mentions| mentions.empty_parse())
             })
             .await?;
 
@@ -90,11 +87,7 @@ impl ChomboCommand {
         let embed = Self::create_chombos_embed(chombot).await?;
 
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response
-                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|message| message.add_embed(embed))
-            })
+            .edit_original_interaction_response(&ctx.http, |response| response.add_embed(embed))
             .await?;
 
         Ok(())
@@ -107,29 +100,13 @@ impl ChomboCommand {
         subcommand: &ApplicationCommandInteractionDataOption,
         chombot: &Chombot,
     ) -> SlashCommandResult {
-        let user_option = subcommand
-            .options
-            .iter()
-            .find(|option| option.name == CHOMBO_ADD_SUBCOMMAND_USER_OPTION)
-            .unwrap()
-            .resolved
-            .as_ref()
-            .unwrap();
-        let user = match user_option {
-            ApplicationCommandInteractionDataOptionValue::User(user, _) => user,
-            _ => panic!("Invalid option value"),
-        };
-
-        let description = subcommand
-            .options
-            .iter()
-            .find(|option| option.name == CHOMBO_ADD_SUBCOMMAND_DESCRIPTION_OPTION)
-            .unwrap()
-            .value
-            .as_ref()
-            .unwrap()
-            .as_str()
-            .unwrap();
+        let (user, _) = get_user_option(&subcommand.options, CHOMBO_ADD_SUBCOMMAND_USER_OPTION)
+            .ok_or("Missing user")?;
+        let description = get_string_option(
+            &subcommand.options,
+            CHOMBO_ADD_SUBCOMMAND_DESCRIPTION_OPTION,
+        )
+        .ok_or("Missing description")?;
 
         chombot
             .add_chombo_for_player(
@@ -149,12 +126,8 @@ impl ChomboCommand {
         let embed = Self::create_chombos_embed(chombot).await?;
 
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response
-                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|message| {
-                        message.content(message_content).add_embed(embed)
-                    })
+            .edit_original_interaction_response(&ctx.http, |response| {
+                response.content(message_content).add_embed(embed)
             })
             .await?;
 
