@@ -41,14 +41,10 @@ impl ChomboCommand {
         let chombos = Self::create_chombos_list(chombot).await?;
 
         command
-            .create_interaction_response(&ctx.http, |response| {
+            .edit_original_interaction_response(&ctx.http, |response| {
                 response
-                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|message| {
-                        message
-                            .content(chombos)
-                            .allowed_mentions(|mentions| mentions.empty_parse())
-                    })
+                    .content(chombos)
+                    .allowed_mentions(|mentions| mentions.empty_parse())
             })
             .await?;
 
@@ -91,11 +87,7 @@ impl ChomboCommand {
         let embed = Self::create_chombos_embed(chombot).await?;
 
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response
-                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|message| message.add_embed(embed))
-            })
+            .edit_original_interaction_response(&ctx.http, |response| response.add_embed(embed))
             .await?;
 
         Ok(())
@@ -134,12 +126,8 @@ impl ChomboCommand {
         let embed = Self::create_chombos_embed(chombot).await?;
 
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response
-                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|message| {
-                        message.content(message_content).add_embed(embed)
-                    })
+            .edit_original_interaction_response(&ctx.http, |response| {
+                response.content(message_content).add_embed(embed)
             })
             .await?;
 
