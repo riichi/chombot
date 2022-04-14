@@ -5,7 +5,7 @@ use serenity::model::interactions::application_command::{
     ApplicationCommandInteraction, ApplicationCommandInteractionDataOption,
     ApplicationCommandOptionType,
 };
-use serenity::model::interactions::InteractionResponseType;
+
 use serenity::model::prelude::User;
 use serenity::utils::Colour;
 use slug::slugify;
@@ -17,12 +17,12 @@ use crate::{Chombo, Chombot, DiscordId, Player, PlayerId};
 
 const DISCORD_MESSAGE_SIZE_LIMIT: usize = 2000;
 
-const CHOMBO_COMMAND: &'static str = "chombo";
-const CHOMBO_RANKING_SUBCOMMAND: &'static str = "ranking";
-const CHOMBO_LIST_SUBCOMMAND: &'static str = "list";
-const CHOMBO_ADD_SUBCOMMAND: &'static str = "add";
-const CHOMBO_ADD_SUBCOMMAND_USER_OPTION: &'static str = "user";
-const CHOMBO_ADD_SUBCOMMAND_DESCRIPTION_OPTION: &'static str = "description";
+const CHOMBO_COMMAND: &str = "chombo";
+const CHOMBO_RANKING_SUBCOMMAND: &str = "ranking";
+const CHOMBO_LIST_SUBCOMMAND: &str = "list";
+const CHOMBO_ADD_SUBCOMMAND: &str = "add";
+const CHOMBO_ADD_SUBCOMMAND_USER_OPTION: &str = "user";
+const CHOMBO_ADD_SUBCOMMAND_DESCRIPTION_OPTION: &str = "description";
 
 pub struct ChomboCommand;
 
@@ -213,15 +213,15 @@ impl SlashCommand for ChomboCommand {
 
         match subcommand.name.as_str() {
             CHOMBO_RANKING_SUBCOMMAND => {
-                self.handle_ranking_subcommand(ctx, &command, subcommand, chombot)
+                self.handle_ranking_subcommand(ctx, command, subcommand, chombot)
                     .await?
             }
             CHOMBO_LIST_SUBCOMMAND => {
-                self.handle_list_subcommand(ctx, &command, subcommand, chombot)
+                self.handle_list_subcommand(ctx, command, subcommand, chombot)
                     .await?
             }
             CHOMBO_ADD_SUBCOMMAND => {
-                self.handle_add_subcommand(ctx, &command, subcommand, chombot)
+                self.handle_add_subcommand(ctx, command, subcommand, chombot)
                     .await?
             }
             &_ => {}

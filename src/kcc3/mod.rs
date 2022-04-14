@@ -10,9 +10,9 @@ use data_types::{Chombo, Player};
 
 pub mod data_types;
 
-const API_PREFIX: &'static str = "/api/";
-const PLAYERS_ENDPOINT: &'static str = "players/";
-const CHOMBOS_ENDPOINT: &'static str = "chombos/";
+const API_PREFIX: &str = "/api/";
+const PLAYERS_ENDPOINT: &str = "players/";
+const CHOMBOS_ENDPOINT: &str = "chombos/";
 
 #[derive(Debug)]
 pub struct Kcc3ClientError {
@@ -27,7 +27,7 @@ impl Error for Kcc3ClientError {
 
 impl Kcc3ClientError {
     fn new(inner_error: reqwest::Error) -> Self {
-        return Self { inner_error };
+        Self { inner_error }
     }
 }
 

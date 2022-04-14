@@ -12,13 +12,13 @@ use crate::slash_commands::utils::get_string_option;
 use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::Chombot;
 
-const HAND_COMMAND: &'static str = "hand";
-const HAND_OPTION: &'static str = "hand";
-const TILE_STYLE_OPTION: &'static str = "tileset";
+const HAND_COMMAND: &str = "hand";
+const HAND_OPTION: &str = "hand";
+const TILE_STYLE_OPTION: &str = "tileset";
 
-const YELLOW_TILE_SET: &'static str = "yellow";
-const RED_TILE_SET: &'static str = "red";
-const BLACK_TILE_SET: &'static str = "black";
+const YELLOW_TILE_SET: &str = "yellow";
+const RED_TILE_SET: &str = "red";
+const BLACK_TILE_SET: &str = "black";
 const DEFAULT_TILE_SET: &str = YELLOW_TILE_SET;
 
 pub struct HandCommand;

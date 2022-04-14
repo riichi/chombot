@@ -51,10 +51,11 @@ impl SlashCommands {
         }
     }
 
-    fn get_command(&self, command_name: &str) -> Option<&Box<dyn SlashCommand>> {
+    fn get_command(&self, command_name: &str) -> Option<&dyn SlashCommand> {
         self.commands
             .iter()
             .find(|command| command.get_name() == command_name)
+            .map(Box::as_ref)
     }
 
     async fn set_error_message(
@@ -72,13 +73,13 @@ impl SlashCommands {
     }
 
     async fn handle_slash_command(
-        slash_command: &Box<dyn SlashCommand>,
+        slash_command: &dyn SlashCommand,
         ctx: &Context,
         command: &ApplicationCommandInteraction,
         chombot: &Chombot,
         requested_command_name: &str,
     ) -> Result<(), String> {
-        if let Err(e) = slash_command.handle(&ctx, &command, chombot).await {
+        if let Err(e) = slash_command.handle(ctx, command, chombot).await {
             println!(
                 "Handler error for command {}: {:?}",
                 requested_command_name, e

@@ -16,7 +16,7 @@ mod chombot;
 mod kcc3;
 mod slash_commands;
 
-const AT_EVERYONE_REACTIONS: [&'static str; 2] = ["Ichiangry", "Mikiknife"];
+const AT_EVERYONE_REACTIONS: [&str; 2] = ["Ichiangry", "Mikiknife"];
 
 struct Handler {
     chombot: Chombot,

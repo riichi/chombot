@@ -38,6 +38,7 @@ impl Player {
         }
     }
 
+    #[allow(dead_code)]
     pub fn name(&self) -> String {
         if !self.first_name.is_empty() && !self.last_name.is_empty() {
             let mut s = format!("{} {}", self.first_name, self.last_name);
