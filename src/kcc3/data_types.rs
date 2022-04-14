@@ -38,20 +38,6 @@ impl Player {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn name(&self) -> String {
-        if !self.first_name.is_empty() && !self.last_name.is_empty() {
-            let mut s = format!("{} {}", self.first_name, self.last_name);
-            if !self.nickname.is_empty() {
-                s += &format!(" ({})", self.nickname);
-            }
-
-            s
-        } else {
-            self.nickname.clone()
-        }
-    }
-
     pub fn short_name(&self) -> String {
         if !self.nickname.is_empty() {
             self.nickname.clone()
