@@ -5,10 +5,7 @@ use serenity::model::interactions::application_command::{
 };
 use serenity::model::user::User;
 
-fn get_option<'a>(
-    options: &'a [DataOption],
-    option_name: &'static str,
-) -> Option<&'a DataOption> {
+fn get_option<'a>(options: &'a [DataOption], option_name: &'static str) -> Option<&'a DataOption> {
     options.iter().find(|option| option.name == option_name)
 }
 
