@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 use std::error::Error;
+use std::fmt::Display;
 use std::result;
 
 use reqwest;
@@ -8,21 +9,53 @@ use selectors::attr::CaseSensitivity;
 
 const RANKING_URL: &str = "https://ranking.cvgo.re/";
 
-type Result<T> = result::Result<T, Box<dyn Error>>;
+type Result<T> = result::Result<T, Box<dyn Error + Send + Sync>>;
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum PositionChangeInfo {
+    New,
+    Diff(i32),
+}
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct RankingEntry {
     pub pos: u32,
-    pub pos_diff: i32,
+    pub pos_diff: PositionChangeInfo,
     pub id: String,
     pub rank: String,
     pub name: String,
     pub address: String,
     pub points: u32,
-    pub points_diff: i32,
+    pub points_diff: PositionChangeInfo,
 }
 
 pub type Ranking = Vec<RankingEntry>;
+
+#[derive(Debug)]
+struct ParseError {
+    pub message: String,
+}
+
+impl Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ParseError: {}", self.message)
+    }
+}
+
+impl Error for ParseError {}
+
+#[derive(Debug)]
+pub struct RankingFetchError {
+    pub cause: Box<dyn Error + Send + Sync>,
+}
+
+impl Display for RankingFetchError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "RankingFetchError: {:?}", self.cause.as_ref())
+    }
+}
+
+impl Error for RankingFetchError {}
 
 macro_rules! unpack_children {
     ($element:expr, $n:expr) => {
@@ -44,9 +77,7 @@ macro_rules! unpack_children {
 
 macro_rules! select_all {
     ($selector:expr, $obj:expr) => {
-        $obj.select(
-            &Selector::parse($selector).expect(format!("Invalid selector: {}", $selector).as_str()),
-        )
+        $obj.select(&Selector::parse($selector).expect(concat!("Invalid selector: ", $selector)))
     };
 }
 
@@ -54,7 +85,7 @@ macro_rules! select_one {
     ($selector:expr, $obj:expr) => {
         select_all!($selector, $obj)
             .next()
-            .ok_or(format!("Could not find `{}`", $selector))
+            .ok_or(concat!("Could not find any ", $selector))
     };
 }
 
@@ -78,21 +109,30 @@ fn first_element_child<'a>(e: &'a ElementRef) -> Result<&'a Element> {
     Ok(ret)
 }
 
-fn parse_diff_column(diff_column: &ElementRef) -> Result<i32> {
+fn parse_diff_column(diff_column: &ElementRef) -> Result<PositionChangeInfo> {
     match first_element_child(diff_column) {
         Ok(element) => {
-            let pos_diff: i32 = first_nonempty_text(diff_column)?.parse()?;
             if element.has_class("has-text-danger", CaseSensitivity::AsciiCaseInsensitive) {
-                Ok(-pos_diff)
+                Ok(PositionChangeInfo::Diff(
+                    -first_nonempty_text(diff_column)?.parse()?,
+                ))
+            } else if element.has_class("has-text-success", CaseSensitivity::AsciiCaseInsensitive) {
+                Ok(PositionChangeInfo::Diff(
+                    first_nonempty_text(diff_column)?.parse()?,
+                ))
+            } else if element.has_class("has-text-info", CaseSensitivity::AsciiCaseInsensitive) {
+                Ok(PositionChangeInfo::New)
             } else {
-                Ok(pos_diff)
+                Err(Box::new(ParseError {
+                    message: format!("Unexpected element without expected classes: {:?}", element),
+                }))
             }
         }
-        Err(_) => Ok(0),
+        Err(_) => Ok(PositionChangeInfo::Diff(0)),
     }
 }
 
-fn parse_pos_cell(pos_cell: &ElementRef) -> Result<(u32, i32)> {
+fn parse_pos_cell(pos_cell: &ElementRef) -> Result<(u32, PositionChangeInfo)> {
     let columns = select_one!("div.columns", pos_cell)?;
     let [pos_column, diff_column] = unpack_children!(&columns, 2)?;
     Ok((
@@ -101,7 +141,7 @@ fn parse_pos_cell(pos_cell: &ElementRef) -> Result<(u32, i32)> {
     ))
 }
 
-fn parse_points_cell(points_cell: &ElementRef) -> Result<(u32, i32)> {
+fn parse_points_cell(points_cell: &ElementRef) -> Result<(u32, PositionChangeInfo)> {
     let columns = select_one!("div.columns", points_cell)?;
     let [diff_column, points_column] = unpack_children!(&columns, 2)?;
     Ok((
@@ -141,12 +181,8 @@ async fn get_ranking_impl() -> Result<Ranking> {
         .collect()
 }
 
-pub async fn get_ranking() -> Option<Ranking> {
-    match get_ranking_impl().await {
-        Ok(ranking) => Some(ranking),
-        Err(err) => {
-            println!("Error when fetching ranking: {:?}", err);
-            None
-        }
-    }
+pub async fn get_ranking() -> result::Result<Ranking, RankingFetchError> {
+    get_ranking_impl()
+        .await
+        .map_err(|cause| RankingFetchError { cause })
 }
