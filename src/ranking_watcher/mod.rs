@@ -46,8 +46,8 @@ where
     HOut: Future<Output = Result<R, E>>,
     E: Error,
 {
-    async fn fetch_ranking(get_next: &H) -> Option<R> {
-        match get_next().await {
+    async fn fetch_ranking(&self) -> Option<R> {
+        match (self.get_next)().await {
             Ok(r) => Some(r),
             Err(e) => {
                 println!("Error when fetching ranking: {:?}", e);
@@ -66,7 +66,7 @@ where
 
     pub async fn run(&mut self) {
         loop {
-            let new_ranking = Self::fetch_ranking(&self.get_next).await;
+            let new_ranking = self.fetch_ranking().await;
             if let Some(r) = self.previous_ranking.should_notify(&new_ranking) {
                 self.update_notifier.notify(r).await;
             }
