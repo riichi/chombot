@@ -1,3 +1,5 @@
+use std::io::Cursor;
+
 use async_trait::async_trait;
 use image::DynamicImage;
 use serenity::builder::CreateApplicationCommand;
@@ -76,7 +78,7 @@ impl SlashCommand for HandCommand {
 
         let image = chombot.render_hand(hand, render_tile_set).await?;
         let mut buf = Vec::new();
-        DynamicImage::ImageRgba8(image).write_to(&mut buf, image::ImageOutputFormat::Png)?;
+        DynamicImage::ImageRgba8(image).write_to(&mut Cursor::new(&mut buf), image::ImageOutputFormat::Png)?;
 
         let files: Vec<AttachmentType> = vec![(buf.as_slice(), "hand.png").into()];
         let image_message = command
