@@ -6,9 +6,9 @@ edition = "2018"
 [dependencies]
 async-trait = "0.1.53"
 chrono = "0.4"
-image = { version = "0.23.14", default-features = false, features = ["png"] }
+image = { version = "0.24.1", default-features = false, features = ["png"] }
 reqwest = "0.11"
-riichi_hand = "0.1.0"
+riichi_hand = "0.2.0"
 serde = "1.0"
 serenity = { version = "0.10", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "unstable_discord_api"] }
 tokio = { version = "1.16", features = ["macros", "rt-multi-thread"] }
