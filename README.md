@@ -3,7 +3,7 @@ Discord bot with many features built for Riichi Mahjong servers.
 
 ## Building
 The project is written in Rust and uses Cargo build system.
-```
+```shell
 cargo build --release
 ```
 
@@ -18,7 +18,7 @@ Chombot requires a few settings passed via environment variables. Those are:
 
 Example:
 
-```
+```shell
 export CHOMBOT_TOKEN=yourdiscordtoken
 export APPLICATION_ID=yourapplicationid
 export KCC3_URL=https://fanpai.chombo.club
@@ -26,4 +26,13 @@ export KCC3_TOKEN=yourkcc3token
 export GUILD_ID=12345
 export RANKING_WATCHER_CHANNEL_ID=54321
 cargo run --release
+```
+
+## Developing
+### `pre-commit`
+We encourage contributors to use predefined [`pre-commit`](https://pre-commit.com/)
+hooks --- to install them in your local repo, make sure you have `pre-commit`
+installed and run
+```shell
+pre-commit install
 ```
