@@ -1,6 +1,7 @@
 use std::env;
 
 use serenity::model::channel::Message;
+use serenity::model::id::ChannelId;
 use serenity::{
     async_trait,
     model::{gateway::Ready, id::GuildId, interactions::Interaction},
@@ -10,10 +11,14 @@ use serenity::{
 use crate::chombot::Chombot;
 use crate::kcc3::data_types::{Chombo, DiscordId, Player, PlayerId};
 use crate::kcc3::Kcc3Client;
+use crate::ranking_watcher::notifier::ChannelMessageNotifier;
+use crate::ranking_watcher::usma::get_ranking;
+use crate::ranking_watcher::RankingWatcher;
 use crate::slash_commands::SlashCommands;
 
 mod chombot;
 mod kcc3;
+mod ranking_watcher;
 mod slash_commands;
 
 const AT_EVERYONE_REACTIONS: [&str; 2] = ["Ichiangry", "Mikiknife"];
@@ -30,6 +35,23 @@ impl Handler {
             slash_commands: SlashCommands::new(),
         }
     }
+}
+
+async fn start_ranking_watcher(ctx: Context) {
+    let ranking_watcher_channel_id = ChannelId(
+        env::var("RANKING_WATCHER_CHANNEL_ID")
+            .expect("Expected RANKING_WATCHER_CHANNEL_ID in environment")
+            .parse()
+            .expect("RANKING_WATCHER_CHANNEL_ID must be an integer"),
+    );
+    let notifier = ChannelMessageNotifier::new(
+        ranking_watcher_channel_id,
+        ctx,
+        String::from("https://ranking.cvgo.re/ ranking update"),
+    );
+    tokio::spawn(async move {
+        RankingWatcher::new(notifier, get_ranking).run().await;
+    });
 }
 
 #[async_trait]
@@ -72,6 +94,8 @@ impl EventHandler for Handler {
         })
         .await
         .unwrap();
+
+        start_ranking_watcher(ctx.clone()).await;
     }
 }
 
