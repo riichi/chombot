@@ -4,7 +4,11 @@ use serenity::model::channel::Message;
 use serenity::model::id::ChannelId;
 use serenity::{
     async_trait,
-    model::{gateway::Ready, id::GuildId, interactions::Interaction},
+    model::{
+        gateway::{GatewayIntents, Ready},
+        id::GuildId,
+        interactions::Interaction,
+    },
     prelude::*,
 };
 
@@ -114,7 +118,7 @@ async fn main() {
     let chombot = chombot::Chombot::new(kcc3client);
 
     let handler = Handler::new(chombot);
-    let mut client = Client::builder(token)
+    let mut client = Client::builder(token, GatewayIntents::non_privileged())
         .event_handler(handler)
         .application_id(application_id)
         .await

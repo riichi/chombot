@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use image::DynamicImage;
 use serenity::builder::CreateApplicationCommand;
 use serenity::client::Context;
-use serenity::http::AttachmentType;
+use serenity::model::channel::AttachmentType;
 use serenity::model::interactions::application_command::{
     ApplicationCommandInteraction, ApplicationCommandOptionType,
 };
