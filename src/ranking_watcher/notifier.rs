@@ -60,7 +60,7 @@ impl ChannelMessageNotifier {
                 )
             })
             .collect::<Vec<String>>();
-        base.push_str("\n\n");
+        base.push_str("\n\nLatest changes:\n");
         base.push_str(ppl.join("\n").as_str());
         base
     }
