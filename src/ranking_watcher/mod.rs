@@ -12,22 +12,20 @@ const RANKING_UPDATE_INTERVAL: Duration = Duration::from_secs(60 * 10);
 
 pub trait WatchableRanking<R> {
     fn should_notify<'a>(&self, new: &'a Self) -> Option<&'a R>;
+    fn update(&mut self, new: Self);
 }
 
 impl<R: Eq> WatchableRanking<R> for Option<R> {
     fn should_notify<'a>(&self, new: &'a Self) -> Option<&'a R> {
-        match &new {
-            None => None,
-            Some(n) => match &self {
-                None => Some(n),
-                Some(o) => {
-                    if n != o {
-                        Some(n)
-                    } else {
-                        None
-                    }
-                }
-            },
+        match (&self, &new) {
+            (Some(o), Some(n)) if o != n => Some(n),
+            _ => None,
+        }
+    }
+
+    fn update(&mut self, new: Self) {
+        if new.is_some() {
+            *self = new;
         }
     }
 }
@@ -70,7 +68,7 @@ where
             if let Some(r) = self.previous_ranking.should_notify(&new_ranking) {
                 self.update_notifier.notify(r).await;
             }
-            self.previous_ranking = new_ranking;
+            self.previous_ranking.update(new_ranking);
             sleep(RANKING_UPDATE_INTERVAL).await;
         }
     }
