@@ -11,13 +11,15 @@ const RANKING_URL: &str = "https://ranking.cvgo.re/";
 
 type Result<T> = result::Result<T, Box<dyn Error + Send + Sync>>;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PositionChangeInfo {
     New,
     Diff(i32),
 }
 
-#[derive(Debug, Eq, PartialEq)]
+const NO_CHANGE: PositionChangeInfo = PositionChangeInfo::Diff(0);
+
+#[derive(Clone, Debug)]
 pub struct RankingEntry {
     pub pos: u32,
     pub pos_diff: PositionChangeInfo,
@@ -29,7 +31,47 @@ pub struct RankingEntry {
     pub points_diff: PositionChangeInfo,
 }
 
-pub type Ranking = Vec<RankingEntry>;
+impl PartialEq for RankingEntry {
+    fn eq(&self, other: &Self) -> bool {
+        (
+            &self.pos,
+            &self.pos_diff,
+            &self.name,
+            &self.points,
+            &self.points_diff,
+        ) == (
+            &other.pos,
+            &other.pos_diff,
+            &other.name,
+            &other.points,
+            &other.points_diff,
+        )
+    }
+}
+
+impl Eq for RankingEntry {}
+
+pub struct Ranking(pub Vec<RankingEntry>);
+
+impl Ranking {
+    pub fn get_changed(&self) -> Self {
+        Self(
+            self.0
+                .iter()
+                .filter(|x| x.pos_diff != NO_CHANGE || x.points_diff != NO_CHANGE)
+                .cloned()
+                .collect(),
+        )
+    }
+}
+
+impl PartialEq for Ranking {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_changed() == other.get_changed()
+    }
+}
+
+impl Eq for Ranking {}
 
 #[derive(Debug)]
 struct ParseError {
@@ -175,10 +217,11 @@ async fn get_ranking_impl() -> Result<Ranking> {
     let body = reqwest::get(RANKING_URL).await?.text().await?;
     let html = Html::parse_document(body.as_str());
     let table = select_one!("table tbody", html)?;
-    select_all!("tr", table)
+    let entries: Result<Vec<RankingEntry>> = select_all!("tr", table)
         .into_iter()
         .map(parse_row)
-        .collect()
+        .collect();
+    Ok(Ranking(entries?))
 }
 
 pub async fn get_ranking() -> result::Result<Ranking, RankingFetchError> {
