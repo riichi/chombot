@@ -54,14 +54,12 @@ impl Eq for RankingEntry {}
 pub struct Ranking(pub Vec<RankingEntry>);
 
 impl Ranking {
-    pub fn get_changed(&self) -> Self {
-        Self(
-            self.0
-                .iter()
-                .filter(|x| x.pos_diff != NO_CHANGE || x.points_diff != NO_CHANGE)
-                .cloned()
-                .collect(),
-        )
+    pub fn get_changed(&self) -> Vec<RankingEntry> {
+        self.0
+            .iter()
+            .filter(|x| x.pos_diff != NO_CHANGE || x.points_diff != NO_CHANGE)
+            .cloned()
+            .collect()
     }
 }
 

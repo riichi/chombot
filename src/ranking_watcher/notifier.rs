@@ -37,7 +37,6 @@ impl ChannelMessageNotifier {
         let mut base = self.message.clone();
         let ppl = ranking
             .get_changed()
-            .0
             .into_iter()
             .map(|e| {
                 format!(
