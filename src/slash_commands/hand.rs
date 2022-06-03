@@ -89,9 +89,7 @@ impl SlashCommand for HandCommand {
         let link = image_message.link_ensured(&ctx.http).await;
 
         command
-            .edit_original_interaction_response(&ctx.http, |response| {
-                response.content(format!(""))
-            })
+            .edit_original_interaction_response(&ctx.http, |response| response.content(format!("")))
             .await?;
 
         Ok(())
