@@ -90,7 +90,7 @@ impl SlashCommand for HandCommand {
 
         command
             .edit_original_interaction_response(&ctx.http, |response| {
-                response.content(format!("Rendered hand: `{}`: {}", hand, link))
+                response.content(format!(""))
             })
             .await?;
 
