@@ -86,7 +86,6 @@ impl SlashCommand for HandCommand {
             .channel_id
             .send_files(&ctx.http, files, |m| m)
             .await?;
-        let link = image_message.link_ensured(&ctx.http).await;
 
         Ok(())
     }
