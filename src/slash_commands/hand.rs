@@ -88,10 +88,6 @@ impl SlashCommand for HandCommand {
             .await?;
         let link = image_message.link_ensured(&ctx.http).await;
 
-        command
-            .edit_original_interaction_response(&ctx.http, |response| response.content(link))
-            .await?;
-
         Ok(())
     }
 }
