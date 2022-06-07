@@ -11,55 +11,38 @@ const RANKING_URL: &str = "https://ranking.cvgo.re/";
 
 type Result<T> = result::Result<T, Box<dyn Error + Send + Sync>>;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum PositionChangeInfo {
     New,
     Diff(i32),
 }
 
-const NO_CHANGE: PositionChangeInfo = PositionChangeInfo::Diff(0);
+impl PositionChangeInfo {
+    pub fn has_changed(&self) -> bool {
+        !matches!(self, PositionChangeInfo::Diff(0))
+    }
+}
 
-#[derive(Clone, Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct RankingEntry {
     pub pos: u32,
     pub pos_diff: PositionChangeInfo,
-    pub id: String,
-    pub rank: String,
     pub name: String,
-    pub address: String,
     pub points: u32,
     pub points_diff: PositionChangeInfo,
 }
 
-impl PartialEq for RankingEntry {
-    fn eq(&self, other: &Self) -> bool {
-        (
-            &self.pos,
-            &self.pos_diff,
-            &self.name,
-            &self.points,
-            &self.points_diff,
-        ) == (
-            &other.pos,
-            &other.pos_diff,
-            &other.name,
-            &other.points,
-            &other.points_diff,
-        )
+impl RankingEntry {
+    pub fn has_changed(&self) -> bool {
+        self.points_diff.has_changed() || self.pos_diff.has_changed()
     }
 }
-
-impl Eq for RankingEntry {}
 
 pub struct Ranking(pub Vec<RankingEntry>);
 
 impl Ranking {
-    pub fn get_changed(&self) -> Vec<RankingEntry> {
-        self.0
-            .iter()
-            .filter(|x| x.pos_diff != NO_CHANGE || x.points_diff != NO_CHANGE)
-            .cloned()
-            .collect()
+    pub fn get_changed(&self) -> Vec<&RankingEntry> {
+        self.0.iter().filter(|x| x.has_changed()).collect()
     }
 }
 
@@ -191,21 +174,15 @@ fn parse_points_cell(points_cell: &ElementRef) -> Result<(u32, PositionChangeInf
 }
 
 fn parse_row(row: ElementRef) -> Result<RankingEntry> {
-    let [pos_cell, id_cell, rank_cell, player_cell, address_cell, points_cell] =
+    let [pos_cell, _id_cell, _rank_cell, player_cell, _address_cell, points_cell] =
         unpack_children!(&row, 6)?;
     let (pos, pos_diff) = parse_pos_cell(&pos_cell)?;
-    let id = first_nonempty_text(&id_cell).unwrap_or("");
-    let rank = first_nonempty_text(&rank_cell).unwrap_or("");
     let name = first_nonempty_text(&player_cell).unwrap_or("");
-    let address = first_nonempty_text(&address_cell).unwrap_or("");
     let (points, points_diff) = parse_points_cell(&points_cell)?;
     Ok(RankingEntry {
         pos,
         pos_diff,
-        id: String::from(id),
-        rank: String::from(rank),
         name: String::from(name),
-        address: String::from(address),
         points,
         points_diff,
     })
