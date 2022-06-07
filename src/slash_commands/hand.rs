@@ -82,15 +82,14 @@ impl SlashCommand for HandCommand {
             .write_to(&mut Cursor::new(&mut buf), image::ImageOutputFormat::Png)?;
 
         let files: Vec<AttachmentType> = vec![(buf.as_slice(), "hand.png").into()];
-        let image_message = command
+        command
             .channel_id
             .send_files(&ctx.http, files, |m| m)
             .await?;
-        let link = image_message.link_ensured(&ctx.http).await;
 
         command
             .edit_original_interaction_response(&ctx.http, |response| {
-                response.content(format!("Rendered hand: `{}`: {}", hand, link))
+                response.content("<:Ichiwink:982315838617038950>")
             })
             .await?;
 
