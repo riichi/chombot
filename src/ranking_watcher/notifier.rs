@@ -33,22 +33,11 @@ impl ChannelMessageNotifier {
         }
     }
 
-    fn position_changed(p: &PositionChangeInfo) -> bool {
-        match *p {
-            PositionChangeInfo::Diff(x) if x != 0 => true,
-            PositionChangeInfo::New => true,
-            _ => false,
-        }
-    }
-
     fn build_message(&self, ranking: &Ranking) -> String {
         let mut base = self.message.clone();
         let ppl = ranking
-            .iter()
-            .filter(|entry| {
-                Self::position_changed(&entry.pos_diff)
-                    || Self::position_changed(&entry.points_diff)
-            })
+            .get_changed()
+            .into_iter()
             .map(|e| {
                 format!(
                     "• {}{} / {} / {}{} pkt",

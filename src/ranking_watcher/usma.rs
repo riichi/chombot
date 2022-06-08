@@ -17,19 +17,42 @@ pub enum PositionChangeInfo {
     Diff(i32),
 }
 
-#[derive(Debug, Eq, PartialEq)]
+impl PositionChangeInfo {
+    pub fn has_changed(&self) -> bool {
+        !matches!(self, PositionChangeInfo::Diff(0))
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub struct RankingEntry {
     pub pos: u32,
     pub pos_diff: PositionChangeInfo,
-    pub id: String,
-    pub rank: String,
     pub name: String,
-    pub address: String,
     pub points: u32,
     pub points_diff: PositionChangeInfo,
 }
 
-pub type Ranking = Vec<RankingEntry>;
+impl RankingEntry {
+    pub fn has_changed(&self) -> bool {
+        self.points_diff.has_changed() || self.pos_diff.has_changed()
+    }
+}
+
+pub struct Ranking(pub Vec<RankingEntry>);
+
+impl Ranking {
+    pub fn get_changed(&self) -> Vec<&RankingEntry> {
+        self.0.iter().filter(|x| x.has_changed()).collect()
+    }
+}
+
+impl PartialEq for Ranking {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_changed() == other.get_changed()
+    }
+}
+
+impl Eq for Ranking {}
 
 #[derive(Debug)]
 struct ParseError {
@@ -151,21 +174,15 @@ fn parse_points_cell(points_cell: &ElementRef) -> Result<(u32, PositionChangeInf
 }
 
 fn parse_row(row: ElementRef) -> Result<RankingEntry> {
-    let [pos_cell, id_cell, rank_cell, player_cell, address_cell, points_cell] =
+    let [pos_cell, _id_cell, _rank_cell, player_cell, _address_cell, points_cell] =
         unpack_children!(&row, 6)?;
     let (pos, pos_diff) = parse_pos_cell(&pos_cell)?;
-    let id = first_nonempty_text(&id_cell).unwrap_or("");
-    let rank = first_nonempty_text(&rank_cell).unwrap_or("");
     let name = first_nonempty_text(&player_cell).unwrap_or("");
-    let address = first_nonempty_text(&address_cell).unwrap_or("");
     let (points, points_diff) = parse_points_cell(&points_cell)?;
     Ok(RankingEntry {
         pos,
         pos_diff,
-        id: String::from(id),
-        rank: String::from(rank),
         name: String::from(name),
-        address: String::from(address),
         points,
         points_diff,
     })
@@ -175,10 +192,11 @@ async fn get_ranking_impl() -> Result<Ranking> {
     let body = reqwest::get(RANKING_URL).await?.text().await?;
     let html = Html::parse_document(body.as_str());
     let table = select_one!("table tbody", html)?;
-    select_all!("tr", table)
+    let entries: Result<Vec<RankingEntry>> = select_all!("tr", table)
         .into_iter()
         .map(parse_row)
-        .collect()
+        .collect();
+    Ok(Ranking(entries?))
 }
 
 pub async fn get_ranking() -> result::Result<Ranking, RankingFetchError> {
