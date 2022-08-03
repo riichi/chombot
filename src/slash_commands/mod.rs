@@ -1,9 +1,10 @@
+use std::error::Error;
+
 use async_trait::async_trait;
 use serenity::builder::{CreateApplicationCommand, CreateApplicationCommands};
 use serenity::client::Context;
-use serenity::model::interactions::application_command::ApplicationCommandInteraction;
-use serenity::model::interactions::{Interaction, InteractionResponseType};
-use std::error::Error;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 
 use crate::slash_commands::chombo::ChomboCommand;
 use crate::slash_commands::hand::HandCommand;

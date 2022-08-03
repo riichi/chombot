@@ -1,12 +1,11 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
+use data_types::{Chombo, Player};
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-
-use data_types::{Chombo, Player};
 
 pub mod data_types;
 

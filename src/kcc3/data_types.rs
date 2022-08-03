@@ -70,42 +70,6 @@ mod tests {
     use crate::kcc3::data_types::Player;
 
     #[test]
-    fn name_should_return_full_name_with_nickname() {
-        let player = Player {
-            id: Default::default(),
-            first_name: "A".to_string(),
-            last_name: "B".to_string(),
-            nickname: "C".to_string(),
-            discord_id: Default::default(),
-        };
-        assert_eq!(player.name(), "A B (C)");
-    }
-
-    #[test]
-    fn name_should_return_full_name() {
-        let player = Player {
-            id: Default::default(),
-            first_name: "A".to_string(),
-            last_name: "B".to_string(),
-            nickname: "".to_string(),
-            discord_id: Default::default(),
-        };
-        assert_eq!(player.name(), "A B");
-    }
-
-    #[test]
-    fn name_should_return_nickname() {
-        let player = Player {
-            id: Default::default(),
-            first_name: "".to_string(),
-            last_name: "".to_string(),
-            nickname: "C".to_string(),
-            discord_id: Default::default(),
-        };
-        assert_eq!(player.name(), "C");
-    }
-
-    #[test]
     fn short_name_should_return_nickname() {
         let player = Player {
             id: Default::default(),

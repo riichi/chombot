@@ -5,9 +5,9 @@ use serenity::model::id::ChannelId;
 use serenity::{
     async_trait,
     model::{
+        application::interaction::Interaction,
         gateway::{GatewayIntents, Ready},
         id::GuildId,
-        interactions::Interaction,
     },
     prelude::*,
 };

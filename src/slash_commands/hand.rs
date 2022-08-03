@@ -4,10 +4,9 @@ use async_trait::async_trait;
 use image::DynamicImage;
 use serenity::builder::CreateApplicationCommand;
 use serenity::client::Context;
+use serenity::model::application::command::CommandOptionType;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::channel::AttachmentType;
-use serenity::model::interactions::application_command::{
-    ApplicationCommandInteraction, ApplicationCommandOptionType,
-};
 
 use crate::chombot::TileStyle;
 use crate::slash_commands::utils::get_string_option;
@@ -44,14 +43,14 @@ impl SlashCommand for HandCommand {
                 option
                     .name(HAND_OPTION)
                     .description("The hand to render")
-                    .kind(ApplicationCommandOptionType::String)
+                    .kind(CommandOptionType::String)
                     .required(true)
             })
             .create_option(|option| {
                 option
                     .name(TILE_STYLE_OPTION)
                     .description("Tile style")
-                    .kind(ApplicationCommandOptionType::String)
+                    .kind(CommandOptionType::String)
                     .add_string_choice("Yellow", YELLOW_TILE_SET)
                     .add_string_choice("Red", RED_TILE_SET)
                     .add_string_choice("Black", BLACK_TILE_SET)

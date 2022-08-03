@@ -1,15 +1,15 @@
+use std::error::Error;
+
 use async_trait::async_trait;
 use serenity::builder::{CreateApplicationCommand, CreateEmbed};
 use serenity::client::Context;
-use serenity::model::interactions::application_command::{
-    ApplicationCommandInteraction, ApplicationCommandInteractionDataOption,
-    ApplicationCommandOptionType,
+use serenity::model::application::command::CommandOptionType;
+use serenity::model::application::interaction::application_command::{
+    ApplicationCommandInteraction, CommandDataOption,
 };
-
 use serenity::model::prelude::User;
 use serenity::utils::Colour;
 use slug::slugify;
-use std::error::Error;
 
 use crate::slash_commands::utils::{get_string_option, get_user_option};
 use crate::slash_commands::{SlashCommand, SlashCommandResult};
@@ -35,7 +35,7 @@ impl ChomboCommand {
         &self,
         ctx: &Context,
         command: &ApplicationCommandInteraction,
-        _subcommand: &ApplicationCommandInteractionDataOption,
+        _subcommand: &CommandDataOption,
         chombot: &Chombot,
     ) -> SlashCommandResult {
         let chombos = Self::create_chombos_list(chombot).await?;
@@ -81,7 +81,7 @@ impl ChomboCommand {
         &self,
         ctx: &Context,
         command: &ApplicationCommandInteraction,
-        _subcommand: &ApplicationCommandInteractionDataOption,
+        _subcommand: &CommandDataOption,
         chombot: &Chombot,
     ) -> SlashCommandResult {
         let embed = Self::create_chombos_embed(chombot).await?;
@@ -97,7 +97,7 @@ impl ChomboCommand {
         &self,
         ctx: &Context,
         command: &ApplicationCommandInteraction,
-        subcommand: &ApplicationCommandInteractionDataOption,
+        subcommand: &CommandDataOption,
         chombot: &Chombot,
     ) -> SlashCommandResult {
         let (user, _) = get_user_option(&subcommand.options, CHOMBO_ADD_SUBCOMMAND_USER_OPTION)
@@ -168,31 +168,31 @@ impl SlashCommand for ChomboCommand {
                 option
                     .name(CHOMBO_RANKING_SUBCOMMAND)
                     .description("Display the chombo ranking")
-                    .kind(ApplicationCommandOptionType::SubCommand)
+                    .kind(CommandOptionType::SubCommand)
             })
             .create_option(|option| {
                 option
                     .name(CHOMBO_LIST_SUBCOMMAND)
                     .description("List all chombos")
-                    .kind(ApplicationCommandOptionType::SubCommand)
+                    .kind(CommandOptionType::SubCommand)
             })
             .create_option(|option| {
                 option
                     .name(CHOMBO_ADD_SUBCOMMAND)
                     .description("Add a chombo for a user")
-                    .kind(ApplicationCommandOptionType::SubCommand)
+                    .kind(CommandOptionType::SubCommand)
                     .create_sub_option(|sub_option| {
                         sub_option
                             .name(CHOMBO_ADD_SUBCOMMAND_USER_OPTION)
                             .description("User that made a chombo")
-                            .kind(ApplicationCommandOptionType::User)
+                            .kind(CommandOptionType::User)
                             .required(true)
                     })
                     .create_sub_option(|sub_option| {
                         sub_option
                             .name(CHOMBO_ADD_SUBCOMMAND_DESCRIPTION_OPTION)
                             .description("Chombo description")
-                            .kind(ApplicationCommandOptionType::String)
+                            .kind(CommandOptionType::String)
                             .required(true)
                     })
             });
@@ -208,7 +208,7 @@ impl SlashCommand for ChomboCommand {
             .data
             .options
             .iter()
-            .find(|x| x.kind == ApplicationCommandOptionType::SubCommand)
+            .find(|x| x.kind == CommandOptionType::SubCommand)
             .unwrap();
 
         match subcommand.name.as_str() {
