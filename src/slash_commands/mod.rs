@@ -8,10 +8,12 @@ use serenity::model::application::interaction::{Interaction, InteractionResponse
 
 use crate::slash_commands::chombo::ChomboCommand;
 use crate::slash_commands::hand::HandCommand;
+use crate::slash_commands::pasta::PastaCommand;
 use crate::Chombot;
 
 mod chombo;
 mod hand;
+mod pasta;
 mod utils;
 
 pub type SlashCommandResult = Result<(), Box<dyn Error>>;
@@ -40,7 +42,11 @@ impl SlashCommands {
     }
 
     fn get_slash_commands() -> Vec<Box<dyn SlashCommand>> {
-        vec![Box::new(ChomboCommand::new()), Box::new(HandCommand::new())]
+        vec![
+            Box::new(ChomboCommand::new()),
+            Box::new(HandCommand::new()),
+            Box::new(PastaCommand::new()),
+        ]
     }
 
     pub fn register_commands(&self, commands: &mut CreateApplicationCommands) {
