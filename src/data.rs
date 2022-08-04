@@ -1,0 +1,1 @@
+pub const DISCORD_MESSAGE_SIZE_LIMIT: usize = 2000;
