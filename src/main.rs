@@ -21,6 +21,7 @@ use crate::ranking_watcher::RankingWatcher;
 use crate::slash_commands::SlashCommands;
 
 mod chombot;
+mod data;
 mod kcc3;
 mod ranking_watcher;
 mod slash_commands;

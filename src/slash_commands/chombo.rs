@@ -11,11 +11,10 @@ use serenity::model::prelude::User;
 use serenity::utils::Colour;
 use slug::slugify;
 
+use crate::data::DISCORD_MESSAGE_SIZE_LIMIT;
 use crate::slash_commands::utils::{get_string_option, get_user_option};
 use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::{Chombo, Chombot, DiscordId, Player, PlayerId};
-
-const DISCORD_MESSAGE_SIZE_LIMIT: usize = 2000;
 
 const CHOMBO_COMMAND: &str = "chombo";
 const CHOMBO_RANKING_SUBCOMMAND: &str = "ranking";
