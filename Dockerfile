@@ -1,4 +1,4 @@
-FROM rust:1.62.1 as builder
+FROM rust:1.63.0 as builder
 
 RUN USER=root cargo new --bin chombot
 
