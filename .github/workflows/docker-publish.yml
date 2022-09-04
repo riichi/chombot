@@ -9,7 +9,7 @@ on:
   schedule:
     - cron: '30 23 * * *'
   push:
-    branches: [ bump-cosign ]
+    branches: [ master ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
 
