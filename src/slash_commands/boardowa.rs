@@ -1,24 +1,28 @@
-use std::cmp::{Eq, Ord, PartialEq};
-use std::collections::{BinaryHeap, HashMap};
-use std::convert::TryFrom;
-use std::error::Error;
-use std::fmt::Display;
+use std::borrow::Cow;
+use std::convert::{TryFrom, TryInto};
 
+use anyhow::{anyhow, bail, Result};
 use async_trait::async_trait;
-use chrono::{Datelike, Local, Months};
+use chrono::{Datelike, Local, Months, NaiveDate};
 use reqwest::Client;
 use serenity::builder::CreateApplicationCommand;
 use serenity::client::Context;
 use serenity::model::application::command::CommandOptionType;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 
-use crate::boardowa::{get_opening_info, get_tables_info, models::TableInfo as HourlyTableInfo};
+use crate::boardowa::api::BoardowaAPIAdapter;
+use crate::boardowa::models::TimeRange;
+use crate::boardowa::ranking::{AvailabilityRange, RankingProvider};
 use crate::slash_commands::utils::get_int_option;
 use crate::slash_commands::{SlashCommand, SlashCommandResult};
 use crate::Chombot;
 
 const BOARDOWA_COMMAND: &str = "boardowa";
 const DAY_OPTION: &str = "day";
+const COUNT_OPTION: &str = "count";
+const BEFORE_OPTION: &str = "before";
+const AFTER_OPTION: &str = "after";
+const DEFAULT_COUNT: i64 = 15;
 
 pub struct BoardowaCommand {}
 
@@ -27,17 +31,6 @@ impl BoardowaCommand {
         Self {}
     }
 }
-
-#[derive(Debug)]
-pub struct BoardowaError(String);
-
-impl Display for BoardowaError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Error for BoardowaError {}
 
 #[async_trait]
 impl SlashCommand for BoardowaCommand {
@@ -51,11 +44,40 @@ impl SlashCommand for BoardowaCommand {
             .create_option(|option| {
                 option
                     .name(DAY_OPTION)
-                    .description("Day of month you want to know about. ")
+                    .description("Day of month you want to know about.")
                     .kind(CommandOptionType::Integer)
                     .min_int_value(1)
                     .max_int_value(31)
                     .required(true)
+            })
+            .create_option(|option| {
+                option
+                    .name(COUNT_OPTION)
+                    .description(format!(
+                        "How many possibilities? (at most) (default is {})",
+                        DEFAULT_COUNT
+                    ))
+                    .kind(CommandOptionType::Integer)
+                    .min_int_value(1)
+                    .required(false)
+            })
+            .create_option(|option| {
+                option
+                    .name(AFTER_OPTION)
+                    .description("The earliest hour")
+                    .kind(CommandOptionType::Integer)
+                    .min_int_value(0)
+                    .max_int_value(24)
+                    .required(false)
+            })
+            .create_option(|option| {
+                option
+                    .name(BEFORE_OPTION)
+                    .description("The latest hour")
+                    .kind(CommandOptionType::Integer)
+                    .min_int_value(0)
+                    .max_int_value(24)
+                    .required(false)
             });
     }
 
@@ -65,74 +87,16 @@ impl SlashCommand for BoardowaCommand {
         command: &ApplicationCommandInteraction,
         _chombot: &Chombot,
     ) -> SlashCommandResult {
-        let dom = u32::try_from(
-            *get_int_option(&command.data.options, DAY_OPTION).ok_or("Missing day of month")?,
-        )?;
-        let now = Local::now().date_naive();
-        let month_adjusted = if now.day() > dom {
-            now.checked_add_months(Months::new(1))
-                .ok_or("Internal error: date out of range")?
-        } else {
-            now
-        };
-        let day_adjusted = month_adjusted.with_day(dom).ok_or(format!(
-            "There is no day {:02} in {:02}/{}",
-            dom,
-            month_adjusted.month(),
-            month_adjusted.year()
-        ))?;
-        let client = Client::new();
-        let opening = get_opening_info(&client, day_adjusted).await?.range;
-        let mut availability_vec = vec![];
-        for t in opening.from..opening.to {
-            availability_vec.push(
-                get_tables_info(
-                    &client,
-                    day_adjusted,
-                    format!("{:02}:01", t),
-                    format!("{:02}:30", t),
-                )
-                .await?,
-            );
-            availability_vec.push(
-                get_tables_info(
-                    &client,
-                    day_adjusted,
-                    format!("{:02}:31", t),
-                    format!("{:02}:00", t + 1),
-                )
-                .await?,
-            );
-        }
-        let transposed = transpose(availability_vec)?;
-        let rank: Vec<AvailabilityRange> = rank_tables(transposed);
-
-        let format_time = |idx| {
-            let hour: usize = idx / 2 + (opening.from as usize);
-            let minutes = if idx % 2 == 0 { 0 } else { 30 };
-            format!("{:02}:{:02}", hour, minutes)
-        };
-
-        let mut message = format!(
-            "Consider following tables for {}:\n```\n",
-            day_adjusted.format("%Y-%m-%d")
-        );
-        message.push_str(
-            &rank
-                .iter()
-                .take(5)
-                .map(|range| {
-                    format!(
-                        "Table {}: {}-{}",
-                        range.table_id,
-                        format_time(range.start),
-                        format_time(range.start + (range.len as usize))
-                    )
-                })
-                .collect::<Vec<String>>()
-                .join("\n"),
-        );
-        message.push_str("\n```");
+        let date = get_query_date(command)?;
+        let api = BoardowaAPIAdapter::new(Client::new());
+        let opening = api.get_opening_info(&date).await?.range;
+        let query_range = get_query_time_range(opening, command)?;
+        let ranking = RankingProvider::new(api)
+            .get_ranking(&date, &query_range)
+            .await?;
+        let option_count =
+            *get_int_option(&command.data.options, COUNT_OPTION).unwrap_or(&DEFAULT_COUNT);
+        let message = build_message(ranking, date, query_range, option_count.try_into()?);
 
         command
             .edit_original_interaction_response(&ctx.http, |response| response.content(message))
@@ -142,105 +106,99 @@ impl SlashCommand for BoardowaCommand {
     }
 }
 
-struct TableInfo {
-    pub value: String,
-    pub availability: Vec<bool>,
+fn get_query_date(command: &ApplicationCommandInteraction) -> Result<NaiveDate> {
+    let dom = u32::try_from(
+        *get_int_option(&command.data.options, DAY_OPTION)
+            .ok_or_else(|| anyhow!("Missing day of month"))?,
+    )?;
+    let now = Local::now().date_naive();
+    let month_adjusted = if now.day() > dom {
+        now.checked_add_months(Months::new(1))
+            .ok_or_else(|| anyhow!("Internal error: date out of range"))?
+    } else {
+        now
+    };
+    month_adjusted.with_day(dom).ok_or_else(|| {
+        anyhow!(
+            "There is no day {:02} in {:02}/{}",
+            dom,
+            month_adjusted.month(),
+            month_adjusted.year()
+        )
+    })
 }
 
-#[derive(PartialEq, Eq)]
-struct AvailabilityRange {
-    pub table_id: String,
-    pub start: usize,
-    pub len: u8,
+fn get_query_time_range(
+    mut opening: TimeRange,
+    command: &ApplicationCommandInteraction,
+) -> Result<TimeRange> {
+    if let Some(&from) = get_int_option(&command.data.options, AFTER_OPTION) {
+        if i64::from(opening.from) < from {
+            opening.from = from.try_into()?;
+        }
+    }
+    if let Some(&to) = get_int_option(&command.data.options, BEFORE_OPTION) {
+        if i64::from(opening.to) > to {
+            opening.to = to.try_into()?;
+        }
+    }
+    if opening.from >= opening.to {
+        bail!(
+            "`before` must be strictly before `after` (got: `{:02}-{:02}`)",
+            opening.from,
+            opening.to
+        );
+    }
+    Ok(opening)
 }
 
-impl PartialOrd for AvailabilityRange {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        if self.len != other.len {
-            other.len.partial_cmp(&self.len)
-        } else {
-            other.start.partial_cmp(&self.start)
-        }
-    }
+fn build_message(
+    rank: Vec<AvailabilityRange>,
+    date: NaiveDate,
+    opening: TimeRange,
+    n_tables: usize,
+) -> String {
+    let mut message = format!(
+        "Consider following tables for {}:\n```\n",
+        date.format("%Y-%m-%d")
+    );
+    message.push_str(
+        &rank
+            .into_iter()
+            .take(n_tables)
+            .map(|range| format_table(&range, &opening))
+            .collect::<Vec<String>>()
+            .join("\n"),
+    );
+    message.push_str("\n```");
+    message
 }
 
-impl Ord for AvailabilityRange {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        if self.len != other.len {
-            other.len.cmp(&self.len)
-        } else {
-            other.start.cmp(&self.start)
-        }
-    }
+fn format_table(range: &AvailabilityRange, opening: &TimeRange) -> String {
+    format!(
+        "Table {} | {} ppl. | {}-{}",
+        replace_leading_zeros(range.table_id.as_str()),
+        range.capacity,
+        format_time(opening.from.into(), range.start),
+        format_time(opening.from.into(), range.start + (range.len as usize))
+    )
 }
 
-impl TableInfo {
-    fn availability_ranges(&self) -> Vec<AvailabilityRange> {
-        let mut ret = vec![];
-        let mut current_range = None;
-        for (idx, av) in self.availability.iter().enumerate() {
-            if !av {
-                if let Some(r) = current_range {
-                    ret.push(r);
-                    current_range = None;
-                }
-            } else {
-                match &mut current_range {
-                    None => {
-                        current_range = Some(AvailabilityRange {
-                            table_id: self.value.clone(),
-                            start: idx,
-                            len: 1,
-                        });
-                    }
-                    Some(r) => {
-                        r.len += 1;
-                    }
-                }
-            }
-        }
-        if let Some(r) = current_range {
-            ret.push(r);
-        }
-        ret
+fn replace_leading_zeros(id: &str) -> Cow<str> {
+    if id.is_empty() || matches!(id.chars().next(), Some(c) if c != '0') {
+        return id.into();
     }
+    let idx = match id.char_indices().find(|(_, c)| c != &'0') {
+        None => id.len() - 1,
+        Some((idx, _)) => idx,
+    };
+    let mut ret = " ".repeat(idx);
+    ret.push_str(&id[idx..]);
+    ret.into()
 }
 
-fn transpose(availability: Vec<Vec<HourlyTableInfo>>) -> Result<Vec<TableInfo>, Box<dyn Error>> {
-    let mut map = HashMap::new();
-    if let Some(tables) = availability.first() {
-        for table in tables {
-            map.insert(
-                &table.value,
-                TableInfo {
-                    value: table.value.clone(),
-                    availability: vec![],
-                },
-            );
-        }
-    }
-    for tables in &availability {
-        if tables.len() != map.len() {
-            return Err(Box::new(BoardowaError(String::from(
-                "Internal error: unexpected table",
-            ))));
-        }
-        for table in tables {
-            map.get_mut(&table.value)
-                .ok_or("Missing table")?
-                .availability
-                .push(table.available);
-        }
-    }
-    Ok(map.into_values().collect())
-}
-
-fn rank_tables(tables: Vec<TableInfo>) -> Vec<AvailabilityRange> {
-    let mut heap = BinaryHeap::new();
-    for table in tables {
-        for range in table.availability_ranges() {
-            heap.push(range);
-        }
-    }
-    heap.into_sorted_vec()
+fn format_time(start: usize, index: usize) -> String {
+    let hour = index / 2 + start;
+    let minutes = if index % 2 == 0 { 0 } else { 30 };
+    format!("{:02}:{:02}", hour, minutes)
 }
