@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-async-trait = "0.1.60"
+async-trait = "0.1.64"
 chrono = { version = "0.4.23", features = ["serde"] }
 image = { version = "0.24.5", default-features = false, features = ["png"] }
 reqwest = "0.11.13"
