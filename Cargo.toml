@@ -7,7 +7,7 @@ edition = "2018"
 async-trait = "0.1.60"
 chrono = { version = "0.4.23", features = ["serde"] }
 image = { version = "0.24.5", default-features = false, features = ["png"] }
-reqwest = "0.11.13"
+reqwest = "0.11.14"
 riichi_hand = "0.2.0"
 scraper = "0.14.0"
 selectors = "0.22.0"
