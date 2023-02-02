@@ -1,8 +1,9 @@
+use std::error::Error;
+use std::fmt::Display;
+
 use serde::de::Error as SerdeError;
 use serde::de::{Unexpected, Visitor};
 use serde::{Deserialize, Deserializer};
-use std::error::Error;
-use std::fmt::Display;
 
 #[derive(Debug, Deserialize)]
 pub struct TableInfo {

@@ -51,7 +51,7 @@ impl SlashCommand for BoardowaCommand {
             .create_option(|option| {
                 option
                     .name(DAY_OPTION)
-                    .description("Day of month you want to know about. ")
+                    .description("Day of month you want to know about.")
                     .kind(CommandOptionType::Integer)
                     .min_int_value(1)
                     .max_int_value(31)
@@ -89,8 +89,8 @@ impl SlashCommand for BoardowaCommand {
                 get_tables_info(
                     &client,
                     day_adjusted,
-                    format!("{:02}:01", t),
-                    format!("{:02}:30", t),
+                    format!("{t:02}:01"),
+                    format!("{t:02}:30"),
                 )
                 .await?,
             );
@@ -98,7 +98,7 @@ impl SlashCommand for BoardowaCommand {
                 get_tables_info(
                     &client,
                     day_adjusted,
-                    format!("{:02}:31", t),
+                    format!("{t:02}:31"),
                     format!("{:02}:00", t + 1),
                 )
                 .await?,
@@ -110,7 +110,7 @@ impl SlashCommand for BoardowaCommand {
         let format_time = |idx| {
             let hour: usize = idx / 2 + (opening.from as usize);
             let minutes = if idx % 2 == 0 { 0 } else { 30 };
-            format!("{:02}:{:02}", hour, minutes)
+            format!("{hour:02}:{minutes:02}")
         };
 
         let mut message = format!(
