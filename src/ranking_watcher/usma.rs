@@ -147,7 +147,7 @@ fn parse_diff_column(diff_column: &ElementRef) -> Result<PositionChangeInfo> {
                 Ok(PositionChangeInfo::New)
             } else {
                 Err(Box::new(ParseError {
-                    message: format!("Unexpected element without expected classes: {:?}", element),
+                    message: format!("Unexpected element without expected classes: {element:?}"),
                 }))
             }
         }
@@ -192,10 +192,7 @@ async fn get_ranking_impl() -> Result<Ranking> {
     let body = reqwest::get(RANKING_URL).await?.text().await?;
     let html = Html::parse_document(body.as_str());
     let table = select_one!("table tbody", html)?;
-    let entries: Result<Vec<RankingEntry>> = select_all!("tr", table)
-        .into_iter()
-        .map(parse_row)
-        .collect();
+    let entries: Result<Vec<RankingEntry>> = select_all!("tr", table).map(parse_row).collect();
     Ok(Ranking(entries?))
 }
 

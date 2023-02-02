@@ -1,6 +1,7 @@
+use std::error::Error;
+
 use chrono::NaiveDate;
 use reqwest::Client;
-use std::error::Error;
 
 pub mod models;
 
@@ -31,7 +32,7 @@ pub async fn get_tables_info(
         .get(API_TABLES_URL)
         .query(&[
             ("date", at.format(DATE_FORMAT).to_string()),
-            ("time", format!("{}-{}", from, to)),
+            ("time", format!("{from}-{to}")),
         ])
         .send()
         .await?

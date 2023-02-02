@@ -72,7 +72,7 @@ impl SlashCommand for HandCommand {
             YELLOW_TILE_SET => Ok(TileStyle::Yellow),
             RED_TILE_SET => Ok(TileStyle::Red),
             BLACK_TILE_SET => Ok(TileStyle::Black),
-            _ => Err(format!("Invalid tile set: {}", tile_set)),
+            _ => Err(format!("Invalid tile set: {tile_set}")),
         }?;
 
         let image = chombot.render_hand(hand, render_tile_set).await?;

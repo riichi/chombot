@@ -54,7 +54,7 @@ impl Kcc3Client {
         let mut headers = HeaderMap::new();
         headers.insert(
             "Authorization",
-            HeaderValue::from_str(&format!("Token {}", auth_token))
+            HeaderValue::from_str(&format!("Token {auth_token}"))
                 .expect("Invalid auth token value"),
         );
         let client = reqwest::ClientBuilder::new()
