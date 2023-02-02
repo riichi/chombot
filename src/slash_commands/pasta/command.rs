@@ -63,7 +63,7 @@ impl SlashCommand for PastaCommand {
             JGAMESCON_PASTA_OPTION => Ok(JGAMESCON_PASTA),
             TANJALO_PASTA_OPTION => Ok(TANJALO_PASTA),
             STOWARZYSZENIE_PASTA_OPTION => Ok(STOWARZYSZENIE_PASTA),
-            _ => Err(format!("Invalid pasta: {}", pasta_option)),
+            _ => Err(format!("Invalid pasta: {pasta_option}")),
         }?;
         let pasta_content = format!("{}\n||#pasta||", pasta.trim());
 

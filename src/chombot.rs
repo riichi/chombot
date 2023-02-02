@@ -36,8 +36,8 @@ impl From<HandParseError> for ChombotError {
 impl Display for ChombotError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChombotError::Kcc3ClientError(e) => write!(f, "KCC3 client error: {}", e),
-            ChombotError::HandParserError(e) => write!(f, "Hand parse error: {}", e),
+            ChombotError::Kcc3ClientError(e) => write!(f, "KCC3 client error: {e}"),
+            ChombotError::HandParserError(e) => write!(f, "Hand parse error: {e}"),
         }
     }
 }

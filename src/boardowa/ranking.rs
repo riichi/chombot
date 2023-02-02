@@ -101,12 +101,12 @@ impl RankingProvider {
         for t in between.from..between.to {
             ret.push(
                 self.api
-                    .get_tables_info(date, format!("{:02}:01", t), format!("{:02}:30", t))
+                    .get_tables_info(date, format!("{t:02}:01"), format!("{t:02}:30"))
                     .await?,
             );
             ret.push(
                 self.api
-                    .get_tables_info(date, format!("{:02}:31", t), format!("{:02}:00", t + 1))
+                    .get_tables_info(date, format!("{t:02}:31"), format!("{:02}:00", t + 1))
                     .await?,
             );
         }

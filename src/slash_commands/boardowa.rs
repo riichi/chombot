@@ -54,8 +54,7 @@ impl SlashCommand for BoardowaCommand {
                 option
                     .name(COUNT_OPTION)
                     .description(format!(
-                        "How many possibilities? (at most) (default is {})",
-                        DEFAULT_COUNT
+                        "How many possibilities? (at most) (default is {DEFAULT_COUNT})"
                     ))
                     .kind(CommandOptionType::Integer)
                     .min_int_value(1)
@@ -200,5 +199,5 @@ fn replace_leading_zeros(id: &str) -> Cow<str> {
 fn format_time(start: usize, index: usize) -> String {
     let hour = index / 2 + start;
     let minutes = if index % 2 == 0 { 0 } else { 30 };
-    format!("{:02}:{:02}", hour, minutes)
+    format!("{hour:02}:{minutes:02}")
 }

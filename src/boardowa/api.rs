@@ -39,7 +39,7 @@ impl BoardowaAPIAdapter {
             .get(Self::API_TABLES_URL)
             .query(&[
                 ("date", at.format(Self::DATE_FORMAT).to_string()),
-                ("time", format!("{}-{}", from, to)),
+                ("time", format!("{from}-{to}")),
             ])
             .send()
             .await?
