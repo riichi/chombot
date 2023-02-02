@@ -35,12 +35,9 @@ impl ChannelMessageNotifier {
 
     fn format_points_delta(p: &PositionChangeInfo) -> String {
         match *p {
-            PositionChangeInfo::Diff(delta) => match delta {
-                d if d < 0 => format!(" ({d})"),
-                d if d > 0 => format!(" (+{d})"),
-                _ => String::from(""),
-            },
-            PositionChangeInfo::New => String::from(""),
+            PositionChangeInfo::Diff(d) if d < 0 => format!(" ({d})"),
+            PositionChangeInfo::Diff(d) if d > 0 => format!(" (+{d})"),
+            _ => String::from(""),
         }
     }
 
