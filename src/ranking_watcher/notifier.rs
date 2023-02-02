@@ -22,14 +22,25 @@ impl ChannelMessageNotifier {
         }
     }
 
-    fn format_delta(p: &PositionChangeInfo) -> String {
+    fn format_position_delta(p: &PositionChangeInfo) -> String {
         match *p {
             PositionChangeInfo::Diff(delta) => match delta {
-                d if d < 0 => format!("({d})"),
-                d if d > 0 => format!("(+{d})"),
+                d if d < 0 => format!(" (↓{})", -d),
+                d if d > 0 => format!(" (↑{d})"),
                 _ => String::from(""),
             },
-            PositionChangeInfo::New => String::from("(NEW)"),
+            PositionChangeInfo::New => String::from(" (NEW)"),
+        }
+    }
+
+    fn format_points_delta(p: &PositionChangeInfo) -> String {
+        match *p {
+            PositionChangeInfo::Diff(delta) => match delta {
+                d if d < 0 => format!(" ({d})"),
+                d if d > 0 => format!(" (+{d})"),
+                _ => String::from(""),
+            },
+            PositionChangeInfo::New => String::from(""),
         }
     }
 
@@ -42,10 +53,10 @@ impl ChannelMessageNotifier {
                 format!(
                     "• {}{} / {} / {}{} pkt",
                     e.pos,
-                    Self::format_delta(&e.pos_diff),
+                    Self::format_position_delta(&e.pos_diff),
                     e.name,
                     e.points,
-                    Self::format_delta(&e.points_diff)
+                    Self::format_points_delta(&e.points_diff)
                 )
             })
             .collect::<Vec<String>>();
