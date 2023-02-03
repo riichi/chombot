@@ -184,16 +184,15 @@ fn format_table(range: &AvailabilityRange, opening: &TimeRange) -> String {
 }
 
 fn replace_leading_zeros(id: &str) -> Cow<str> {
-    if id.is_empty() || matches!(id.chars().next(), Some(c) if c != '0') {
-        return id.into();
+    let trimmed = id.trim_start_matches('0');
+    match id.len() - trimmed.len() {
+        0 => id.into(),
+        padding => {
+            let mut ret = " ".repeat(padding);
+            ret.push_str(trimmed);
+            ret.into()
+        }
     }
-    let idx = match id.char_indices().find(|(_, c)| c != &'0') {
-        None => id.len() - 1,
-        Some((idx, _)) => idx,
-    };
-    let mut ret = " ".repeat(idx);
-    ret.push_str(&id[idx..]);
-    ret.into()
 }
 
 fn format_time(start: usize, index: usize) -> String {
