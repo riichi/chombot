@@ -52,6 +52,14 @@ impl<'de> Deserialize<'de> for TimeRange {
     {
         struct TimeRangeVisitor;
 
+        impl TimeRangeVisitor {
+            fn try_parse_fragment<E: SerdeError>(&self, fragment: &str) -> Result<u8, E> {
+                fragment
+                    .parse()
+                    .map_err(|_| E::invalid_value(Unexpected::Str(fragment), self))
+            }
+        }
+
         impl<'de> Visitor<'de> for TimeRangeVisitor {
             type Value = TimeRange;
 
@@ -66,12 +74,8 @@ impl<'de> Deserialize<'de> for TimeRange {
                 match v.split_once('-') {
                     None => Err(E::invalid_value(Unexpected::Str(v), &self)),
                     Some((from, to)) => {
-                        let from: u8 = from
-                            .parse()
-                            .map_err(|_| E::invalid_value(Unexpected::Str(v), &self))?;
-                        let to: u8 = to
-                            .parse::<u8>()
-                            .map_err(|_| E::invalid_value(Unexpected::Str(v), &self))?;
+                        let from: u8 = self.try_parse_fragment(from)?;
+                        let to = self.try_parse_fragment(to)?;
                         Ok(Self::Value { from, to })
                     }
                 }
