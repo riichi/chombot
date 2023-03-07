@@ -4,8 +4,7 @@ use std::fmt::Display;
 use std::result;
 
 use reqwest;
-use scraper::{node::Element, node::Node, ElementRef, Html, Selector};
-use selectors::attr::CaseSensitivity;
+use scraper::{node::Element, node::Node, CaseSensitivity, ElementRef, Html, Selector};
 
 const RANKING_URL: &str = "https://ranking.cvgo.re/";
 
