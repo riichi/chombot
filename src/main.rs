@@ -20,7 +20,6 @@ use crate::ranking_watcher::usma::get_ranking;
 use crate::ranking_watcher::RankingWatcher;
 use crate::slash_commands::SlashCommands;
 
-mod boardowa;
 mod chombot;
 mod data;
 mod kcc3;

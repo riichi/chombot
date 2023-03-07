@@ -23,18 +23,6 @@ pub fn get_string_option<'a>(
     None
 }
 
-pub fn get_int_option<'a>(
-    options: &'a [CommandDataOption],
-    option_name: &'static str,
-) -> Option<&'a i64> {
-    if let Some(option) = get_option(options, option_name) {
-        if let Some(CommandDataOptionValue::Integer(value)) = &option.resolved {
-            return Some(value);
-        }
-    }
-    None
-}
-
 pub fn get_user_option<'a>(
     options: &'a [CommandDataOption],
     option_name: &'static str,
