@@ -6,6 +6,7 @@ use serenity::client::Context;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 
+use crate::args::Arguments;
 use crate::slash_commands::chombo::ChomboCommand;
 use crate::slash_commands::hand::HandCommand;
 use crate::slash_commands::pasta::PastaCommand;
@@ -35,18 +36,19 @@ pub struct SlashCommands {
 }
 
 impl SlashCommands {
-    pub fn new() -> Self {
+    pub fn new(args: &Arguments) -> Self {
         Self {
-            commands: Self::get_slash_commands(),
+            commands: Self::get_slash_commands(args),
         }
     }
 
-    fn get_slash_commands() -> Vec<Box<dyn SlashCommand>> {
-        vec![
-            Box::new(ChomboCommand::new()),
-            Box::new(HandCommand::new()),
-            Box::new(PastaCommand::new()),
-        ]
+    fn get_slash_commands(args: &Arguments) -> Vec<Box<dyn SlashCommand>> {
+        let mut ret: Vec<Box<dyn SlashCommand>> =
+            vec![Box::new(HandCommand::new()), Box::new(PastaCommand::new())];
+        if args.feature_kcc3 {
+            ret.push(Box::new(ChomboCommand::new()))
+        }
+        ret
     }
 
     pub fn register_commands(&self, commands: &mut CreateApplicationCommands) {

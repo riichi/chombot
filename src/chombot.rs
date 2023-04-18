@@ -19,6 +19,7 @@ use crate::Kcc3Client;
 pub enum ChombotError {
     Kcc3ClientError(Kcc3ClientError),
     HandParserError(HandParseError),
+    Kcc3ClientNotAvailable,
 }
 
 impl From<Kcc3ClientError> for ChombotError {
@@ -36,8 +37,9 @@ impl From<HandParseError> for ChombotError {
 impl Display for ChombotError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChombotError::Kcc3ClientError(e) => write!(f, "KCC3 client error: {e}"),
-            ChombotError::HandParserError(e) => write!(f, "Hand parse error: {e}"),
+            Self::Kcc3ClientError(e) => write!(f, "KCC3 client error: {e}"),
+            Self::HandParserError(e) => write!(f, "Hand parse error: {e}"),
+            Self::Kcc3ClientNotAvailable => write!(f, "KCC3 feature disabled"),
         }
     }
 }
@@ -45,8 +47,9 @@ impl Display for ChombotError {
 impl Error for ChombotError {
     fn cause(&self) -> Option<&dyn Error> {
         match self {
-            ChombotError::Kcc3ClientError(e) => Some(e),
-            ChombotError::HandParserError(e) => Some(e),
+            Self::Kcc3ClientError(e) => Some(e),
+            Self::HandParserError(e) => Some(e),
+            Self::Kcc3ClientNotAvailable => None,
         }
     }
 }
@@ -60,12 +63,18 @@ pub enum TileStyle {
 }
 
 pub struct Chombot {
-    kcc3client: Kcc3Client,
+    kcc3client: Option<Kcc3Client>,
 }
 
 impl Chombot {
-    pub fn new(kcc3client: Kcc3Client) -> Self {
+    pub fn new(kcc3client: Option<Kcc3Client>) -> Self {
         Self { kcc3client }
+    }
+
+    fn get_client(&self) -> ChombotResult<&Kcc3Client> {
+        self.kcc3client
+            .as_ref()
+            .ok_or(ChombotError::Kcc3ClientNotAvailable)
     }
 
     pub async fn add_chombo_for_player<P, F>(
@@ -78,22 +87,24 @@ impl Chombot {
         P: Fn(&Player) -> bool,
         F: Fn() -> Player,
     {
-        let players = self.kcc3client.get_players().await?;
+        let client = self.get_client()?;
+        let players = client.get_players().await?;
         let maybe_player = players.into_iter().find(predicate);
 
         let player = if let Some(player) = maybe_player {
             player
         } else {
-            self.kcc3client.add_player(&create_new()).await?
+            client.add_player(&create_new()).await?
         };
 
         let chombo = Chombo::new(Utc::now(), &player.id, comment);
-        Ok(self.kcc3client.add_chombo(&chombo).await?)
+        Ok(client.add_chombo(&chombo).await?)
     }
 
     pub async fn create_chombo_ranking(&self) -> ChombotResult<Vec<(Player, usize)>> {
-        let players_fut = self.kcc3client.get_players();
-        let chombos_fut = self.kcc3client.get_chombos();
+        let client = self.get_client()?;
+        let players_fut = client.get_players();
+        let chombos_fut = client.get_chombos();
         let (players, chombos) = try_join!(players_fut, chombos_fut)?;
 
         let mut player_map: HashMap<PlayerId, Player> =
@@ -113,8 +124,9 @@ impl Chombot {
     }
 
     pub async fn get_chombo_list(&self) -> ChombotResult<Vec<(Player, Chombo)>> {
-        let players_fut = self.kcc3client.get_players();
-        let chombos_fut = self.kcc3client.get_chombos();
+        let client = self.get_client()?;
+        let players_fut = client.get_players();
+        let chombos_fut = client.get_chombos();
         let (players, mut chombos) = try_join!(players_fut, chombos_fut)?;
 
         let player_map: HashMap<PlayerId, Player> =
