@@ -43,10 +43,12 @@ impl SlashCommands {
     }
 
     fn get_slash_commands(args: &Arguments) -> Vec<Box<dyn SlashCommand>> {
-        let mut ret: Vec<Box<dyn SlashCommand>> =
-            vec![Box::new(HandCommand::new()), Box::new(PastaCommand::new())];
+        let mut ret: Vec<Box<dyn SlashCommand>> = vec![Box::new(HandCommand::new())];
+        if args.feature_pasta {
+            ret.push(Box::new(PastaCommand::new()));
+        }
         if args.feature_kcc3 {
-            ret.push(Box::new(ChomboCommand::new()))
+            ret.push(Box::new(ChomboCommand::new()));
         }
         ret
     }

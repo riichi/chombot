@@ -28,4 +28,8 @@ pub struct Arguments {
     /// KCC3 API token
     #[arg(long, env)]
     pub kcc3_token: Option<String>,
+
+    /// Enable pasta slash command (hermeric humour warning)
+    #[arg(long, env, default_value_t = false)]
+    pub feature_pasta: bool,
 }
