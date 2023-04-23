@@ -30,7 +30,7 @@ impl Kcc3ClientError {
     }
 }
 
-type Kcc3ClientResult<T> = Result<T, Kcc3ClientError>;
+pub type Kcc3ClientResult<T> = Result<T, Kcc3ClientError>;
 
 impl Display for Kcc3ClientError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

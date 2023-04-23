@@ -1,25 +1,25 @@
-use std::env;
-
-use serenity::model::channel::Message;
-use serenity::model::id::ChannelId;
+use clap::Parser;
 use serenity::{
     async_trait,
     model::{
         application::interaction::Interaction,
+        channel::Message,
         gateway::{GatewayIntents, Ready},
-        id::GuildId,
+        id::{ChannelId, GuildId},
     },
     prelude::*,
 };
 
+use crate::args::Arguments;
 use crate::chombot::Chombot;
 use crate::kcc3::data_types::{Chombo, DiscordId, Player, PlayerId};
-use crate::kcc3::Kcc3Client;
+use crate::kcc3::{Kcc3Client, Kcc3ClientResult};
 use crate::ranking_watcher::notifier::ChannelMessageNotifier;
 use crate::ranking_watcher::usma::get_ranking;
 use crate::ranking_watcher::RankingWatcher;
 use crate::slash_commands::SlashCommands;
 
+mod args;
 mod chombot;
 mod data;
 mod kcc3;
@@ -31,32 +31,70 @@ const AT_EVERYONE_REACTIONS: [&str; 2] = ["Ichiangry", "Mikiknife"];
 struct Handler {
     chombot: Chombot,
     slash_commands: SlashCommands,
+    args: Arguments,
+}
+
+struct HandlerState {
+    ranking_watcher_started: bool,
+}
+
+impl TypeMapKey for HandlerState {
+    type Value = Self;
 }
 
 impl Handler {
-    pub fn new(chombot: Chombot) -> Self {
+    pub fn new(chombot: Chombot, args: Arguments) -> Self {
         Self {
             chombot,
-            slash_commands: SlashCommands::new(),
+            slash_commands: SlashCommands::new(&args),
+            args,
         }
     }
-}
 
-async fn start_ranking_watcher(ctx: Context) {
-    let ranking_watcher_channel_id = ChannelId(
-        env::var("RANKING_WATCHER_CHANNEL_ID")
-            .expect("Expected RANKING_WATCHER_CHANNEL_ID in environment")
-            .parse()
-            .expect("RANKING_WATCHER_CHANNEL_ID must be an integer"),
-    );
-    let notifier = ChannelMessageNotifier::new(
-        ranking_watcher_channel_id,
-        ctx,
-        String::from("https://ranking.cvgo.re/ ranking update"),
-    );
-    tokio::spawn(async move {
-        RankingWatcher::new(notifier, get_ranking).run().await;
-    });
+    async fn update_state<F, R>(ctx: &Context, callback: F) -> R
+    where
+        F: FnOnce(&mut HandlerState) -> R,
+    {
+        let mut data = ctx.data.write().await;
+        match data.get_mut::<HandlerState>() {
+            None => {
+                let mut state = HandlerState {
+                    ranking_watcher_started: false,
+                };
+                let ret = callback(&mut state);
+                data.insert::<HandlerState>(state);
+                ret
+            }
+            Some(state) => callback(state),
+        }
+    }
+
+    async fn start_ranking_watcher(&self, ctx: Context) {
+        if !self.args.feature_ranking_watcher {
+            return;
+        }
+        let ranking_watcher_started = Self::update_state(&ctx, |state| {
+            let ret = state.ranking_watcher_started;
+            state.ranking_watcher_started = true;
+            ret
+        })
+        .await;
+        if ranking_watcher_started {
+            return;
+        }
+        let ranking_watcher_channel_id = self
+            .args
+            .ranking_watcher_channel_id
+            .expect("Ranking watcher feature enabled but no channel ID provided");
+        let notifier = ChannelMessageNotifier::new(
+            ChannelId(ranking_watcher_channel_id),
+            ctx,
+            String::from("https://ranking.cvgo.re/ ranking update"),
+        );
+        tokio::spawn(async move {
+            RankingWatcher::new(notifier, get_ranking).run().await;
+        });
+    }
 }
 
 #[async_trait]
@@ -84,42 +122,45 @@ impl EventHandler for Handler {
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
+        self.start_ranking_watcher(ctx.clone()).await;
+
         println!("{} is connected!", ready.user.name);
 
-        let guild_id = GuildId(
-            env::var("GUILD_ID")
-                .expect("Expected GUILD_ID in environment")
-                .parse()
-                .expect("GUILD_ID must be an integer"),
-        );
-
-        GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+        GuildId::set_application_commands(&GuildId(self.args.guild_id), &ctx.http, |commands| {
             self.slash_commands.register_commands(commands);
             commands
         })
         .await
         .unwrap();
-
-        start_ranking_watcher(ctx.clone()).await;
     }
+}
+
+fn get_kcc3_client(args: &Arguments) -> Kcc3ClientResult<Option<kcc3::Kcc3Client>> {
+    if !args.feature_kcc3 {
+        return Ok(None);
+    }
+    let url = args
+        .kcc3_url
+        .as_ref()
+        .expect("KCC3 feature enabled but no URL provided");
+    let token = args
+        .kcc3_token
+        .as_ref()
+        .expect("KCC3 feature enabled but no token provided");
+    Ok(Some(kcc3::Kcc3Client::new(url.clone(), token)?))
 }
 
 #[tokio::main]
 async fn main() {
-    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    let args = Arguments::parse();
 
-    let application_id: u64 = env::var("APPLICATION_ID")
-        .expect("Expected an application id in the environment")
-        .parse()
-        .expect("application id is not a valid id");
+    let kcc3_client = get_kcc3_client(&args).unwrap();
+    let chombot = chombot::Chombot::new(kcc3_client);
 
-    let kcc3_url = env::var("KCC3_URL").expect("Expected KCC3 URL in the environment");
-    let kcc3_token = env::var("KCC3_TOKEN").expect("Expected KCC3 token in the environment");
-    let kcc3client = kcc3::Kcc3Client::new(kcc3_url, &kcc3_token).unwrap();
-    let chombot = chombot::Chombot::new(kcc3client);
-
-    let handler = Handler::new(chombot);
-    let mut client = Client::builder(token, GatewayIntents::non_privileged())
+    let discord_token = args.discord_token.clone();
+    let application_id = args.application_id;
+    let handler = Handler::new(chombot, args);
+    let mut client = Client::builder(discord_token, GatewayIntents::non_privileged())
         .event_handler(handler)
         .application_id(application_id)
         .await
