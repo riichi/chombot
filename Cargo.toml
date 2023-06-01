@@ -7,7 +7,7 @@ edition = "2021"
 async-trait = "0.1.68"
 chrono = { version = "0.4.24", features = ["serde"] }
 image = { version = "0.24.6", default-features = false, features = ["png"] }
-reqwest = "0.11.17"
+reqwest = "0.11.18"
 riichi_hand = "0.2.0"
 scraper = "0.16.0"
 serde = "1.0.160"
