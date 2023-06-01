@@ -8,7 +8,7 @@ use riichi_hand::parser::{HandParseError, HandParser};
 use riichi_hand::raster_renderer::fluffy_stuff_tile_sets::{
     BLACK_FLUFFY_STUFF_TILE_SET, RED_FLUFFY_STUFF_TILE_SET, YELLOW_FLUFFY_STUFF_TILE_SET,
 };
-use riichi_hand::raster_renderer::{RasterRenderer, RenderOptions};
+use riichi_hand::raster_renderer::{HandRenderError, RasterRenderer, RenderOptions};
 use tokio::try_join;
 
 use crate::kcc3::data_types::{Chombo, Player, PlayerId};
@@ -19,6 +19,7 @@ use crate::Kcc3Client;
 pub enum ChombotError {
     Kcc3ClientError(Kcc3ClientError),
     HandParserError(HandParseError),
+    HandRenderingError(HandRenderError),
     Kcc3ClientNotAvailable,
 }
 
@@ -34,11 +35,18 @@ impl From<HandParseError> for ChombotError {
     }
 }
 
+impl From<HandRenderError> for ChombotError {
+    fn from(e: HandRenderError) -> Self {
+        Self::HandRenderingError(e)
+    }
+}
+
 impl Display for ChombotError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Kcc3ClientError(e) => write!(f, "KCC3 client error: {e}"),
             Self::HandParserError(e) => write!(f, "Hand parse error: {e}"),
+            Self::HandRenderingError(e) => write!(f, "Hand rendering error: {e}"),
             Self::Kcc3ClientNotAvailable => write!(f, "KCC3 feature disabled"),
         }
     }
@@ -49,6 +57,7 @@ impl Error for ChombotError {
         match self {
             Self::Kcc3ClientError(e) => Some(e),
             Self::HandParserError(e) => Some(e),
+            Self::HandRenderingError(e) => Some(e),
             Self::Kcc3ClientNotAvailable => None,
         }
     }
@@ -149,8 +158,10 @@ impl Chombot {
         };
 
         let hand = HandParser::parse(hand)?;
-        let image = RasterRenderer::render(&hand, tile_set, RenderOptions::default());
-
-        Ok(image)
+        Ok(RasterRenderer::render(
+            &hand,
+            tile_set,
+            RenderOptions::default(),
+        )?)
     }
 }
