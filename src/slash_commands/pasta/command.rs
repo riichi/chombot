@@ -18,6 +18,8 @@ const TANJALO_PASTA_OPTION: &str = "tanjalo";
 const TANJALO_PASTA: &str = include_str!("tanjalo.txt");
 const STOWARZYSZENIE_PASTA_OPTION: &str = "stowarzyszenie";
 const STOWARZYSZENIE_PASTA: &str = include_str!("stowarzyszenie.txt");
+const YOSTAR_PASTA_OPTION: &str = "yostar";
+const YOSTAR_PASTA: &str = include_str!("yostar.txt");
 
 pub struct PastaCommand;
 
@@ -47,6 +49,7 @@ impl SlashCommand for PastaCommand {
                         "Tylko nie zakładajcie mu stowarzyszenia",
                         STOWARZYSZENIE_PASTA_OPTION,
                     )
+                    .add_string_choice("Yostar rant", YOSTAR_PASTA_OPTION)
                     .required(true)
             });
     }
@@ -63,6 +66,7 @@ impl SlashCommand for PastaCommand {
             JGAMESCON_PASTA_OPTION => Ok(JGAMESCON_PASTA),
             TANJALO_PASTA_OPTION => Ok(TANJALO_PASTA),
             STOWARZYSZENIE_PASTA_OPTION => Ok(STOWARZYSZENIE_PASTA),
+            YOSTAR_PASTA_OPTION => Ok(YOSTAR_PASTA),
             _ => Err(format!("Invalid pasta: {pasta_option}")),
         }?;
         let pasta_content = format!("{}\n||#pasta||", pasta.trim());
