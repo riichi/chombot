@@ -91,7 +91,7 @@ impl SlashCommand for HandCommand {
 
         command
             .edit_original_interaction_response(&ctx.http, |response| {
-                response.content("<:Ichiwink:982315838617038950>")
+                response.content("<:Ichiwink:591396074141515776>")
             })
             .await?;
 
