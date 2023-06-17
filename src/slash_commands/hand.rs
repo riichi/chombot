@@ -20,6 +20,7 @@ const TILE_STYLE_OPTION: &str = "tileset";
 const YELLOW_TILE_SET: &str = "yellow";
 const RED_TILE_SET: &str = "red";
 const BLACK_TILE_SET: &str = "black";
+const MARTIN_PERSSON_TILE_SET: &str = "martin-persson";
 const DEFAULT_TILE_SET: &str = YELLOW_TILE_SET;
 
 pub struct HandCommand;
@@ -54,6 +55,7 @@ impl SlashCommand for HandCommand {
                     .add_string_choice("Yellow", YELLOW_TILE_SET)
                     .add_string_choice("Red", RED_TILE_SET)
                     .add_string_choice("Black", BLACK_TILE_SET)
+                    .add_string_choice("Martin Persson", MARTIN_PERSSON_TILE_SET)
                     .required(false)
             });
     }
@@ -72,6 +74,7 @@ impl SlashCommand for HandCommand {
             YELLOW_TILE_SET => Ok(TileStyle::Yellow),
             RED_TILE_SET => Ok(TileStyle::Red),
             BLACK_TILE_SET => Ok(TileStyle::Black),
+            MARTIN_PERSSON_TILE_SET => Ok(TileStyle::MartinPersson),
             _ => Err(format!("Invalid tile set: {tile_set}")),
         }?;
 
