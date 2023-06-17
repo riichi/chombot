@@ -1,4 +1,5 @@
 use clap::Parser;
+use log::{info, LevelFilter};
 use serenity::{
     async_trait,
     model::{
@@ -124,7 +125,7 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         self.start_ranking_watcher(ctx.clone()).await;
 
-        println!("{} is connected!", ready.user.name);
+        info!("{} is connected!", ready.user.name);
 
         GuildId::set_application_commands(&GuildId(self.args.guild_id), &ctx.http, |commands| {
             self.slash_commands.register_commands(commands);
@@ -152,6 +153,10 @@ fn get_kcc3_client(args: &Arguments) -> Kcc3ClientResult<Option<kcc3::Kcc3Client
 
 #[tokio::main]
 async fn main() {
+    env_logger::builder()
+        .filter_module("chombot", LevelFilter::Info)
+        .init();
+
     let args = Arguments::parse();
 
     let kcc3_client = get_kcc3_client(&args).unwrap();
@@ -167,6 +172,6 @@ async fn main() {
         .expect("Error creating client");
 
     if let Err(why) = client.start().await {
-        println!("Client error: {why:?}");
+        info!("Client error: {why:?}");
     }
 }
