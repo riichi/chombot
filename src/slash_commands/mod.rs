@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use async_trait::async_trait;
+use log::info;
 use serenity::builder::{CreateApplicationCommand, CreateApplicationCommands};
 use serenity::client::Context;
 use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
@@ -79,7 +80,7 @@ impl SlashCommands {
             .await;
 
         if let Err(err) = error_response_result {
-            println!("Could not set error response: {err:?}");
+            info!("Could not set error response: {err:?}");
         }
     }
 
@@ -91,7 +92,7 @@ impl SlashCommands {
         requested_command_name: &str,
     ) -> Result<(), String> {
         if let Err(e) = slash_command.handle(ctx, command, chombot).await {
-            println!("Handler error for command {requested_command_name}: {e:?}");
+            info!("Handler error for command {requested_command_name}: {e:?}");
             Err(format!("Could not generate response:\n```\n{e}\n```"))
         } else {
             Ok(())
@@ -106,7 +107,7 @@ impl SlashCommands {
                 })
                 .await;
             if let Err(e) = deferred_result {
-                println!("Could not create deferred response: {e:?}");
+                info!("Could not create deferred response: {e:?}");
                 return;
             }
 
@@ -125,7 +126,7 @@ impl SlashCommands {
                     Self::set_error_message(&ctx, &command, msg.as_str()).await;
                 }
             } else {
-                println!("Invalid command received: {requested_command_name}");
+                info!("Invalid command received: {requested_command_name}");
             }
         }
     }

@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::future::Future;
 
+use log::info;
 use tokio::time::{sleep, Duration};
 
 use crate::ranking_watcher::notifier::RankingUpdateNotifier;
@@ -48,7 +49,7 @@ where
         match (self.get_next)().await {
             Ok(r) => Some(r),
             Err(e) => {
-                println!("Error when fetching ranking: {e:?}");
+                info!("Error when fetching ranking: {e:?}");
                 None
             }
         }
