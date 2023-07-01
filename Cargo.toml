@@ -9,7 +9,7 @@ chrono = { version = "0.4.26", features = ["serde"] }
 image = { version = "0.24.6", default-features = false, features = ["png"] }
 reqwest = "0.11.18"
 riichi_hand = "0.4.0"
-scraper = "0.16.0"
+scraper = "0.17.1"
 serde = "1.0.164"
 serenity = { version = "0.11.5", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "unstable_discord_api"] }
 tokio = { version = "1.28.2", features = ["macros", "rt-multi-thread"] }
