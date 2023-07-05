@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.71"
 async-trait = "0.1.71"
 chrono = { version = "0.4.26", features = ["serde"] }
 image = { version = "0.24.6", default-features = false, features = ["png"] }
@@ -18,6 +19,7 @@ clap = { version = "4.3.11", features = ["derive", "env"] }
 env_logger = "0.10.0"
 log = "0.4.19"
 num-bigint = "0.4.3"
+itertools = "0.11.0"
 
 [profile.release]
 lto = true

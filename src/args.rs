@@ -19,6 +19,13 @@ pub struct Arguments {
     #[arg(long, env)]
     pub ranking_watcher_channel_id: Option<u64>,
 
+    /// Enable tournaments watcher
+    #[arg(long, env, default_value_t = false)]
+    pub feature_tournaments_watcher: bool,
+    /// Tournaments watcher channel ID
+    #[arg(long, env)]
+    pub tournaments_watcher_channel_id: Option<u64>,
+
     /// Enable KCC3 features
     #[arg(long, env, default_value_t = false)]
     pub feature_kcc3: bool,

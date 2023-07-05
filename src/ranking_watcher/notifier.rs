@@ -1,11 +1,7 @@
 use serenity::{async_trait, client::Context, model::id::ChannelId};
 
+use crate::data_watcher::DataUpdateNotifier;
 use crate::ranking_watcher::usma::{PositionChangeInfo, Ranking};
-
-#[async_trait]
-pub trait RankingUpdateNotifier<R: Send + Sync> {
-    async fn notify(&self, ranking: &R);
-}
 
 pub struct ChannelMessageNotifier {
     channel_id: ChannelId,
@@ -64,11 +60,11 @@ impl ChannelMessageNotifier {
 }
 
 #[async_trait]
-impl RankingUpdateNotifier<Ranking> for ChannelMessageNotifier {
-    async fn notify(&self, ranking: &Ranking) {
+impl DataUpdateNotifier<Ranking> for ChannelMessageNotifier {
+    async fn notify(&self, _old_ranking: &Ranking, new_ranking: &Ranking) {
         self.channel_id
             .send_message(&self.ctx, |m| {
-                m.content(self.build_message(ranking).as_str())
+                m.content(self.build_message(new_ranking).as_str())
             })
             .await
             .unwrap();
