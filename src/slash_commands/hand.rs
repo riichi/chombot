@@ -23,6 +23,8 @@ const BLACK_TILE_SET: &str = "black";
 const MARTIN_PERSSON_TILE_SET: &str = "martin-persson";
 const DEFAULT_TILE_SET: &str = YELLOW_TILE_SET;
 
+const MAX_HAND_LENGTH: u16 = 150;
+
 pub struct HandCommand;
 
 impl HandCommand {
@@ -45,6 +47,7 @@ impl SlashCommand for HandCommand {
                     .name(HAND_OPTION)
                     .description("The hand to render")
                     .kind(CommandOptionType::String)
+                    .max_length(MAX_HAND_LENGTH)
                     .required(true)
             })
             .create_option(|option| {
