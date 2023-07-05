@@ -11,11 +11,13 @@ use crate::args::Arguments;
 use crate::slash_commands::chombo::ChomboCommand;
 use crate::slash_commands::hand::HandCommand;
 use crate::slash_commands::pasta::PastaCommand;
+use crate::slash_commands::score::ScoreCommand;
 use crate::Chombot;
 
 mod chombo;
 mod hand;
 mod pasta;
+mod score;
 mod utils;
 
 pub type SlashCommandResult = Result<(), Box<dyn Error>>;
@@ -44,7 +46,8 @@ impl SlashCommands {
     }
 
     fn get_slash_commands(args: &Arguments) -> Vec<Box<dyn SlashCommand>> {
-        let mut ret: Vec<Box<dyn SlashCommand>> = vec![Box::new(HandCommand::new())];
+        let mut ret: Vec<Box<dyn SlashCommand>> =
+            vec![Box::new(HandCommand::new()), Box::new(ScoreCommand::new())];
         if args.feature_pasta {
             ret.push(Box::new(PastaCommand::new()));
         }

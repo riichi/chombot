@@ -17,6 +17,7 @@ slug = "0.1.4"
 clap = { version = "4.3.11", features = ["derive", "env"] }
 env_logger = "0.10.0"
 log = "0.4.19"
+num-bigint = "0.4.3"
 
 [profile.release]
 lto = true
