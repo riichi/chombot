@@ -4,17 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-async-trait = "0.1.68"
+async-trait = "0.1.71"
 chrono = { version = "0.4.26", features = ["serde"] }
 image = { version = "0.24.6", default-features = false, features = ["png"] }
 reqwest = "0.11.18"
-riichi_hand = "0.4.0"
+riichi_hand = "0.5.0"
 scraper = "0.17.1"
-serde = "1.0.164"
+serde = "1.0.166"
 serenity = { version = "0.11.6", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "unstable_discord_api"] }
 tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
 slug = "0.1.4"
-clap = { version = "4.3.10", features = ["derive", "env"] }
+clap = { version = "4.3.11", features = ["derive", "env"] }
 env_logger = "0.10.0"
 log = "0.4.19"
 
