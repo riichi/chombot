@@ -91,8 +91,8 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
 
 #[async_trait]
 impl DataUpdateNotifier<Tournaments> for TournamentsChannelMessageNotifier {
-    async fn notify(&self, old_ranking: &Tournaments, new_ranking: &Tournaments) {
-        let diff = tournaments_diff(old_ranking, new_ranking);
+    async fn notify(&self, old_tournaments: &Tournaments, new_tournaments: &Tournaments) {
+        let diff = tournaments_diff(old_tournaments, new_tournaments);
 
         let channel_id = self.channel_id;
         let ctx = &self.ctx;

@@ -2,14 +2,16 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use itertools::Itertools;
 use scraper::{ElementRef, Html, Selector};
 
 use crate::scraping_utils::{cell_text, first_nonempty_text, select_all, select_one};
 
-const HEADER_CLASS_PREFIX: &str = "TCTT_contenuEntete";
 const CALENDAR_URL: &str = "http://mahjong-europe.org/ranking/Calendar.html";
+const HEADER_CLASS_PREFIX: &str = "TCTT_contenuEntete";
+const RCR_RULES_NAME: &str = "Riichi";
+const TABLE_COLUMN_NUM: usize = 6;
 
 macro_rules! diff_option_for {
     ($old_object:ident, $new_object:ident, $field_name:ident) => {
@@ -151,11 +153,10 @@ fn get_diff_option(value_old: &str, value_new: &str) -> Option<String> {
 pub fn parse_tournaments(body: &str) -> anyhow::Result<Tournaments> {
     let html = Html::parse_document(body);
     let table = select_one!(".Tableau_CertifiedTournament .TCTT_lignes", html)?;
-    let rows: Vec<_> = select_all!("div", table).collect();
 
     let mut last_header = String::new();
     let mut entries = Vec::new();
-    for row in rows {
+    for row in select_all!("div", table) {
         let cells: Vec<_> = select_all!("p", row).collect();
         if is_header(&cells) {
             last_header = first_nonempty_text(&cells[0])?.to_owned();
@@ -186,6 +187,13 @@ fn make_entry(last_header: &mut String, cells: Vec<ElementRef>) -> anyhow::Resul
         "".to_owned()
     };
     let texts = cells.iter().map(cell_text).collect::<Vec<_>>();
+    if texts.len() != TABLE_COLUMN_NUM {
+        bail!(
+            "Expected {} columns in the EMA tournaments table; got {}",
+            TABLE_COLUMN_NUM,
+            texts.len()
+        );
+    }
 
     let entry = TournamentEntry {
         name: texts[0].clone(),
@@ -198,8 +206,6 @@ fn make_entry(last_header: &mut String, cells: Vec<ElementRef>) -> anyhow::Resul
     };
     Ok(entry)
 }
-
-const RCR_RULES_NAME: &str = "Riichi";
 
 pub async fn get_rcr_tournaments() -> Result<Tournaments, TournamentsFetchError> {
     Ok(get_tournaments().await?.into_rcr_only())

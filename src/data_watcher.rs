@@ -77,6 +77,6 @@ where
 }
 
 #[async_trait]
-pub trait DataUpdateNotifier<R: Send + Sync> {
-    async fn notify(&self, old_ranking: &R, new_ranking: &R);
+pub trait DataUpdateNotifier<T: Send + Sync> {
+    async fn notify(&self, old_data: &T, new_data: &T);
 }
