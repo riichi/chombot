@@ -5,7 +5,8 @@ use std::result;
 
 use anyhow::anyhow;
 use reqwest;
-use scraper::{node::Element, node::Node, CaseSensitivity, ElementRef, Html, Selector};
+use scraper::node::{Element, Node};
+use scraper::{CaseSensitivity, ElementRef, Html, Selector};
 
 use crate::scraping_utils::{first_nonempty_text, select_all, select_one, unpack_children};
 

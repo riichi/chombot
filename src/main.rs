@@ -1,15 +1,11 @@
 use clap::Parser;
 use log::{info, LevelFilter};
-use serenity::{
-    async_trait,
-    model::{
-        application::interaction::Interaction,
-        channel::Message,
-        gateway::{GatewayIntents, Ready},
-        id::{ChannelId, GuildId},
-    },
-    prelude::*,
-};
+use serenity::async_trait;
+use serenity::model::application::interaction::Interaction;
+use serenity::model::channel::Message;
+use serenity::model::gateway::{GatewayIntents, Ready};
+use serenity::model::id::{ChannelId, GuildId};
+use serenity::prelude::*;
 
 use crate::args::Arguments;
 use crate::chombot::Chombot;

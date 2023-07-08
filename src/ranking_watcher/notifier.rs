@@ -1,4 +1,6 @@
-use serenity::{async_trait, client::Context, model::id::ChannelId};
+use serenity::async_trait;
+use serenity::client::Context;
+use serenity::model::id::ChannelId;
 
 use crate::data_watcher::DataUpdateNotifier;
 use crate::ranking_watcher::usma::{PositionChangeInfo, Ranking};
