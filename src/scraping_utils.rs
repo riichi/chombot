@@ -34,9 +34,7 @@ macro_rules! select_one {
     };
 }
 
-pub(crate) use select_all;
-pub(crate) use select_one;
-pub(crate) use unpack_children;
+pub(crate) use {select_all, select_one, unpack_children};
 
 pub(crate) fn first_nonempty_text<'a>(e: &'a ElementRef) -> anyhow::Result<&'a str> {
     let ret = e

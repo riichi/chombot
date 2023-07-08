@@ -4,11 +4,9 @@ use std::fmt::{Display, Formatter};
 
 use anyhow::anyhow;
 use itertools::Itertools;
-use scraper::Html;
-use scraper::{ElementRef, Selector};
+use scraper::{ElementRef, Html, Selector};
 
-use crate::scraping_utils::{cell_text, select_one};
-use crate::scraping_utils::{first_nonempty_text, select_all};
+use crate::scraping_utils::{cell_text, first_nonempty_text, select_all, select_one};
 
 const HEADER_CLASS_PREFIX: &str = "TCTT_contenuEntete";
 const CALENDAR_URL: &str = "http://mahjong-europe.org/ranking/Calendar.html";
