@@ -9,19 +9,25 @@ use serenity::prelude::*;
 
 use crate::args::Arguments;
 use crate::chombot::Chombot;
+use crate::data_watcher::DataWatcher;
 use crate::kcc3::data_types::{Chombo, DiscordId, Player, PlayerId};
 use crate::kcc3::{Kcc3Client, Kcc3ClientResult};
 use crate::ranking_watcher::notifier::ChannelMessageNotifier;
 use crate::ranking_watcher::usma::get_ranking;
-use crate::ranking_watcher::RankingWatcher;
 use crate::slash_commands::SlashCommands;
+use crate::tournaments_watcher::ema::get_rcr_tournaments;
+use crate::tournaments_watcher::notifier::TournamentsChannelMessageNotifier;
 
 mod args;
 mod chombot;
 mod data;
+mod data_watcher;
+mod discord_utils;
 mod kcc3;
 mod ranking_watcher;
+mod scraping_utils;
 mod slash_commands;
+mod tournaments_watcher;
 
 const AT_EVERYONE_REACTIONS: [&str; 2] = ["Ichiangry", "Mikiknife"];
 
@@ -33,6 +39,7 @@ struct Handler {
 
 struct HandlerState {
     ranking_watcher_started: bool,
+    tournaments_watcher_started: bool,
 }
 
 impl TypeMapKey for HandlerState {
@@ -57,6 +64,7 @@ impl Handler {
             None => {
                 let mut state = HandlerState {
                     ranking_watcher_started: false,
+                    tournaments_watcher_started: false,
                 };
                 let ret = callback(&mut state);
                 data.insert::<HandlerState>(state);
@@ -89,7 +97,37 @@ impl Handler {
             String::from("https://ranking.cvgo.re/ ranking update"),
         );
         tokio::spawn(async move {
-            RankingWatcher::new(notifier, get_ranking).run().await;
+            DataWatcher::new(notifier, get_ranking).run().await;
+        });
+    }
+
+    async fn start_tournaments_watcher(&self, ctx: Context) {
+        if !self.args.feature_tournaments_watcher {
+            return;
+        }
+        let tournaments_watcher_started = Self::update_state(&ctx, |state| {
+            let ret = state.tournaments_watcher_started;
+            state.tournaments_watcher_started = true;
+            ret
+        })
+        .await;
+        if tournaments_watcher_started {
+            return;
+        }
+        let tournemants_watcher_channel_id = self
+            .args
+            .tournaments_watcher_channel_id
+            .expect("Tournaments watcher feature enabled but no channel ID provided");
+
+        const MESSAGE_PREFIX: &str =
+            "**TOURNAMENTS UPDATE** (http://mahjong-europe.org/ranking/Calendar.html)\n\n";
+        let notifier = TournamentsChannelMessageNotifier::new(
+            ChannelId(tournemants_watcher_channel_id),
+            ctx,
+            String::from(MESSAGE_PREFIX),
+        );
+        tokio::spawn(async move {
+            DataWatcher::new(notifier, get_rcr_tournaments).run().await;
         });
     }
 }
@@ -120,6 +158,7 @@ impl EventHandler for Handler {
 
     async fn ready(&self, ctx: Context, ready: Ready) {
         self.start_ranking_watcher(ctx.clone()).await;
+        self.start_tournaments_watcher(ctx.clone()).await;
 
         info!("{} is connected!", ready.user.name);
 

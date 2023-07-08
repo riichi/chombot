@@ -3,9 +3,12 @@ use std::error::Error;
 use std::fmt::Display;
 use std::result;
 
+use anyhow::anyhow;
 use reqwest;
 use scraper::node::{Element, Node};
 use scraper::{CaseSensitivity, ElementRef, Html, Selector};
+
+use crate::scraping_utils::{first_nonempty_text, select_all, select_one, unpack_children};
 
 const RANKING_URL: &str = "https://ranking.cvgo.re/";
 
@@ -79,47 +82,6 @@ impl Display for RankingFetchError {
 }
 
 impl Error for RankingFetchError {}
-
-macro_rules! unpack_children {
-    ($element:expr, $n:expr) => {
-        <[ElementRef; $n]>::try_from(
-            $element
-                .children()
-                .filter_map(ElementRef::wrap)
-                .collect::<Vec<ElementRef>>(),
-        )
-        .map_err(|v| {
-            format!(
-                "Could not unpack children into {} elements; got {} instead",
-                $n,
-                v.len()
-            )
-        })
-    };
-}
-
-macro_rules! select_all {
-    ($selector:expr, $obj:expr) => {
-        $obj.select(&Selector::parse($selector).expect(concat!("Invalid selector: ", $selector)))
-    };
-}
-
-macro_rules! select_one {
-    ($selector:expr, $obj:expr) => {
-        select_all!($selector, $obj)
-            .next()
-            .ok_or(concat!("Could not find any ", $selector))
-    };
-}
-
-fn first_nonempty_text<'a>(e: &'a ElementRef) -> Result<&'a str> {
-    let ret = e
-        .text()
-        .map(str::trim)
-        .find(|s| !s.is_empty())
-        .ok_or("No non-empty text nodes found")?;
-    Ok(ret)
-}
 
 fn first_element_child<'a>(e: &'a ElementRef) -> Result<&'a Element> {
     let ret = e

@@ -22,6 +22,7 @@ Chombot requires a few settings passed via environment variables. Those are:
 * `KCC3_TOKEN` - the API token for kcc3 that can be obtained via kcc3 admin page.
 * `GUILD_ID` - your guild ID.
 * `RANKING_WATCHER_CHANNEL_ID` - ID of the channel used for notifications about ranking updates.
+* `TOURNAMENTS_WATCHER_CHANNEL_ID` - ID of the channel used for notifications about EMA tournament updates.
 
 Example:
 
@@ -32,6 +33,7 @@ export KCC3_URL=https://fanpai.chombo.club
 export KCC3_TOKEN=yourkcc3token
 export GUILD_ID=12345
 export RANKING_WATCHER_CHANNEL_ID=54321
+export TOURNAMENTS_WATCHER_CHANNEL_ID=98765
 cargo run --release
 ```
 
