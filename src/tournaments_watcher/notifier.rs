@@ -80,8 +80,8 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
                 str += &format!("results: \"{}\"; ", results);
             }
 
-            if str.ends_with("; ") {
-                str = str[0..str.len() - 2].to_owned();
+            if let Some(trimmed) = str.strip_suffix("; ") {
+                str = trimmed.to_owned();
             }
         }
     };
