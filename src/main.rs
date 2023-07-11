@@ -1,5 +1,5 @@
 use clap::Parser;
-use log::{info, LevelFilter};
+use log::{error, info, LevelFilter};
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::channel::Message;
@@ -207,6 +207,6 @@ async fn main() {
         .expect("Error creating client");
 
     if let Err(why) = client.start().await {
-        info!("Client error: {why:?}");
+        error!("Client error: {why:?}");
     }
 }

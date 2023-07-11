@@ -3,7 +3,7 @@ use std::future::Future;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use log::info;
+use log::error;
 use tokio::time::sleep;
 
 const DATA_UPDATE_INTERVAL: Duration = Duration::from_secs(60 * 10);
@@ -49,7 +49,7 @@ where
         match (self.get_next)().await {
             Ok(r) => Some(r),
             Err(e) => {
-                info!("Error when fetching data: {e:?}");
+                error!("Error when fetching data: {e:?}");
                 None
             }
         }
