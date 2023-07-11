@@ -1,8 +1,8 @@
 use std::error::Error;
 
 use async_trait::async_trait;
-use num_bigint::BigUint;
-use riichi_hand::points::{Fu, Han, PointsCalculationMode, PointsCustom};
+use num_bigint::BigInt;
+use riichi_hand::points::{Fu, Han, Honbas, PointsCalculationMode, PointsCustom};
 use serenity::builder::{CreateApplicationCommand, CreateEmbed};
 use serenity::client::Context;
 use serenity::model::application::command::CommandOptionType;
@@ -16,16 +16,22 @@ use crate::Chombot;
 const HAND_COMMAND: &str = "score";
 const HAN_OPTION: &str = "han";
 const FU_OPTION: &str = "fu";
+const HONBAS_OPTION: &str = "honbas";
 const MODE_OPTION: &str = "mode";
 
 const DEFAULT_MODE: &str = "default";
 const LOOSE_MODE: &str = "loose";
 const UNLIMITED_MODE: &str = "unlimited";
 
+const MIN_HAN: i64 = -1600;
 const MAX_HAN: i64 = 1600;
+const MIN_FU: i64 = -100000;
 const MAX_FU: i64 = 100000;
+const MIN_HONBAS: i64 = -10000;
+const MAX_HONBAS: i64 = 10000;
+const DEFAULT_HONBAS: i64 = 0;
 
-type Points = PointsCustom<BigUint>;
+type Points = PointsCustom<BigInt>;
 
 pub struct ScoreCommand;
 
@@ -49,6 +55,7 @@ impl SlashCommand for ScoreCommand {
                     .name(HAN_OPTION)
                     .description("Number of han points")
                     .kind(CommandOptionType::Integer)
+                    .min_int_value(MIN_HAN)
                     .max_int_value(MAX_HAN)
                     .required(true)
             })
@@ -57,8 +64,18 @@ impl SlashCommand for ScoreCommand {
                     .name(FU_OPTION)
                     .description("Number of fu points")
                     .kind(CommandOptionType::Integer)
+                    .min_int_value(MIN_FU)
                     .max_int_value(MAX_FU)
                     .required(true)
+            })
+            .create_option(|option| {
+                option
+                    .name(HONBAS_OPTION)
+                    .description("Number of honbas (counter sticks)")
+                    .kind(CommandOptionType::Integer)
+                    .min_int_value(MIN_HONBAS)
+                    .max_int_value(MAX_HONBAS)
+                    .required(false)
             })
             .create_option(|option| {
                 option
@@ -80,6 +97,7 @@ impl SlashCommand for ScoreCommand {
     ) -> SlashCommandResult {
         let han = get_int_option(&command.data.options, HAN_OPTION).ok_or("Missing han value")?;
         let fu = get_int_option(&command.data.options, FU_OPTION).ok_or("Missing fu value")?;
+        let honbas = get_int_option(&command.data.options, HONBAS_OPTION).unwrap_or(DEFAULT_HONBAS);
         let mode = get_string_option(&command.data.options, MODE_OPTION).unwrap_or(DEFAULT_MODE);
         let points_calculation_mode = match mode {
             DEFAULT_MODE => Ok(PointsCalculationMode::Default),
@@ -88,10 +106,11 @@ impl SlashCommand for ScoreCommand {
             _ => Err(format!("Invalid mode: {mode}")),
         }?;
 
-        let han = Han::new(u32::try_from(han)?);
-        let fu = Fu::new(u32::try_from(fu)?);
-        let points = Points::from_calculated(points_calculation_mode, han, fu)?;
-        let embed = create_points_embed(han, fu, &points)?;
+        let han = Han::new(i32::try_from(han)?);
+        let fu = Fu::new(i32::try_from(fu)?);
+        let honbas = Honbas::new(i32::try_from(honbas)?);
+        let points = Points::from_calculated(points_calculation_mode, han, fu, honbas)?;
+        let embed = create_points_embed(han, fu, honbas, &points)?;
 
         command
             .edit_original_interaction_response(&ctx.http, |response| response.add_embed(embed))
@@ -101,7 +120,12 @@ impl SlashCommand for ScoreCommand {
     }
 }
 
-fn create_points_embed(han: Han, fu: Fu, points: &Points) -> Result<CreateEmbed, Box<dyn Error>> {
+fn create_points_embed(
+    han: Han,
+    fu: Fu,
+    honbas: Honbas,
+    points: &Points,
+) -> Result<CreateEmbed, Box<dyn Error>> {
     let fields = [
         (
             "Non-dealer tsumo",
@@ -115,21 +139,21 @@ fn create_points_embed(han: Han, fu: Fu, points: &Points) -> Result<CreateEmbed,
 
     let mut embed = CreateEmbed::default();
     embed
-        .title(format!("**{} {}**", han, fu))
+        .title(format!("**{han} {fu} {honbas}**"))
         .color(Colour::DARK_GREEN)
         .fields(fields);
 
     Ok(embed)
 }
 
-fn format_points(points: &Option<BigUint>) -> String {
+fn format_points(points: &Option<BigInt>) -> String {
     match points {
         None => "N/A".to_owned(),
         Some(value) => value.to_string(),
     }
 }
 
-fn format_ko_tsumo_points(points: &Option<(BigUint, BigUint)>) -> String {
+fn format_ko_tsumo_points(points: &Option<(BigInt, BigInt)>) -> String {
     match points {
         None => "N/A".to_owned(),
         Some((value_ko, value_oya)) => format!("{}/{}", value_ko, value_oya),
