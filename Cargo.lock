@@ -1648,9 +1648,9 @@ dependencies = [
 
 [[package]]
 name = "riichi_hand"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e2cd7656d3e88e5b3ce87b5a83f5c3f21c8d7ddb9309caa586623b918ec3157"
+checksum = "85a3e22eaec6b8bb357ca3687932d0b0ef7d56528c50d3cdee75c1f1379a20b8"
 dependencies = [
  "image",
  "lazy_static",
