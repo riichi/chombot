@@ -11,7 +11,7 @@ macro_rules! unpack_children {
                 .collect::<Vec<ElementRef>>(),
         )
         .map_err(|v| {
-            format!(
+            anyhow!(
                 "Could not unpack children into {} elements; got {} instead",
                 $n,
                 v.len()
