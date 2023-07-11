@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use log::error;
 use serenity::model::prelude::ChannelId;
 use serenity::prelude::Context;
 
@@ -98,7 +99,9 @@ impl DataUpdateNotifier<Tournaments> for TournamentsChannelMessageNotifier {
         let ctx = &self.ctx;
         let text = self.build_message(&diff);
 
-        send_with_overflow(channel_id, ctx, text).await;
+        if let Err(why) = send_with_overflow(channel_id, ctx, text).await {
+            error!("Could not send Tournaments update: {why:?}");
+        }
     }
 }
 

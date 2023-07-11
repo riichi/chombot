@@ -1,8 +1,10 @@
+use log::error;
 use serenity::async_trait;
 use serenity::client::Context;
 use serenity::model::id::ChannelId;
 
 use crate::data_watcher::DataUpdateNotifier;
+use crate::discord_utils::send_with_overflow;
 use crate::ranking_watcher::usma::{PositionChangeInfo, Ranking};
 
 pub struct ChannelMessageNotifier {
@@ -64,11 +66,12 @@ impl ChannelMessageNotifier {
 #[async_trait]
 impl DataUpdateNotifier<Ranking> for ChannelMessageNotifier {
     async fn notify(&self, _old_ranking: &Ranking, new_ranking: &Ranking) {
-        self.channel_id
-            .send_message(&self.ctx, |m| {
-                m.content(self.build_message(new_ranking).as_str())
-            })
-            .await
-            .unwrap();
+        let channel_id = self.channel_id;
+        let ctx = &self.ctx;
+        let text = self.build_message(new_ranking);
+
+        if let Err(why) = send_with_overflow(channel_id, ctx, text).await {
+            error!("Could not send Ranking update: {why:?}");
+        }
     }
 }
