@@ -9,8 +9,7 @@ use crate::scraping_utils::{first_nonempty_text, select_all, select_one, unpack_
 
 const RANKING_URL: &str = "https://ranking.cvgo.re/";
 
-#[derive(Eq, PartialEq)]
-#[cfg_attr(test, derive(Debug))]
+#[derive(Debug, Eq, PartialEq)]
 pub enum PositionChangeInfo {
     New,
     Diff(i32),
@@ -22,8 +21,7 @@ impl PositionChangeInfo {
     }
 }
 
-#[derive(PartialEq, Eq)]
-#[cfg_attr(test, derive(Debug))]
+#[derive(Debug, Eq, PartialEq)]
 pub struct RankingEntry {
     pub pos: u32,
     pub pos_diff: PositionChangeInfo,
