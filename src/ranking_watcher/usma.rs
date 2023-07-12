@@ -1,9 +1,6 @@
 use std::convert::TryFrom;
-use std::error::Error;
-use std::fmt::Display;
-use std::result;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context, Result};
 use reqwest;
 use scraper::node::{Element, Node};
 use scraper::{CaseSensitivity, ElementRef, Html, Selector};
@@ -11,8 +8,6 @@ use scraper::{CaseSensitivity, ElementRef, Html, Selector};
 use crate::scraping_utils::{first_nonempty_text, select_all, select_one, unpack_children};
 
 const RANKING_URL: &str = "https://ranking.cvgo.re/";
-
-type Result<T> = result::Result<T, Box<dyn Error + Send + Sync>>;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum PositionChangeInfo {
@@ -26,7 +21,7 @@ impl PositionChangeInfo {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct RankingEntry {
     pub pos: u32,
     pub pos_diff: PositionChangeInfo,
@@ -57,46 +52,16 @@ impl PartialEq for Ranking {
 
 impl Eq for Ranking {}
 
-#[derive(Debug)]
-struct ParseError {
-    pub message: String,
-}
-
-impl Display for ParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ParseError: {}", self.message)
-    }
-}
-
-impl Error for ParseError {}
-
-#[derive(Debug)]
-pub struct RankingFetchError {
-    pub cause: Box<dyn Error + Send + Sync>,
-}
-
-impl Display for RankingFetchError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "RankingFetchError: {:?}", self.cause.as_ref())
-    }
-}
-
-impl Error for RankingFetchError {}
-
-fn first_element_child<'a>(e: &'a ElementRef) -> Result<&'a Element> {
-    let ret = e
-        .children()
-        .find_map(|chld| match chld.value() {
-            Node::Element(e) => Some(e),
-            _ => None,
-        })
-        .ok_or("No element children nodes found")?;
-    Ok(ret)
+fn first_element_child<'a>(e: &'a ElementRef) -> Option<&'a Element> {
+    e.children().find_map(|chld| match chld.value() {
+        Node::Element(e) => Some(e),
+        _ => None,
+    })
 }
 
 fn parse_diff_column(diff_column: &ElementRef) -> Result<PositionChangeInfo> {
     match first_element_child(diff_column) {
-        Ok(element) => {
+        Some(element) => {
             if element.has_class("has-text-danger", CaseSensitivity::AsciiCaseInsensitive) {
                 Ok(PositionChangeInfo::Diff(
                     -first_nonempty_text(diff_column)?.parse()?,
@@ -108,12 +73,12 @@ fn parse_diff_column(diff_column: &ElementRef) -> Result<PositionChangeInfo> {
             } else if element.has_class("has-text-info", CaseSensitivity::AsciiCaseInsensitive) {
                 Ok(PositionChangeInfo::New)
             } else {
-                Err(Box::new(ParseError {
-                    message: format!("Unexpected element without expected classes: {element:?}"),
-                }))
+                Err(anyhow!(
+                    "Unexpected element without expected classes: {element:?}"
+                ))
             }
         }
-        Err(_) => Ok(PositionChangeInfo::Diff(0)),
+        None => Ok(PositionChangeInfo::Diff(0)),
     }
 }
 
@@ -137,10 +102,12 @@ fn parse_points_cell(points_cell: &ElementRef) -> Result<(u32, PositionChangeInf
 
 fn parse_row(row: ElementRef) -> Result<RankingEntry> {
     let [pos_cell, _id_cell, _rank_cell, player_cell, _address_cell, points_cell] =
-        unpack_children!(&row, 6)?;
-    let (pos, pos_diff) = parse_pos_cell(&pos_cell)?;
+        unpack_children!(&row, 6).with_context(|| format!("Failed to unpack cells: {:?}", row))?;
+    let (pos, pos_diff) = parse_pos_cell(&pos_cell)
+        .with_context(|| format!("Failed to parse position cell: {:?}", row))?;
     let name = first_nonempty_text(&player_cell).unwrap_or("");
-    let (points, points_diff) = parse_points_cell(&points_cell)?;
+    let (points, points_diff) = parse_points_cell(&points_cell)
+        .with_context(|| format!("Failed to parse points cell: {:?}", row))?;
     Ok(RankingEntry {
         pos,
         pos_diff,
@@ -150,16 +117,101 @@ fn parse_row(row: ElementRef) -> Result<RankingEntry> {
     })
 }
 
-async fn get_ranking_impl() -> Result<Ranking> {
-    let body = reqwest::get(RANKING_URL).await?.text().await?;
-    let html = Html::parse_document(body.as_str());
+fn parse_document(document: &str) -> Result<Ranking> {
+    let html = Html::parse_document(document);
     let table = select_one!("table tbody", html)?;
     let entries: Result<Vec<RankingEntry>> = select_all!("tr", table).map(parse_row).collect();
     Ok(Ranking(entries?))
 }
 
-pub async fn get_ranking() -> result::Result<Ranking, RankingFetchError> {
-    get_ranking_impl()
-        .await
-        .map_err(|cause| RankingFetchError { cause })
+pub async fn get_ranking() -> Result<Ranking> {
+    let body = reqwest::get(RANKING_URL).await?.text().await?;
+    parse_document(&body)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::ranking_watcher::usma::{parse_document, PositionChangeInfo, RankingEntry};
+
+    #[test]
+    fn builds_ranking_changed_from_real_data() {
+        let data = include_str!("test_data/ranking.html");
+        let ranking = parse_document(data).unwrap();
+
+        assert_eq!(
+            ranking.get_changed(),
+            vec![
+                &RankingEntry {
+                    pos: 1,
+                    pos_diff: PositionChangeInfo::Diff(0),
+                    name: "player-name-001".to_owned(),
+                    points: 1966,
+                    points_diff: PositionChangeInfo::Diff(3),
+                },
+                &RankingEntry {
+                    pos: 2,
+                    pos_diff: PositionChangeInfo::Diff(3),
+                    name: "player-name-002".to_owned(),
+                    points: 1893,
+                    points_diff: PositionChangeInfo::Diff(163),
+                },
+                &RankingEntry {
+                    pos: 3,
+                    pos_diff: PositionChangeInfo::Diff(-1),
+                    name: "player-name-003".to_owned(),
+                    points: 1830,
+                    points_diff: PositionChangeInfo::Diff(-60),
+                },
+                &RankingEntry {
+                    pos: 4,
+                    pos_diff: PositionChangeInfo::Diff(3),
+                    name: "player-name-004".to_owned(),
+                    points: 1718,
+                    points_diff: PositionChangeInfo::Diff(73),
+                },
+                &RankingEntry {
+                    pos: 5,
+                    pos_diff: PositionChangeInfo::Diff(-2),
+                    name: "player-name-005".to_owned(),
+                    points: 1711,
+                    points_diff: PositionChangeInfo::Diff(-94),
+                },
+                &RankingEntry {
+                    pos: 6,
+                    pos_diff: PositionChangeInfo::Diff(0),
+                    name: "player-name-006".to_owned(),
+                    points: 1706,
+                    points_diff: PositionChangeInfo::Diff(56),
+                },
+                &RankingEntry {
+                    pos: 7,
+                    pos_diff: PositionChangeInfo::Diff(-3),
+                    name: "player-name-007".to_owned(),
+                    points: 1685,
+                    points_diff: PositionChangeInfo::Diff(-66),
+                },
+                &RankingEntry {
+                    pos: 8,
+                    pos_diff: PositionChangeInfo::New,
+                    name: "player-name-008".to_owned(),
+                    points: 1669,
+                    points_diff: PositionChangeInfo::Diff(0),
+                },
+                &RankingEntry {
+                    pos: 8,
+                    pos_diff: PositionChangeInfo::New,
+                    name: "player-name-009".to_owned(),
+                    points: 1669,
+                    points_diff: PositionChangeInfo::Diff(0),
+                },
+                &RankingEntry {
+                    pos: 10,
+                    pos_diff: PositionChangeInfo::Diff(-1),
+                    name: "player-name-010".to_owned(),
+                    points: 1651,
+                    points_diff: PositionChangeInfo::Diff(43),
+                },
+            ]
+        );
+    }
 }

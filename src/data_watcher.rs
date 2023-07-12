@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::fmt::Debug;
 use std::future::Future;
 use std::time::Duration;
 
@@ -42,7 +42,7 @@ where
     F: DataUpdateNotifier<T>,
     H: Fn() -> HOut,
     HOut: Future<Output = Result<T, E>>,
-    E: Error,
+    E: Debug,
 {
     #[must_use]
     async fn fetch_data(&self) -> Option<T> {
