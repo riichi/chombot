@@ -1,5 +1,4 @@
-use std::error::Error;
-
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use serenity::builder::{CreateApplicationCommand, CreateEmbed};
 use serenity::client::Context;
@@ -13,7 +12,7 @@ use slug::slugify;
 
 use crate::data::DISCORD_MESSAGE_SIZE_LIMIT;
 use crate::slash_commands::utils::{get_string_option, get_user_option};
-use crate::slash_commands::{SlashCommand, SlashCommandResult};
+use crate::slash_commands::SlashCommand;
 use crate::{Chombo, Chombot, DiscordId, Player, PlayerId};
 
 const CHOMBO_COMMAND: &str = "chombo";
@@ -36,7 +35,7 @@ impl ChomboCommand {
         command: &ApplicationCommandInteraction,
         _subcommand: &CommandDataOption,
         chombot: &Chombot,
-    ) -> SlashCommandResult {
+    ) -> Result<()> {
         let chombos = Self::create_chombos_list(chombot).await?;
 
         command
@@ -50,7 +49,7 @@ impl ChomboCommand {
         Ok(())
     }
 
-    async fn create_chombos_list(chombot: &Chombot) -> Result<String, Box<dyn Error>> {
+    async fn create_chombos_list(chombot: &Chombot) -> Result<String> {
         let chombos = chombot.get_chombo_list().await?;
         let mut result = String::new();
         for (player, chombo) in &chombos {
@@ -82,7 +81,7 @@ impl ChomboCommand {
         command: &ApplicationCommandInteraction,
         _subcommand: &CommandDataOption,
         chombot: &Chombot,
-    ) -> SlashCommandResult {
+    ) -> Result<()> {
         let embed = Self::create_chombos_embed(chombot).await?;
 
         command
@@ -98,14 +97,14 @@ impl ChomboCommand {
         command: &ApplicationCommandInteraction,
         subcommand: &CommandDataOption,
         chombot: &Chombot,
-    ) -> SlashCommandResult {
+    ) -> Result<()> {
         let (user, _) = get_user_option(&subcommand.options, CHOMBO_ADD_SUBCOMMAND_USER_OPTION)
-            .ok_or("Missing user")?;
+            .ok_or(anyhow!("Missing user"))?;
         let description = get_string_option(
             &subcommand.options,
             CHOMBO_ADD_SUBCOMMAND_DESCRIPTION_OPTION,
         )
-        .ok_or("Missing description")?;
+        .ok_or(anyhow!("Missing description"))?;
 
         chombot
             .add_chombo_for_player(
@@ -137,7 +136,7 @@ impl ChomboCommand {
         format!("Adding chombo for <@!{}>: *{}*", user.id, description)
     }
 
-    async fn create_chombos_embed(chombot: &Chombot) -> Result<CreateEmbed, Box<dyn Error>> {
+    async fn create_chombos_embed(chombot: &Chombot) -> Result<CreateEmbed> {
         let chombos = chombot.create_chombo_ranking().await?;
         let chombos = chombos
             .into_iter()
@@ -202,13 +201,13 @@ impl SlashCommand for ChomboCommand {
         ctx: &Context,
         command: &ApplicationCommandInteraction,
         chombot: &Chombot,
-    ) -> SlashCommandResult {
+    ) -> Result<()> {
         let subcommand = command
             .data
             .options
             .iter()
             .find(|x| x.kind == CommandOptionType::SubCommand)
-            .unwrap();
+            .ok_or(anyhow!("No subcommand provided"))?;
 
         match subcommand.name.as_str() {
             CHOMBO_RANKING_SUBCOMMAND => {

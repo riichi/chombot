@@ -1,5 +1,4 @@
-use std::error::Error;
-
+use anyhow::Result;
 use async_trait::async_trait;
 use log::error;
 use serenity::builder::{CreateApplicationCommand, CreateApplicationCommands};
@@ -20,8 +19,6 @@ mod pasta;
 mod score;
 mod utils;
 
-pub type SlashCommandResult = Result<(), Box<dyn Error>>;
-
 #[async_trait]
 pub trait SlashCommand: Send + Sync {
     fn get_name(&self) -> &'static str;
@@ -31,7 +28,7 @@ pub trait SlashCommand: Send + Sync {
         ctx: &Context,
         command: &ApplicationCommandInteraction,
         chombot: &Chombot,
-    ) -> SlashCommandResult;
+    ) -> Result<()>;
 }
 
 pub struct SlashCommands {

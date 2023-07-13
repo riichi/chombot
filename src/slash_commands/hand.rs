@@ -1,5 +1,6 @@
 use std::io::Cursor;
 
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use image::DynamicImage;
 use serenity::builder::CreateApplicationCommand;
@@ -10,7 +11,7 @@ use serenity::model::channel::AttachmentType;
 
 use crate::chombot::TileStyle;
 use crate::slash_commands::utils::get_string_option;
-use crate::slash_commands::{SlashCommand, SlashCommandResult};
+use crate::slash_commands::SlashCommand;
 use crate::Chombot;
 
 const HAND_COMMAND: &str = "hand";
@@ -68,9 +69,9 @@ impl SlashCommand for HandCommand {
         ctx: &Context,
         command: &ApplicationCommandInteraction,
         chombot: &Chombot,
-    ) -> SlashCommandResult {
+    ) -> Result<()> {
         let hand = get_string_option(&command.data.options, HAND_OPTION)
-            .ok_or("Missing hand description")?;
+            .ok_or(anyhow!("Missing hand description"))?;
         let tile_set =
             get_string_option(&command.data.options, TILE_STYLE_OPTION).unwrap_or(DEFAULT_TILE_SET);
         let render_tile_set = match tile_set {
@@ -78,7 +79,7 @@ impl SlashCommand for HandCommand {
             RED_TILE_SET => Ok(TileStyle::Red),
             BLACK_TILE_SET => Ok(TileStyle::Black),
             MARTIN_PERSSON_TILE_SET => Ok(TileStyle::MartinPersson),
-            _ => Err(format!("Invalid tile set: {tile_set}")),
+            _ => Err(anyhow!("Invalid tile set: {tile_set}")),
         }?;
 
         let image = chombot.render_hand(hand, render_tile_set).await?;

@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use serenity::builder::CreateApplicationCommand;
 use serenity::client::Context;
@@ -6,7 +7,7 @@ use serenity::model::application::interaction::application_command::ApplicationC
 
 use crate::data::DISCORD_MESSAGE_SIZE_LIMIT;
 use crate::slash_commands::utils::get_string_option;
-use crate::slash_commands::{SlashCommand, SlashCommandResult};
+use crate::slash_commands::SlashCommand;
 use crate::Chombot;
 
 const PASTA_COMMAND: &str = "pasta";
@@ -59,7 +60,7 @@ impl SlashCommand for PastaCommand {
         ctx: &Context,
         command: &ApplicationCommandInteraction,
         _chombot: &Chombot,
-    ) -> SlashCommandResult {
+    ) -> Result<()> {
         let pasta_option = get_string_option(&command.data.options, PASTA_OPTION)
             .expect("Pasta option not provided");
         let pasta = match pasta_option {
@@ -67,7 +68,7 @@ impl SlashCommand for PastaCommand {
             TANJALO_PASTA_OPTION => Ok(TANJALO_PASTA),
             STOWARZYSZENIE_PASTA_OPTION => Ok(STOWARZYSZENIE_PASTA),
             YOSTAR_PASTA_OPTION => Ok(YOSTAR_PASTA),
-            _ => Err(format!("Invalid pasta: {pasta_option}")),
+            _ => Err(anyhow!("Invalid pasta: {pasta_option}")),
         }?;
         let pasta_content = format!("{}\n||#pasta||", pasta.trim());
 
@@ -100,7 +101,7 @@ impl PastaCommand {
         command: &ApplicationCommandInteraction,
         message: &str,
         first: &mut bool,
-    ) -> SlashCommandResult {
+    ) -> Result<()> {
         if *first {
             *first = false;
             command

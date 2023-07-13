@@ -1,5 +1,4 @@
-use std::error::Error;
-
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use num_bigint::BigInt;
 use riichi_hand::points::{Fu, Han, Honbas, PointsCalculationMode, PointsCustom};
@@ -10,7 +9,7 @@ use serenity::model::application::interaction::application_command::ApplicationC
 use serenity::utils::Colour;
 
 use crate::slash_commands::utils::{get_int_option, get_string_option};
-use crate::slash_commands::{SlashCommand, SlashCommandResult};
+use crate::slash_commands::SlashCommand;
 use crate::Chombot;
 
 const HAND_COMMAND: &str = "score";
@@ -94,23 +93,25 @@ impl SlashCommand for ScoreCommand {
         ctx: &Context,
         command: &ApplicationCommandInteraction,
         _chombot: &Chombot,
-    ) -> SlashCommandResult {
-        let han = get_int_option(&command.data.options, HAN_OPTION).ok_or("Missing han value")?;
-        let fu = get_int_option(&command.data.options, FU_OPTION).ok_or("Missing fu value")?;
+    ) -> Result<()> {
+        let han = get_int_option(&command.data.options, HAN_OPTION)
+            .ok_or(anyhow!("Missing han value"))?;
+        let fu =
+            get_int_option(&command.data.options, FU_OPTION).ok_or(anyhow!("Missing fu value"))?;
         let honbas = get_int_option(&command.data.options, HONBAS_OPTION).unwrap_or(DEFAULT_HONBAS);
         let mode = get_string_option(&command.data.options, MODE_OPTION).unwrap_or(DEFAULT_MODE);
         let points_calculation_mode = match mode {
             DEFAULT_MODE => Ok(PointsCalculationMode::Default),
             LOOSE_MODE => Ok(PointsCalculationMode::Loose),
             UNLIMITED_MODE => Ok(PointsCalculationMode::Unlimited),
-            _ => Err(format!("Invalid mode: {mode}")),
+            _ => Err(anyhow!("Invalid mode: {mode}")),
         }?;
 
         let han = Han::new(i32::try_from(han)?);
         let fu = Fu::new(i32::try_from(fu)?);
         let honbas = Honbas::new(i32::try_from(honbas)?);
         let points = Points::from_calculated(points_calculation_mode, han, fu, honbas)?;
-        let embed = create_points_embed(han, fu, honbas, &points)?;
+        let embed = create_points_embed(han, fu, honbas, &points);
 
         command
             .edit_original_interaction_response(&ctx.http, |response| response.add_embed(embed))
@@ -120,12 +121,7 @@ impl SlashCommand for ScoreCommand {
     }
 }
 
-fn create_points_embed(
-    han: Han,
-    fu: Fu,
-    honbas: Honbas,
-    points: &Points,
-) -> Result<CreateEmbed, Box<dyn Error>> {
+fn create_points_embed(han: Han, fu: Fu, honbas: Honbas, points: &Points) -> CreateEmbed {
     let fields = [
         (
             "Non-dealer tsumo",
@@ -143,7 +139,7 @@ fn create_points_embed(
         .color(Colour::DARK_GREEN)
         .fields(fields);
 
-    Ok(embed)
+    embed
 }
 
 fn format_points(points: &Option<BigInt>) -> String {
