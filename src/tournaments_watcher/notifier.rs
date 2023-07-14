@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 use log::error;
-use serenity::model::prelude::ChannelId;
-use serenity::prelude::Context;
+use poise::serenity_prelude::{ChannelId, Context};
 
 use crate::data_watcher::DataUpdateNotifier;
 use crate::discord_utils::send_with_overflow;

@@ -5,9 +5,6 @@ pub struct Arguments {
     /// Discord API token
     #[arg(long, env)]
     pub discord_token: String,
-    /// Discord Application ID
-    #[arg(long, env)]
-    pub application_id: u64,
     /// Guild (Discord server) ID
     #[arg(long, env)]
     pub guild_id: u64,

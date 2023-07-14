@@ -17,7 +17,6 @@ cargo build --release
 ## Running
 Chombot requires a few settings passed via environment variables. Those are:
 * `DISCORD_TOKEN` - the Discord bot token. You can obtain one by [creating a Discord app](https://discord.com/developers/applications). Make sure to copy your Bot token, not a client secret.
-* `APPLICATION_ID` - application ID of the Discord bot.
 * `KCC3_URL` - the URL of the [kcc3 instance](https://github.com/riichi/kcc3) that you want to use with Chombot. The official instance is `https://fanpai.chombo.club`.
 * `KCC3_TOKEN` - the API token for kcc3 that can be obtained via kcc3 admin page.
 * `GUILD_ID` - your guild ID.
@@ -28,7 +27,6 @@ Example:
 
 ```shell
 export CHOMBOT_TOKEN=yourdiscordtoken
-export APPLICATION_ID=yourapplicationid
 export KCC3_URL=https://fanpai.chombo.club
 export KCC3_TOKEN=yourkcc3token
 export GUILD_ID=12345
