@@ -7,8 +7,6 @@ use riichi_hand::points::{Fu, Han, Honbas, PointsCalculationMode, PointsCustom};
 
 use crate::PoiseContext;
 
-const DEFAULT_HONBAS: i64 = 0;
-
 type Points = PointsCustom<BigInt>;
 
 #[derive(Debug, ChoiceParameter)]
@@ -41,23 +39,22 @@ pub async fn score(
     #[description = "Number of han points"]
     #[min = -1600]
     #[max = 1600]
-    han: i64,
+    han: i32,
     #[description = "Number of fu points"]
     #[min = -100000]
     #[max = 100000]
-    fu: i64,
+    fu: i32,
     #[description = "Number of honbas (counter sticks)"]
     #[min = -10000]
     #[max = 10000]
-    honbas: Option<i64>,
+    honbas: Option<i32>,
     #[description = "Calculating mode"] mode: Option<Mode>,
 ) -> Result<()> {
-    let honbas = honbas.unwrap_or(DEFAULT_HONBAS);
     let points_calculation_mode: PointsCalculationMode = mode.unwrap_or_default().into();
 
-    let han = Han::new(i32::try_from(han)?);
-    let fu = Fu::new(i32::try_from(fu)?);
-    let honbas = Honbas::new(i32::try_from(honbas)?);
+    let han = Han::new(han);
+    let fu = Fu::new(fu);
+    let honbas = honbas.map(Honbas::new).unwrap_or_default();
     let points = Points::from_calculated(points_calculation_mode, han, fu, honbas)?;
     let fields = create_points_embed_fields(points);
 
