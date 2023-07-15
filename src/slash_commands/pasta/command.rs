@@ -1,119 +1,69 @@
-use anyhow::{anyhow, Result};
-use async_trait::async_trait;
-use serenity::builder::CreateApplicationCommand;
-use serenity::client::Context;
-use serenity::model::application::command::CommandOptionType;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use anyhow::Result;
+use poise::serenity_prelude::CacheHttp;
+use poise::ChoiceParameter;
 
 use crate::data::DISCORD_MESSAGE_SIZE_LIMIT;
-use crate::slash_commands::utils::get_string_option;
-use crate::slash_commands::SlashCommand;
-use crate::Chombot;
+use crate::PoiseContext;
 
-const PASTA_COMMAND: &str = "pasta";
-const PASTA_OPTION: &str = "pasta";
+#[derive(Debug, ChoiceParameter)]
+pub enum Pasta {
+    #[name = "O jgamesach na conach"]
+    JGamesCon,
+    #[name = "Expert 1 do wora a wór do jeziora"]
+    Tanjalo,
+    #[name = "Tylko nie zakładajcie mu stowarzyszenia"]
+    Stowarzyszenie,
+    #[name = "Yostar rant"]
+    Yostar,
+}
 
-const JGAMESCON_PASTA_OPTION: &str = "jgamescon";
-const JGAMESCON_PASTA: &str = include_str!("jgamescon.txt");
-const TANJALO_PASTA_OPTION: &str = "tanjalo";
-const TANJALO_PASTA: &str = include_str!("tanjalo.txt");
-const STOWARZYSZENIE_PASTA_OPTION: &str = "stowarzyszenie";
-const STOWARZYSZENIE_PASTA: &str = include_str!("stowarzyszenie.txt");
-const YOSTAR_PASTA_OPTION: &str = "yostar";
-const YOSTAR_PASTA: &str = include_str!("yostar.txt");
-
-pub struct PastaCommand;
-
-impl PastaCommand {
-    pub fn new() -> Self {
-        Self {}
+impl Pasta {
+    pub fn content(&self) -> &'static str {
+        match self {
+            Self::JGamesCon => include_str!("jgamescon.txt"),
+            Self::Tanjalo => include_str!("tanjalo.txt"),
+            Self::Stowarzyszenie => include_str!("stowarzyszenie.txt"),
+            Self::Yostar => include_str!("yostar.txt"),
+        }
     }
 }
 
-#[async_trait]
-impl SlashCommand for PastaCommand {
-    fn get_name(&self) -> &'static str {
-        PASTA_COMMAND
-    }
+/// Paste a pasta 🍝
+#[poise::command(slash_command)]
+pub async fn pasta(
+    ctx: PoiseContext<'_>,
+    #[description = "Copypasta to output"] pasta: Pasta,
+) -> Result<()> {
+    let pasta_content = format!("{}\n||#pasta||", pasta.content().trim());
 
-    fn add_application_command(&self, command: &mut CreateApplicationCommand) {
-        command
-            .description("Paste a pasta 🍝")
-            .create_option(|option| {
-                option
-                    .name(PASTA_OPTION)
-                    .description("Copypasta to output")
-                    .kind(CommandOptionType::String)
-                    .add_string_choice("O jgamesach na conach", JGAMESCON_PASTA_OPTION)
-                    .add_string_choice("Expert 1 do wora a wór do jeziora", TANJALO_PASTA_OPTION)
-                    .add_string_choice(
-                        "Tylko nie zakładajcie mu stowarzyszenia",
-                        STOWARZYSZENIE_PASTA_OPTION,
-                    )
-                    .add_string_choice("Yostar rant", YOSTAR_PASTA_OPTION)
-                    .required(true)
-            });
-    }
+    let mut first = true;
 
-    async fn handle(
-        &self,
-        ctx: &Context,
-        command: &ApplicationCommandInteraction,
-        _chombot: &Chombot,
-    ) -> Result<()> {
-        let pasta_option = get_string_option(&command.data.options, PASTA_OPTION)
-            .expect("Pasta option not provided");
-        let pasta = match pasta_option {
-            JGAMESCON_PASTA_OPTION => Ok(JGAMESCON_PASTA),
-            TANJALO_PASTA_OPTION => Ok(TANJALO_PASTA),
-            STOWARZYSZENIE_PASTA_OPTION => Ok(STOWARZYSZENIE_PASTA),
-            YOSTAR_PASTA_OPTION => Ok(YOSTAR_PASTA),
-            _ => Err(anyhow!("Invalid pasta: {pasta_option}")),
-        }?;
-        let pasta_content = format!("{}\n||#pasta||", pasta.trim());
-
-        let mut first = true;
-
-        let mut message = String::new();
-        for line in pasta_content.lines() {
-            if message.len() + line.len() + "\n".len() > DISCORD_MESSAGE_SIZE_LIMIT {
-                self.send_pasta_slice(ctx, command, &message, &mut first)
-                    .await?;
-                message.clear();
-            }
-
-            message.push_str(line);
-            message.push('\n');
-        }
-        if !message.is_empty() {
-            self.send_pasta_slice(ctx, command, &message, &mut first)
-                .await?;
+    let mut message = String::new();
+    for line in pasta_content.lines() {
+        if message.len() + line.len() + "\n".len() > DISCORD_MESSAGE_SIZE_LIMIT {
+            send_pasta_slice(&ctx, &message, &mut first).await?;
+            message.clear();
         }
 
-        Ok(())
+        message.push_str(line);
+        message.push('\n');
     }
+    if !message.is_empty() {
+        send_pasta_slice(&ctx, &message, &mut first).await?;
+    }
+
+    Ok(())
 }
 
-impl PastaCommand {
-    async fn send_pasta_slice(
-        &self,
-        ctx: &Context,
-        command: &ApplicationCommandInteraction,
-        message: &str,
-        first: &mut bool,
-    ) -> Result<()> {
-        if *first {
-            *first = false;
-            command
-                .edit_original_interaction_response(&ctx.http, |response| response.content(message))
-                .await?;
-        } else {
-            command
-                .channel_id
-                .send_message(&ctx.http, |m| m.content(message))
-                .await?;
-        }
-
-        Ok(())
+async fn send_pasta_slice(ctx: &PoiseContext<'_>, message: &str, first: &mut bool) -> Result<()> {
+    if *first {
+        *first = false;
+        ctx.say(message).await?;
+    } else {
+        ctx.channel_id()
+            .send_message(&ctx.http(), |m| m.content(message))
+            .await?;
     }
+
+    Ok(())
 }
