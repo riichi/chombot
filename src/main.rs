@@ -151,10 +151,11 @@ async fn main() {
         })
         .token(&args.discord_token)
         .intents(GatewayIntents::non_privileged())
-        .setup(|ctx, ready, _| {
+        .setup(|ctx, ready, framework| {
             Box::pin(async move {
                 start_ranking_watcher(&args, ctx.clone()).await;
                 start_tournaments_watcher(&args, ctx.clone()).await;
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 info!("{} is connected!", ready.user.name);
                 Ok(PoiseUserData { chombot })
             })
