@@ -15,6 +15,8 @@ pub enum Pasta {
     Stowarzyszenie,
     #[name = "Yostar rant"]
     Yostar,
+    #[name = "Mały Książę na planecie Czombiarza"]
+    MalyKsiaze,
 }
 
 impl Pasta {
@@ -24,6 +26,7 @@ impl Pasta {
             Self::Tanjalo => include_str!("tanjalo.txt"),
             Self::Stowarzyszenie => include_str!("stowarzyszenie.txt"),
             Self::Yostar => include_str!("yostar.txt"),
+            Self::MalyKsiaze => include_str!("ksiaze.txt"),
         }
     }
 }
