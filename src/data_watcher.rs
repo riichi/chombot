@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use log::error;
+use poise::serenity_prelude::Context;
 use tokio::time::sleep;
 
 const DATA_UPDATE_INTERVAL: Duration = Duration::from_secs(60 * 10);
@@ -64,11 +65,11 @@ where
         }
     }
 
-    pub async fn run(&mut self) {
+    pub async fn run(&mut self, ctx: &Context) {
         loop {
             let new_data = self.fetch_data().await;
             if let Some((old, new)) = self.previous_data.should_notify(&new_data) {
-                self.update_notifier.notify(old, new).await;
+                self.update_notifier.notify(old, new, ctx).await;
             }
             self.previous_data.update(new_data);
             sleep(DATA_UPDATE_INTERVAL).await;
@@ -78,5 +79,5 @@ where
 
 #[async_trait]
 pub trait DataUpdateNotifier<T: Send + Sync> {
-    async fn notify(&self, old_data: &T, new_data: &T);
+    async fn notify(&self, old_data: &T, new_data: &T, ctx: &Context);
 }

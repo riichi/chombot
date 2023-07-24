@@ -46,11 +46,10 @@ async fn start_ranking_watcher(args: &Arguments, ctx: SerenityContext) {
         .expect("Ranking watcher feature enabled but no channel ID provided");
     let notifier = ChannelMessageNotifier::new(
         ChannelId(ranking_watcher_channel_id),
-        ctx,
         String::from("https://ranking.cvgo.re/ ranking update"),
     );
     tokio::spawn(async move {
-        DataWatcher::new(notifier, get_ranking).run().await;
+        DataWatcher::new(notifier, get_ranking).run(&ctx).await;
     });
 }
 
@@ -66,11 +65,12 @@ async fn start_tournaments_watcher(args: &Arguments, ctx: SerenityContext) {
         "**TOURNAMENTS UPDATE** (http://mahjong-europe.org/ranking/Calendar.html)\n\n";
     let notifier = TournamentsChannelMessageNotifier::new(
         ChannelId(tournemants_watcher_channel_id),
-        ctx,
         String::from(MESSAGE_PREFIX),
     );
     tokio::spawn(async move {
-        DataWatcher::new(notifier, get_rcr_tournaments).run().await;
+        DataWatcher::new(notifier, get_rcr_tournaments)
+            .run(&ctx)
+            .await;
     });
 }
 

@@ -107,3 +107,51 @@ fn format_ko_tsumo_points(points: Option<(BigInt, BigInt)>) -> String {
         Some((value_ko, value_oya)) => format!("{}/{}", value_ko, value_oya),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use riichi_hand::points::Honbas;
+
+    use super::*;
+
+    macro_rules! test_create_points_embed_fields_impl {
+        {$id:ident, $points:expr, $ko_tsumo:expr, $ko_ron:expr, $oya_tsumo:expr, $oya_ron:expr} => {
+            #[test]
+            fn $id() {
+                let points: Points = $points;
+                let fields: Vec<_> = create_points_embed_fields(points).collect();
+                assert_eq!(fields, vec![
+                    ("Non-dealer tsumo", String::from($ko_tsumo), false),
+                    ("Non-dealer ron", String::from($ko_ron), false),
+                    ("Dealer tsumo", String::from($oya_tsumo), false),
+                    ("Dealer ron", String::from($oya_ron), false),
+                ])
+            }
+        };
+    }
+
+    test_create_points_embed_fields_impl! {
+        test_create_points_embed_fields_mangan,
+        Points::mangan(Honbas::default()),
+        "2000/4000",
+        "8000",
+        "4000",
+        "12000"
+    }
+    test_create_points_embed_fields_impl! {
+        test_create_points_embed_fields_no_ron,
+        Points::from_calculated(PointsCalculationMode::Default, Han::new(3), Fu::new(20), Honbas::default()).unwrap(),
+        "700/1300",
+        "N/A",
+        "1300",
+        "N/A"
+    }
+    test_create_points_embed_fields_impl! {
+        test_create_points_embed_fields_no_tsumo,
+        Points::from_calculated(PointsCalculationMode::Default, Han::new(2), Fu::new(25), Honbas::default()).unwrap(),
+        "N/A",
+        "1600",
+        "N/A",
+        "2400"
+    }
+}
