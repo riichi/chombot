@@ -4,17 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.71"
-async-trait = "0.1.71"
+anyhow = "1.0.72"
+async-trait = "0.1.72"
 chrono = { version = "0.4.26", features = ["serde"] }
 image = { version = "0.24.6", default-features = false, features = ["png"] }
 reqwest = "0.11.18"
 riichi_hand = "0.6.0"
 scraper = "0.17.1"
-serde = "1.0.166"
+serde = "1.0.180"
 tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
 slug = "0.1.4"
-clap = { version = "4.3.11", features = ["derive", "env"] }
+clap = { version = "4.3.19", features = ["derive", "env"] }
 env_logger = "0.10.0"
 log = "0.4.19"
 num-bigint = "0.4.3"
