@@ -57,14 +57,14 @@ async fn start_tournaments_watcher(args: &Arguments, ctx: SerenityContext) {
     if !args.feature_tournaments_watcher {
         return;
     }
-    let tournemants_watcher_channel_id = args
+    let tournaments_watcher_channel_id = args
         .tournaments_watcher_channel_id
         .expect("Tournaments watcher feature enabled but no channel ID provided");
 
     const MESSAGE_PREFIX: &str =
         "**TOURNAMENTS UPDATE** (http://mahjong-europe.org/ranking/Calendar.html)\n\n";
     let notifier = TournamentsChannelMessageNotifier::new(
-        ChannelId(tournemants_watcher_channel_id),
+        ChannelId(tournaments_watcher_channel_id),
         String::from(MESSAGE_PREFIX),
     );
     tokio::spawn(async move {
