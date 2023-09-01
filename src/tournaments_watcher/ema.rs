@@ -161,7 +161,7 @@ pub fn parse_tournaments(body: &str) -> anyhow::Result<Tournaments> {
         if is_header(&cells) {
             last_header = first_nonempty_text(&cells[0])?.to_owned();
         } else {
-            let entry = make_entry(&mut last_header, cells)?;
+            let entry = make_entry(&last_header, cells)?;
             entries.push(entry);
         }
     }
@@ -176,7 +176,7 @@ fn is_header(cells: &[ElementRef]) -> bool {
     cell_classes.any(|class_name| class_name.starts_with(HEADER_CLASS_PREFIX))
 }
 
-fn make_entry(last_header: &mut String, cells: Vec<ElementRef>) -> anyhow::Result<TournamentEntry> {
+fn make_entry(last_header: &str, cells: Vec<ElementRef>) -> anyhow::Result<TournamentEntry> {
     let url = if let Some(element) = select_all!("a", cells[0]).next() {
         element
             .value()
