@@ -5,7 +5,7 @@ use image::DynamicImage;
 use poise::serenity_prelude::{AttachmentType, CacheHttp};
 use poise::ChoiceParameter;
 
-use crate::chombot::TileStyle;
+use crate::chombot::{Chombot, TileStyle};
 use crate::PoiseContext;
 
 #[derive(Debug, ChoiceParameter)]
@@ -44,9 +44,8 @@ pub async fn hand(
     #[description = "Tile style"] tileset: Option<Tileset>,
 ) -> Result<()> {
     let tile_style: TileStyle = tileset.unwrap_or_default().into();
-    let chombot = &ctx.data().chombot;
 
-    let image = chombot.render_hand(&hand, tile_style).await?;
+    let image = Chombot::render_hand(&hand, &tile_style)?;
     let mut buf = Vec::new();
     DynamicImage::ImageRgba8(image)
         .write_to(&mut Cursor::new(&mut buf), image::ImageOutputFormat::Png)?;

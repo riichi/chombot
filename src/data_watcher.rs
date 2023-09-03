@@ -40,9 +40,9 @@ pub struct DataWatcher<T, F, H> {
 impl<T, F, H, HOut, E> DataWatcher<T, F, H>
 where
     T: Eq + Send + Sync,
-    F: DataUpdateNotifier<T>,
-    H: Fn() -> HOut,
-    HOut: Future<Output = Result<T, E>>,
+    F: DataUpdateNotifier<T> + Send + Sync,
+    H: (Fn() -> HOut) + Send + Sync,
+    HOut: Future<Output = Result<T, E>> + Send + Sync,
     E: Debug,
 {
     #[must_use]
@@ -57,7 +57,7 @@ where
     }
 
     #[must_use]
-    pub fn new(update_notifier: F, get_next: H) -> Self {
+    pub const fn new(update_notifier: F, get_next: H) -> Self {
         Self {
             previous_data: None,
             update_notifier,

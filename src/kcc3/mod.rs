@@ -25,7 +25,7 @@ impl Error for Kcc3ClientError {
 }
 
 impl Kcc3ClientError {
-    fn new(inner_error: reqwest::Error) -> Self {
+    const fn new(inner_error: reqwest::Error) -> Self {
         Self { inner_error }
     }
 }
@@ -88,10 +88,10 @@ impl Kcc3Client {
             .error_for_status()?
             .json()
             .await
-            .map_err(|x| x.into())
+            .map_err(std::convert::Into::into)
     }
 
-    async fn api_call_post<T: DeserializeOwned, P: Serialize>(
+    async fn api_call_post<T: DeserializeOwned, P: Serialize + Sync + Send>(
         &self,
         endpoint: &str,
         payload: P,
@@ -103,6 +103,6 @@ impl Kcc3Client {
             .error_for_status()?
             .json()
             .await
-            .map_err(|x| x.into())
+            .map_err(std::convert::Into::into)
     }
 }

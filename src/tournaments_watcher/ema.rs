@@ -25,18 +25,18 @@ pub struct Tournaments(pub Vec<TournamentEntry>);
 impl Tournaments {
     #[inline]
     #[must_use]
-    fn get(&self) -> &Vec<TournamentEntry> {
+    const fn get(&self) -> &Vec<TournamentEntry> {
         &self.0
     }
 
     #[must_use]
-    fn into_rcr_only(self) -> Tournaments {
+    fn into_rcr_only(self) -> Self {
         let filtered = self
             .0
             .into_iter()
             .filter(|entry| entry.rules == RCR_RULES_NAME)
             .collect();
-        Tournaments(filtered)
+        Self(filtered)
     }
 }
 
@@ -161,7 +161,7 @@ pub fn parse_tournaments(body: &str) -> anyhow::Result<Tournaments> {
         if is_header(&cells) {
             last_header = first_nonempty_text(&cells[0])?.to_owned();
         } else {
-            let entry = make_entry(&last_header, cells)?;
+            let entry = make_entry(&last_header, &cells)?;
             entries.push(entry);
         }
     }
@@ -176,15 +176,15 @@ fn is_header(cells: &[ElementRef]) -> bool {
     cell_classes.any(|class_name| class_name.starts_with(HEADER_CLASS_PREFIX))
 }
 
-fn make_entry(last_header: &str, cells: Vec<ElementRef>) -> anyhow::Result<TournamentEntry> {
+fn make_entry(last_header: &str, cells: &[ElementRef]) -> anyhow::Result<TournamentEntry> {
     let url = if let Some(element) = select_all!("a", cells[0]).next() {
         element
             .value()
             .attr("href")
-            .ok_or(anyhow!("<a> element does not contain a link"))?
+            .ok_or_else(|| anyhow!("<a> element does not contain a link"))?
             .to_owned()
     } else {
-        "".to_owned()
+        String::new()
     };
     let texts = cells.iter().map(cell_text).collect::<Vec<_>>();
     if texts.len() != TABLE_COLUMN_NUM {
@@ -230,11 +230,11 @@ pub enum TournamentsFetchError {
 impl Display for TournamentsFetchError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            TournamentsFetchError::FetchError(err) => {
-                write!(f, "Could not fetch the tournament list: {}", err)
+            Self::FetchError(err) => {
+                write!(f, "Could not fetch the tournament list: {err}")
             }
-            TournamentsFetchError::ParseError(err) => {
-                write!(f, "Could not parse the tournament list: {}", err)
+            Self::ParseError(err) => {
+                write!(f, "Could not parse the tournament list: {err}")
             }
         }
     }
@@ -275,7 +275,7 @@ mod tests {
                     date: "27-31 November 2023".to_owned(),
                     place: "Krakow".to_owned(),
                     approval_status: "OK".to_owned(),
-                    results_status: "".to_owned(),
+                    results_status: String::new(),
                 }),
             ]
         );

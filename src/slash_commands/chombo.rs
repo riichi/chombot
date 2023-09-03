@@ -7,6 +7,7 @@ use crate::{Chombo, Chombot, DiscordId, Player, PlayerId, PoiseContext};
 
 #[poise::command(slash_command, subcommands("ranking", "list", "add"))]
 pub async fn chombo(_: PoiseContext<'_>) -> Result<()> {
+    #![allow(clippy::unused_async)]
     Ok(())
 }
 
@@ -74,8 +75,8 @@ async fn add(
 async fn get_chombos_embed_entries(
     chombot: &Chombot,
 ) -> Result<impl Iterator<Item = (String, usize, bool)>> {
-    let chombos = chombot.create_chombo_ranking().await?;
-    Ok(chombos
+    let chombo_ranking = chombot.create_chombo_ranking().await?;
+    Ok(chombo_ranking
         .into_iter()
         .map(|(player, num)| (player.short_name(), num, true)))
 }
@@ -96,9 +97,9 @@ fn format_add_message(user: &User, description: &str) -> String {
 }
 
 async fn create_chombos_list(chombot: &Chombot) -> Result<String> {
-    let chombos = chombot.get_chombo_list().await?;
+    let chombo_list = chombot.get_chombo_list().await?;
     let mut result = String::new();
-    for (player, chombo) in &chombos {
+    for (player, chombo) in &chombo_list {
         let entry = format_chombo_entry(player, chombo);
         if result.len() + entry.len() <= DISCORD_MESSAGE_SIZE_LIMIT {
             result += &entry;
@@ -112,7 +113,7 @@ async fn create_chombos_list(chombot: &Chombot) -> Result<String> {
 
 fn format_chombo_entry(player: &Player, chombo: &Chombo) -> String {
     let comment = if chombo.comment.is_empty() {
-        "".to_owned()
+        String::new()
     } else {
         format!(": *{}*", chombo.comment)
     };

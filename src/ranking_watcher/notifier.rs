@@ -12,7 +12,7 @@ pub struct ChannelMessageNotifier {
 }
 
 impl ChannelMessageNotifier {
-    pub fn new(channel_id: ChannelId, message: String) -> Self {
+    pub const fn new(channel_id: ChannelId, message: String) -> Self {
         Self {
             channel_id,
             message,
@@ -24,7 +24,7 @@ impl ChannelMessageNotifier {
             PositionChangeInfo::Diff(delta) => match delta {
                 d if d < 0 => format!(" (↓{})", -d),
                 d if d > 0 => format!(" (↑{d})"),
-                _ => String::from(""),
+                _ => String::new(),
             },
             PositionChangeInfo::New => String::from(" (NEW)"),
         }
@@ -34,7 +34,7 @@ impl ChannelMessageNotifier {
         match *p {
             PositionChangeInfo::Diff(d) if d < 0 => format!(" ({d})"),
             PositionChangeInfo::Diff(d) if d > 0 => format!(" (+{d})"),
-            _ => String::from(""),
+            _ => String::new(),
         }
     }
 
@@ -123,6 +123,6 @@ mod tests {
                 "• 5 (NEW) / player-name-003 / 1830 (-60) pkt\n",
                 "• 8 (↓3) / player-name-004 / 1718 (+73) pkt"
             )
-        )
+        );
     }
 }
