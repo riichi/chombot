@@ -16,8 +16,8 @@ pub enum PositionChangeInfo {
 }
 
 impl PositionChangeInfo {
-    pub fn has_changed(&self) -> bool {
-        !matches!(self, PositionChangeInfo::Diff(0))
+    pub const fn has_changed(&self) -> bool {
+        !matches!(self, Self::Diff(0))
     }
 }
 
@@ -31,7 +31,7 @@ pub struct RankingEntry {
 }
 
 impl RankingEntry {
-    pub fn has_changed(&self) -> bool {
+    pub const fn has_changed(&self) -> bool {
         self.points_diff.has_changed() || self.pos_diff.has_changed()
     }
 }

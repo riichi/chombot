@@ -78,7 +78,7 @@ pub struct Chombot {
 }
 
 impl Chombot {
-    pub fn new(kcc3client: Option<Kcc3Client>) -> Self {
+    pub const fn new(kcc3client: Option<Kcc3Client>) -> Self {
         Self { kcc3client }
     }
 
@@ -95,8 +95,8 @@ impl Chombot {
         comment: &str,
     ) -> ChombotResult<Chombo>
     where
-        P: Fn(&Player) -> bool,
-        F: Fn() -> Player,
+        P: (Fn(&Player) -> bool) + Send + Sync,
+        F: (Fn() -> Player) + Send + Sync,
     {
         let client = self.get_client()?;
         let players = client.get_players().await?;
@@ -152,7 +152,7 @@ impl Chombot {
         Ok(chombos)
     }
 
-    pub async fn render_hand(&self, hand: &str, tile_style: TileStyle) -> ChombotResult<RgbaImage> {
+    pub fn render_hand(hand: &str, tile_style: &TileStyle) -> ChombotResult<RgbaImage> {
         let tile_set: Box<dyn TileSet> = match tile_style {
             TileStyle::Yellow => Box::new(&*YELLOW_FLUFFY_STUFF_TILE_SET),
             TileStyle::Red => Box::new(&*RED_FLUFFY_STUFF_TILE_SET),

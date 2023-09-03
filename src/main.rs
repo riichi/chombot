@@ -1,3 +1,8 @@
+#![warn(clippy::pedantic)]
+#![warn(clippy::nursery)]
+#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::unreadable_literal)]
+
 use anyhow::Error;
 use clap::Parser;
 use log::{error, info, LevelFilter};
@@ -37,7 +42,7 @@ pub struct PoiseUserData {
 
 pub type PoiseContext<'a> = Context<'a, PoiseUserData, anyhow::Error>;
 
-async fn start_ranking_watcher(args: &Arguments, ctx: SerenityContext) {
+fn start_ranking_watcher(args: &Arguments, ctx: SerenityContext) {
     if !args.feature_ranking_watcher {
         return;
     }
@@ -53,7 +58,10 @@ async fn start_ranking_watcher(args: &Arguments, ctx: SerenityContext) {
     });
 }
 
-async fn start_tournaments_watcher(args: &Arguments, ctx: SerenityContext) {
+fn start_tournaments_watcher(args: &Arguments, ctx: SerenityContext) {
+    const MESSAGE_PREFIX: &str =
+        "**TOURNAMENTS UPDATE** (http://mahjong-europe.org/ranking/Calendar.html)\n\n";
+
     if !args.feature_tournaments_watcher {
         return;
     }
@@ -61,8 +69,6 @@ async fn start_tournaments_watcher(args: &Arguments, ctx: SerenityContext) {
         .tournaments_watcher_channel_id
         .expect("Tournaments watcher feature enabled but no channel ID provided");
 
-    const MESSAGE_PREFIX: &str =
-        "**TOURNAMENTS UPDATE** (http://mahjong-europe.org/ranking/Calendar.html)\n\n";
     let notifier = TournamentsChannelMessageNotifier::new(
         ChannelId(tournaments_watcher_channel_id),
         String::from(MESSAGE_PREFIX),
@@ -153,8 +159,8 @@ async fn main() {
         .intents(GatewayIntents::non_privileged())
         .setup(|ctx, ready, framework| {
             Box::pin(async move {
-                start_ranking_watcher(&args, ctx.clone()).await;
-                start_tournaments_watcher(&args, ctx.clone()).await;
+                start_ranking_watcher(&args, ctx.clone());
+                start_tournaments_watcher(&args, ctx.clone());
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 info!("{} is connected!", ready.user.name);
                 Ok(PoiseUserData { chombot })

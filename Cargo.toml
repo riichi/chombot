@@ -2,6 +2,11 @@
 name = "chombot"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE"
+description = "Discord bot for Riichi Mahjong servers."
+repository = "https://github.com/riichi/chombot"
+keywords = ["riichi", "mahjong", "discord", "chombo"]
+categories = ["multimedia::images"]
 
 [dependencies]
 anyhow = "1.0.75"

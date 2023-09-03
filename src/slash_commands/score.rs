@@ -25,9 +25,9 @@ impl Default for Mode {
 impl From<Mode> for PointsCalculationMode {
     fn from(value: Mode) -> Self {
         match value {
-            Mode::Default => PointsCalculationMode::Default,
-            Mode::Loose => PointsCalculationMode::Loose,
-            Mode::Unlimited => PointsCalculationMode::Unlimited,
+            Mode::Default => Self::Default,
+            Mode::Loose => Self::Loose,
+            Mode::Unlimited => Self::Unlimited,
         }
     }
 }
@@ -56,7 +56,7 @@ pub async fn score(
     let fu = Fu::new(fu);
     let honbas = honbas.map(Honbas::new).unwrap_or_default();
     let points = Points::from_calculated(points_calculation_mode, han, fu, honbas)?;
-    let fields = create_points_embed_fields(points);
+    let fields = create_points_embed_fields(&points);
 
     ctx.send(|reply| reply.embed(move |embed| create_points_embed(embed, han, fu, honbas, fields)))
         .await?;
@@ -78,7 +78,7 @@ fn create_points_embed(
 }
 
 fn create_points_embed_fields(
-    points: Points,
+    points: &Points,
 ) -> impl Iterator<Item = (&'static str, String, bool)> {
     info!("{points:?}");
     [
@@ -95,16 +95,13 @@ fn create_points_embed_fields(
 }
 
 fn format_points(points: Option<BigInt>) -> String {
-    match points {
-        None => "N/A".to_owned(),
-        Some(value) => value.to_string(),
-    }
+    points.map_or_else(|| "N/A".to_owned(), |value| value.to_string())
 }
 
 fn format_ko_tsumo_points(points: Option<(BigInt, BigInt)>) -> String {
     match points {
         None => "N/A".to_owned(),
-        Some((value_ko, value_oya)) => format!("{}/{}", value_ko, value_oya),
+        Some((value_ko, value_oya)) => format!("{value_ko}/{value_oya}"),
     }
 }
 
@@ -119,7 +116,7 @@ mod tests {
             #[test]
             fn $id() {
                 let points: Points = $points;
-                let fields: Vec<_> = create_points_embed_fields(points).collect();
+                let fields: Vec<_> = create_points_embed_fields(&points).collect();
                 assert_eq!(fields, vec![
                     ("Non-dealer tsumo", String::from($ko_tsumo), false),
                     ("Non-dealer ron", String::from($ko_ron), false),

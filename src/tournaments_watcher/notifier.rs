@@ -20,7 +20,7 @@ pub struct TournamentsChannelMessageNotifier {
 
 impl TournamentsChannelMessageNotifier {
     #[must_use]
-    pub fn new(channel_id: ChannelId, message: String) -> Self {
+    pub const fn new(channel_id: ChannelId, message: String) -> Self {
         Self {
             channel_id,
             message,
@@ -66,16 +66,16 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
             str += &format!("**CHANGED**: _{}_; ", change.name);
 
             if let Some(date) = &change.date {
-                str += &format!("date: {}; ", date);
+                str += &format!("date: {date}; ");
             }
             if let Some(place) = &change.place {
-                str += &format!("place: {}; ", place);
+                str += &format!("place: {place}; ");
             }
             if let Some(approval_status) = &change.approval_status {
-                str += &format!("MERS approval: {}; ", approval_status);
+                str += &format!("MERS approval: {approval_status}; ");
             }
             if let Some(results) = &change.results_status {
-                str += &format!("results: \"{}\"; ", results);
+                str += &format!("results: \"{results}\"; ");
             }
 
             if let Some(trimmed) = str.strip_suffix("; ") {
@@ -132,7 +132,7 @@ mod tests {
                 date: "27-31 November 2023".to_owned(),
                 place: "Krakow".to_owned(),
                 approval_status: "OK".to_owned(),
-                results_status: "".to_owned(),
+                results_status: String::new(),
             }),
         ];
 

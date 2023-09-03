@@ -36,16 +36,16 @@ macro_rules! select_one {
 
 pub(crate) use {select_all, select_one, unpack_children};
 
-pub(crate) fn first_nonempty_text<'a>(e: &'a ElementRef) -> anyhow::Result<&'a str> {
+pub fn first_nonempty_text<'a>(e: &'a ElementRef) -> anyhow::Result<&'a str> {
     let ret = e
         .text()
         .map(str::trim)
         .find(|s| !s.is_empty())
-        .ok_or(anyhow!("No non-empty text nodes found"))?;
+        .ok_or_else(|| anyhow!("No non-empty text nodes found"))?;
     Ok(ret)
 }
 
 #[must_use]
-pub(crate) fn cell_text(e: &ElementRef) -> String {
-    e.text().map(|s| s.trim()).join(" ").trim().to_owned()
+pub fn cell_text(e: &ElementRef) -> String {
+    e.text().map(str::trim).join(" ").trim().to_owned()
 }

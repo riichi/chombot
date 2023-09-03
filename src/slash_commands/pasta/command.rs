@@ -20,7 +20,7 @@ pub enum Pasta {
 }
 
 impl Pasta {
-    pub fn content(&self) -> &'static str {
+    pub const fn content(&self) -> &'static str {
         match self {
             Self::JGamesCon => include_str!("jgamescon.txt"),
             Self::Tanjalo => include_str!("tanjalo.txt"),
