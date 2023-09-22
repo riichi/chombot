@@ -8,7 +8,7 @@ ADD . ./
 
 RUN cargo build --bin chombot-kcc --release
 
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 ARG APP=/app
 
 RUN apt-get update \
