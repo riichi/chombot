@@ -1,11 +1,11 @@
 use std::convert::TryFrom;
 
 use anyhow::{anyhow, Context, Result};
+use chombot_common::scraping_utils::first_nonempty_text;
+use chombot_common::{select_all, select_one, unpack_children};
 use reqwest;
 use scraper::node::{Element, Node};
 use scraper::{CaseSensitivity, ElementRef, Html, Selector};
-
-use crate::scraping_utils::{first_nonempty_text, select_all, select_one, unpack_children};
 
 const RANKING_URL: &str = "https://ranking.cvgo.re/";
 

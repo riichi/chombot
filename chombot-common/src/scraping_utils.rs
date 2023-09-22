@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use itertools::Itertools;
 use scraper::ElementRef;
 
+#[macro_export]
 macro_rules! unpack_children {
     ($element:expr, $n:expr) => {
         <[ElementRef; $n]>::try_from(
@@ -20,12 +21,14 @@ macro_rules! unpack_children {
     };
 }
 
+#[macro_export]
 macro_rules! select_all {
     ($selector:expr, $obj:expr) => {
         $obj.select(&Selector::parse($selector).expect(concat!("Invalid selector: ", $selector)))
     };
 }
 
+#[macro_export]
 macro_rules! select_one {
     ($selector:expr, $obj:expr) => {
         select_all!($selector, $obj)
@@ -33,8 +36,6 @@ macro_rules! select_one {
             .ok_or(anyhow!(concat!("Could not find any ", $selector)))
     };
 }
-
-pub(crate) use {select_all, select_one, unpack_children};
 
 pub fn first_nonempty_text<'a>(e: &'a ElementRef) -> anyhow::Result<&'a str> {
     let ret = e

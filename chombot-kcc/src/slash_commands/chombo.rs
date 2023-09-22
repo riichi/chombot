@@ -1,9 +1,11 @@
 use anyhow::Result;
+use chombot_common::data::DISCORD_MESSAGE_SIZE_LIMIT;
 use poise::serenity_prelude::{Color, CreateEmbed, User};
 use slug::slugify;
 
-use crate::data::DISCORD_MESSAGE_SIZE_LIMIT;
-use crate::{Chombo, Chombot, DiscordId, Player, PlayerId, PoiseContext};
+use crate::chombot::Chombot;
+use crate::kcc3::data_types::{Chombo, DiscordId, Player, PlayerId};
+use crate::PoiseContext;
 
 #[poise::command(slash_command, subcommands("ranking", "list", "add"))]
 pub async fn chombo(_: PoiseContext<'_>) -> Result<()> {
@@ -14,7 +16,7 @@ pub async fn chombo(_: PoiseContext<'_>) -> Result<()> {
 /// Display the chombo ranking.
 #[poise::command(slash_command)]
 async fn ranking(ctx: PoiseContext<'_>) -> Result<()> {
-    let entries = get_chombos_embed_entries(&ctx.data().chombot).await?;
+    let entries = get_chombos_embed_entries(&ctx.data().kcc_chombot).await?;
 
     ctx.send(|response| response.embed(|embed| create_chombos_embed(embed, entries)))
         .await?;
@@ -25,7 +27,7 @@ async fn ranking(ctx: PoiseContext<'_>) -> Result<()> {
 /// List all chombos.
 #[poise::command(slash_command)]
 async fn list(ctx: PoiseContext<'_>) -> Result<()> {
-    let chombos = create_chombos_list(&ctx.data().chombot).await?;
+    let chombos = create_chombos_list(&ctx.data().kcc_chombot).await?;
 
     ctx.send(|response| {
         response
@@ -44,7 +46,7 @@ async fn add(
     #[description = "User that made a chombo"] user: User,
     #[description = "Chombo description"] description: String,
 ) -> Result<()> {
-    let chombot = &ctx.data().chombot;
+    let chombot = &ctx.data().kcc_chombot;
     chombot
         .add_chombo_for_player(
             |player| player.discord_id.0 == user.id.to_string(),

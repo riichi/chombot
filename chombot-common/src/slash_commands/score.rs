@@ -5,7 +5,7 @@ use poise::serenity_prelude::{Color, CreateEmbed};
 use poise::ChoiceParameter;
 use riichi_hand::points::{Fu, Han, Honbas, PointsCalculationMode, PointsCustom};
 
-use crate::PoiseContext;
+use crate::{ChombotPoiseContext, ChombotPoiseUserData};
 
 type Points = PointsCustom<BigInt>;
 
@@ -34,8 +34,8 @@ impl From<Mode> for PointsCalculationMode {
 
 /// Calculate the score for given number of han and fu points.
 #[poise::command(slash_command)]
-pub async fn score(
-    ctx: PoiseContext<'_>,
+pub async fn score<T: ChombotPoiseUserData>(
+    ctx: ChombotPoiseContext<'_, T>,
     #[description = "Number of han points"]
     #[min = -1600]
     #[max = 1600]

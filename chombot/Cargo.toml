@@ -1,0 +1,28 @@
+[package]
+name = "chombot"
+version = "0.1.0"
+edition = "2021"
+license-file = "LICENSE"
+description = "Discord bot for Riichi Mahjong servers."
+repository = "https://github.com/riichi/chombot"
+keywords = ["riichi", "mahjong", "discord", "chombo"]
+categories = ["multimedia::images"]
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+image.workspace = true
+reqwest.workspace = true
+riichi_hand.workspace = true
+scraper.workspace = true
+serde.workspace = true
+tokio.workspace = true
+slug.workspace = true
+clap.workspace = true
+log.workspace = true
+env_logger.workspace = true
+num-bigint.workspace = true
+itertools.workspace = true
+poise.workspace = true
+chombot-common = { path = "../chombot-common" }

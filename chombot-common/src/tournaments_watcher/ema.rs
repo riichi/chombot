@@ -6,7 +6,8 @@ use anyhow::{anyhow, bail};
 use itertools::Itertools;
 use scraper::{ElementRef, Html, Selector};
 
-use crate::scraping_utils::{cell_text, first_nonempty_text, select_all, select_one};
+use crate::scraping_utils::{cell_text, first_nonempty_text};
+use crate::{select_all, select_one};
 
 const CALENDAR_URL: &str = "http://mahjong-europe.org/ranking/Calendar.html";
 const HEADER_CLASS_PREFIX: &str = "TCTT_contenuEntete";

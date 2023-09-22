@@ -6,7 +6,7 @@ WORKDIR ./chombot
 
 ADD . ./
 
-RUN cargo build --release
+RUN cargo build --bin chombot-kcc --release
 
 FROM debian:bullseye-slim
 ARG APP=/app
@@ -20,7 +20,7 @@ RUN groupadd $APP_USER \
     && useradd -g $APP_USER $APP_USER \
     && mkdir -p ${APP}
 
-COPY --from=builder /chombot/target/release/chombot ${APP}/chombot
+COPY --from=builder /chombot/target/release/chombot-kcc ${APP}/chombot
 
 RUN chown -R $APP_USER:$APP_USER ${APP}
 
