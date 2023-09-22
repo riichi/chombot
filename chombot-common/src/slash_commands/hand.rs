@@ -2,11 +2,11 @@ use std::io::Cursor;
 
 use anyhow::Result;
 use image::DynamicImage;
-use poise::serenity_prelude::{AttachmentType, CacheHttp};
+use poise::serenity_prelude::AttachmentType;
 use poise::ChoiceParameter;
 
-use crate::chombot::{Chombot, TileStyle};
-use crate::PoiseContext;
+use crate::chombot::{ChombotBase, TileStyle};
+use crate::{ChombotPoiseContext, ChombotPoiseUserData};
 
 #[derive(Debug, ChoiceParameter)]
 pub enum Tileset {
@@ -36,8 +36,8 @@ impl From<Tileset> for TileStyle {
 
 /// Draw a specified hand.
 #[poise::command(slash_command)]
-pub async fn hand(
-    ctx: PoiseContext<'_>,
+pub async fn hand<T: ChombotPoiseUserData>(
+    ctx: ChombotPoiseContext<'_, T>,
     #[description = "The hand to render"]
     #[max_length = 150]
     hand: String,
@@ -45,7 +45,7 @@ pub async fn hand(
 ) -> Result<()> {
     let tile_style: TileStyle = tileset.unwrap_or_default().into();
 
-    let image = Chombot::render_hand(&hand, &tile_style)?;
+    let image = ChombotBase::render_hand(&hand, &tile_style)?;
     let mut buf = Vec::new();
     DynamicImage::ImageRgba8(image)
         .write_to(&mut Cursor::new(&mut buf), image::ImageOutputFormat::Png)?;

@@ -1,8 +1,8 @@
 use anyhow::Result;
+use chombot_common::data::DISCORD_MESSAGE_SIZE_LIMIT;
 use poise::serenity_prelude::CacheHttp;
 use poise::ChoiceParameter;
 
-use crate::data::DISCORD_MESSAGE_SIZE_LIMIT;
 use crate::PoiseContext;
 
 #[derive(Debug, ChoiceParameter)]

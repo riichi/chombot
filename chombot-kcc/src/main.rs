@@ -2,8 +2,15 @@
 #![warn(clippy::nursery)]
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::unreadable_literal)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_panics_doc)]
 
 use anyhow::Error;
+use chombot_common::chombot::ChombotBase;
+use chombot_common::data_watcher::DataWatcher;
+use chombot_common::slash_commands::hand::hand;
+use chombot_common::slash_commands::score::score;
+use chombot_common::{start_tournaments_watcher, ChombotPoiseUserData};
 use clap::Parser;
 use log::{error, info, LevelFilter};
 use poise::serenity_prelude::{ChannelId, Context as SerenityContext, GatewayIntents};
@@ -11,43 +18,35 @@ use poise::{BoxFuture, Command, Context, Event, Framework, FrameworkContext, Fra
 
 use crate::args::Arguments;
 use crate::chombot::Chombot;
-use crate::data_watcher::DataWatcher;
-use crate::kcc3::data_types::{Chombo, DiscordId, Player, PlayerId};
-use crate::kcc3::{Kcc3Client, Kcc3ClientResult};
+use crate::kcc3::Kcc3ClientResult;
 use crate::ranking_watcher::notifier::ChannelMessageNotifier;
 use crate::ranking_watcher::usma::get_ranking;
 use crate::slash_commands::chombo::chombo;
-use crate::slash_commands::hand::hand;
 use crate::slash_commands::pasta::pasta;
-use crate::slash_commands::score::score;
-use crate::tournaments_watcher::ema::get_rcr_tournaments;
-use crate::tournaments_watcher::notifier::TournamentsChannelMessageNotifier;
 
 mod args;
 mod chombot;
-mod data;
-mod data_watcher;
-mod discord_utils;
 mod kcc3;
 mod ranking_watcher;
-mod scraping_utils;
 mod slash_commands;
-mod tournaments_watcher;
 
 const AT_EVERYONE_REACTIONS: [&str; 2] = ["Ichiangry", "Mikiknife"];
 
 pub struct PoiseUserData {
-    pub chombot: Chombot,
+    pub chombot: ChombotBase,
+    pub kcc_chombot: Chombot,
+}
+
+impl ChombotPoiseUserData for PoiseUserData {
+    fn chombot(&self) -> &ChombotBase {
+        &self.chombot
+    }
 }
 
 pub type PoiseContext<'a> = Context<'a, PoiseUserData, anyhow::Error>;
 
-fn start_ranking_watcher(args: &Arguments, ctx: SerenityContext) {
-    if !args.feature_ranking_watcher {
-        return;
-    }
-    let ranking_watcher_channel_id = args
-        .ranking_watcher_channel_id
+fn start_ranking_watcher(ranking_watcher_channel_id: Option<u64>, ctx: SerenityContext) {
+    let ranking_watcher_channel_id = ranking_watcher_channel_id
         .expect("Ranking watcher feature enabled but no channel ID provided");
     let notifier = ChannelMessageNotifier::new(
         ChannelId(ranking_watcher_channel_id),
@@ -55,28 +54,6 @@ fn start_ranking_watcher(args: &Arguments, ctx: SerenityContext) {
     );
     tokio::spawn(async move {
         DataWatcher::new(notifier, get_ranking).run(&ctx).await;
-    });
-}
-
-fn start_tournaments_watcher(args: &Arguments, ctx: SerenityContext) {
-    const MESSAGE_PREFIX: &str =
-        "**TOURNAMENTS UPDATE** (http://mahjong-europe.org/ranking/Calendar.html)\n\n";
-
-    if !args.feature_tournaments_watcher {
-        return;
-    }
-    let tournaments_watcher_channel_id = args
-        .tournaments_watcher_channel_id
-        .expect("Tournaments watcher feature enabled but no channel ID provided");
-
-    let notifier = TournamentsChannelMessageNotifier::new(
-        ChannelId(tournaments_watcher_channel_id),
-        String::from(MESSAGE_PREFIX),
-    );
-    tokio::spawn(async move {
-        DataWatcher::new(notifier, get_rcr_tournaments)
-            .run(&ctx)
-            .await;
     });
 }
 
@@ -129,7 +106,7 @@ fn event_handler<'a>(
 }
 
 fn get_command_list(args: &Arguments) -> Vec<Command<PoiseUserData, Error>> {
-    let mut ret = vec![hand(), score()];
+    let mut ret: Vec<Command<PoiseUserData, Error>> = vec![hand(), score()];
     if args.feature_kcc3 {
         ret.push(chombo());
     }
@@ -147,7 +124,8 @@ async fn main() {
 
     let args = Arguments::parse();
     let kcc3_client = get_kcc3_client(&args).unwrap();
-    let chombot = chombot::Chombot::new(kcc3_client);
+    let chombot = ChombotBase::new();
+    let kcc_chombot = Chombot::new(kcc3_client);
 
     let framework = Framework::builder()
         .options(FrameworkOptions {
@@ -157,13 +135,20 @@ async fn main() {
         })
         .token(&args.discord_token)
         .intents(GatewayIntents::non_privileged())
-        .setup(|ctx, ready, framework| {
+        .setup(move |ctx, ready, framework| {
             Box::pin(async move {
-                start_ranking_watcher(&args, ctx.clone());
-                start_tournaments_watcher(&args, ctx.clone());
+                if args.feature_ranking_watcher {
+                    start_ranking_watcher(args.ranking_watcher_channel_id, ctx.clone());
+                }
+                if args.feature_tournaments_watcher {
+                    start_tournaments_watcher(args.tournaments_watcher_channel_id, ctx.clone());
+                }
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 info!("{} is connected!", ready.user.name);
-                Ok(PoiseUserData { chombot })
+                Ok(PoiseUserData {
+                    chombot,
+                    kcc_chombot,
+                })
             })
         });
 

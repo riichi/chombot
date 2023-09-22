@@ -67,16 +67,16 @@ impl Chombo {
 
 #[cfg(test)]
 mod tests {
-    use crate::kcc3::data_types::Player;
+    use crate::kcc3::data_types::{DiscordId, Player, PlayerId};
 
     #[test]
     fn short_name_should_return_nickname() {
         let player = Player {
-            id: Default::default(),
+            id: PlayerId::default(),
             first_name: "A".to_string(),
             last_name: "B".to_string(),
             nickname: "C".to_string(),
-            discord_id: Default::default(),
+            discord_id: DiscordId::default(),
         };
         assert_eq!(player.short_name(), "C");
     }
@@ -84,11 +84,11 @@ mod tests {
     #[test]
     fn short_name_should_return_full_name() {
         let player = Player {
-            id: Default::default(),
+            id: PlayerId::default(),
             first_name: "A".to_string(),
             last_name: "B".to_string(),
             nickname: String::new(),
-            discord_id: Default::default(),
+            discord_id: DiscordId::default(),
         };
         assert_eq!(player.short_name(), "A B");
     }

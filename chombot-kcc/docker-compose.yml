@@ -1,0 +1,7 @@
+version: "3"
+services:
+  chombot:
+    image: ghcr.io/riichi/chombot_kcc:master
+    env_file:
+      - .env
+    restart: always

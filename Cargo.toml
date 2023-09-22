@@ -1,14 +1,16 @@
-[package]
-name = "chombot"
-version = "0.1.0"
-edition = "2021"
-license-file = "LICENSE"
-description = "Discord bot for Riichi Mahjong servers."
-repository = "https://github.com/riichi/chombot"
-keywords = ["riichi", "mahjong", "discord", "chombo"]
-categories = ["multimedia::images"]
+[workspace]
+members = [
+    "chombot-common",
+    "chombot",
+    "chombot-kcc"
+]
+resolver = "2"
 
-[dependencies]
+[profile.release]
+codegen-units = 1
+lto = true
+
+[workspace.dependencies]
 anyhow = "1.0.75"
 async-trait = "0.1.73"
 chrono = { version = "0.4.28", features = ["serde"] }
@@ -24,7 +26,4 @@ env_logger = "0.10.0"
 log = "0.4.20"
 num-bigint = "0.4.4"
 itertools = "0.11.0"
-poise = "0.5.5"
-
-[profile.release]
-lto = true
+poise = { git = "https://github.com/m4tx/poise.git" }

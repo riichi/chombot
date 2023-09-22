@@ -13,8 +13,7 @@ use riichi_hand::raster_renderer::{HandRenderError, RasterRenderer, RenderOption
 use tokio::try_join;
 
 use crate::kcc3::data_types::{Chombo, Player, PlayerId};
-use crate::kcc3::Kcc3ClientError;
-use crate::Kcc3Client;
+use crate::kcc3::{Kcc3Client, Kcc3ClientError};
 
 #[derive(Debug)]
 pub enum ChombotError {
