@@ -1,6 +1,11 @@
+use std::iter;
+use std::iter::Once;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use log::error;
 use poise::serenity_prelude::{ChannelId, Context};
+use tokio::sync::RwLock;
 
 use crate::data_watcher::DataUpdateNotifier;
 use crate::discord_utils::send_with_overflow;
@@ -13,16 +18,43 @@ pub trait TournamentsUpdateNotifier<R: Send + Sync> {
     async fn notify(&self, ranking: &R);
 }
 
-pub struct TournamentsChannelMessageNotifier {
-    channel_id: ChannelId,
+#[async_trait]
+pub trait TournamentWatcherChannelListProvider: Send + Sync {
+    type TournamentWatcherChannelList: IntoIterator<Item = ChannelId> + Send;
+
+    async fn tournament_watcher_channels(&self) -> Self::TournamentWatcherChannelList;
+}
+
+#[async_trait]
+impl TournamentWatcherChannelListProvider for ChannelId {
+    type TournamentWatcherChannelList = Once<Self>;
+
+    async fn tournament_watcher_channels(&self) -> Self::TournamentWatcherChannelList {
+        iter::once(*self)
+    }
+}
+
+#[async_trait]
+impl<T: TournamentWatcherChannelListProvider> TournamentWatcherChannelListProvider
+    for Arc<RwLock<T>>
+{
+    type TournamentWatcherChannelList = T::TournamentWatcherChannelList;
+
+    async fn tournament_watcher_channels(&self) -> Self::TournamentWatcherChannelList {
+        self.read().await.tournament_watcher_channels().await
+    }
+}
+
+pub struct TournamentsChannelMessageNotifier<T> {
+    channel_list_provider: T,
     message: String,
 }
 
-impl TournamentsChannelMessageNotifier {
+impl<T: TournamentWatcherChannelListProvider> TournamentsChannelMessageNotifier<T> {
     #[must_use]
-    pub const fn new(channel_id: ChannelId, message: String) -> Self {
+    pub const fn new(channel_list_provider: T, message: String) -> Self {
         Self {
-            channel_id,
+            channel_list_provider,
             message,
         }
     }
@@ -88,7 +120,9 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
 }
 
 #[async_trait]
-impl DataUpdateNotifier<Tournaments> for TournamentsChannelMessageNotifier {
+impl<T: TournamentWatcherChannelListProvider> DataUpdateNotifier<Tournaments>
+    for TournamentsChannelMessageNotifier<T>
+{
     async fn notify(
         &self,
         old_tournaments: &Tournaments,
@@ -97,11 +131,18 @@ impl DataUpdateNotifier<Tournaments> for TournamentsChannelMessageNotifier {
     ) {
         let diff = tournaments_diff(old_tournaments, new_tournaments);
 
-        let channel_id = self.channel_id;
         let text = self.build_message(&diff);
 
-        if let Err(why) = send_with_overflow(channel_id, ctx, text).await {
-            error!("Could not send Tournaments update: {why:?}");
+        let channel_list: Vec<ChannelId> = self
+            .channel_list_provider
+            .tournament_watcher_channels()
+            .await
+            .into_iter()
+            .collect();
+        for channel_id in channel_list {
+            if let Err(why) = send_with_overflow(channel_id, ctx, &text).await {
+                error!("Could not send Tournaments update: {why:?}");
+            }
         }
     }
 }

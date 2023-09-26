@@ -141,7 +141,11 @@ async fn main() {
                     start_ranking_watcher(args.ranking_watcher_channel_id, ctx.clone());
                 }
                 if args.feature_tournaments_watcher {
-                    start_tournaments_watcher(args.tournaments_watcher_channel_id, ctx.clone());
+                    let tournaments_watcher_channel_id =
+                        ChannelId::from(args.tournaments_watcher_channel_id.expect(
+                            "Tournaments watcher feature enabled but no channel ID provided",
+                        ));
+                    start_tournaments_watcher(tournaments_watcher_channel_id, ctx.clone());
                 }
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 info!("{} is connected!", ready.user.name);

@@ -66,7 +66,7 @@ impl DataUpdateNotifier<Ranking> for ChannelMessageNotifier {
         let channel_id = self.channel_id;
         let text = self.build_message(new_ranking);
 
-        if let Err(why) = send_with_overflow(channel_id, ctx, text).await {
+        if let Err(why) = send_with_overflow(channel_id, ctx, &text).await {
             error!("Could not send Ranking update: {why:?}");
         }
     }

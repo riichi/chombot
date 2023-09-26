@@ -15,26 +15,26 @@ cargo build --release
 ```
 
 ## Running
-Chombot requires a few settings passed via environment variables. These are:
+Chombot requires some config values defined as environment variables. These are:
+
 * `DISCORD_TOKEN` - the Discord bot token. You can obtain one by [creating a Discord app](https://discord.com/developers/applications). Make sure to copy your Bot token, not a client secret.
-* `GUILD_ID` - your guild ID.
-* `FEATURE_TOURNAMENTS_WATCHER` - `true`, if you want to receive the notification about EMA tournament updates.
-* `TOURNAMENTS_WATCHER_CHANNEL_ID` - ID of the channel used for notifications about EMA tournament updates.
 
 Example:
 
 ```shell
 export DISCORD_TOKEN=yourdiscordtoken
-export GUILD_ID=12345
-export FEATURE_TOURNAMENTS_WATCHER=true
-export TOURNAMENTS_WATCHER_CHANNEL_ID=98765
 cargo run --bin chombot --release
 ```
+
+Please note that the working directory serves as a persistence storage for the bot's state, so the bot process must have write permissions for it.
 
 ### chombot-kcc
 In addition to the base version of Chombot, there is also an enhanced version called Chombot-kcc available. This is version tailored for the needs of Krakow Chombo Club and contains a few additional (possibly hermetic) features.
 
-This version requires a few config values in addition to the ones described above. Those are:
+Chombot-kcc requires more config values defined as environment variables. Those are:
+* `FEATURE_TOURNAMENTS_WATCHER` - `true`, if you want to receive the notification about EMA tournament updates.
+* `TOURNAMENTS_WATCHER_CHANNEL_ID` - ID of the channel used for notifications about EMA tournament updates.
+* `GUILD_ID` - your guild ID.
 * `FEATURE_KCC3` - `true` if you want to enable the integration with [kcc3](https://github.com/riichi/kcc3).
 * `KCC3_URL` - the URL of the [kcc3 instance](https://github.com/riichi/kcc3) that you want to use with Chombot. The official instance is `https://fanpai.chombo.club`.
 * `KCC3_TOKEN` - the API token for kcc3 that can be obtained via kcc3 admin page.
