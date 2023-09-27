@@ -139,7 +139,6 @@ mod tests {
         let path = file.into_temp_path();
 
         let config = Config {
-            discord_token: "dupa".to_string(),
             guilds: HashMap::from([
                 (
                     GuildId::new(69),
