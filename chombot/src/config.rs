@@ -148,7 +148,7 @@ mod tests {
                     },
                 ),
                 (
-                    GuildId::new(123),
+                    GuildId::new(420),
                     GuildConfig {
                         tournaments_watcher_channel_id: Some(69),
                     },
