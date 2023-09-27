@@ -2,6 +2,6 @@ version: "3"
 services:
   chombot:
     image: ghcr.io/riichi/chombot:master
-    env_file:
-      - .env
+    volumes:
+      - ./config.toml:/app/config.toml
     restart: always

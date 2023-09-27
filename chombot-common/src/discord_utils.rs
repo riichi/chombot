@@ -5,7 +5,7 @@ use crate::data::DISCORD_MESSAGE_SIZE_LIMIT;
 pub async fn send_with_overflow(
     channel_id: ChannelId,
     ctx: &Context,
-    text: String,
+    text: &str,
 ) -> Result<(), SerenityError> {
     let mut message = String::new();
     for line in text.lines() {

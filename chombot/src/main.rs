@@ -5,6 +5,8 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
+use std::sync::Arc;
+
 use anyhow::Error;
 use chombot_common::chombot::ChombotBase;
 use chombot_common::slash_commands::hand::hand;
@@ -14,13 +16,19 @@ use clap::Parser;
 use log::{error, info, LevelFilter};
 use poise::serenity_prelude::GatewayIntents;
 use poise::{Command, Context, Framework, FrameworkOptions};
+use tokio::sync::RwLock;
 
 use crate::args::Arguments;
+use crate::config::ChombotConfig;
+use crate::tournament_watcher::tournament_watcher;
 
 mod args;
+mod config;
+mod tournament_watcher;
 
 pub struct PoiseUserData {
     pub chombot: ChombotBase,
+    pub config: Arc<RwLock<ChombotConfig>>,
 }
 
 impl ChombotPoiseUserData for PoiseUserData {
@@ -32,8 +40,10 @@ impl ChombotPoiseUserData for PoiseUserData {
 pub type PoiseContext<'a> = Context<'a, PoiseUserData, anyhow::Error>;
 
 fn get_command_list() -> Vec<Command<PoiseUserData, Error>> {
-    vec![hand(), score()]
+    vec![hand(), score(), tournament_watcher()]
 }
+
+const CONFIG_DATA_PATH: &str = "data.toml";
 
 #[tokio::main]
 async fn main() {
@@ -43,6 +53,8 @@ async fn main() {
 
     let args = Arguments::parse();
     let chombot = ChombotBase::new();
+    let config = ChombotConfig::load(CONFIG_DATA_PATH.into()).expect("Could not load config");
+    let config_ref = Arc::new(RwLock::new(config));
 
     let framework = Framework::builder()
         .options(FrameworkOptions {
@@ -53,12 +65,13 @@ async fn main() {
         .intents(GatewayIntents::non_privileged())
         .setup(move |ctx, ready, framework| {
             Box::pin(async move {
-                if args.feature_tournaments_watcher {
-                    start_tournaments_watcher(args.tournaments_watcher_channel_id, ctx.clone());
-                }
+                start_tournaments_watcher(config_ref.clone(), ctx.clone());
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 info!("{} is connected!", ready.user.name);
-                Ok(PoiseUserData { chombot })
+                Ok(PoiseUserData {
+                    chombot,
+                    config: config_ref,
+                })
             })
         });
 

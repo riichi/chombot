@@ -5,13 +5,15 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
-use poise::serenity_prelude::{ChannelId, Context as SerenityContext};
+use poise::serenity_prelude::Context as SerenityContext;
 use poise::Context;
 
 use crate::chombot::ChombotBase;
 use crate::data_watcher::DataWatcher;
 use crate::tournaments_watcher::ema::get_rcr_tournaments;
-use crate::tournaments_watcher::notifier::TournamentsChannelMessageNotifier;
+use crate::tournaments_watcher::notifier::{
+    TournamentWatcherChannelListProvider, TournamentsChannelMessageNotifier,
+};
 
 pub mod chombot;
 pub mod data;
@@ -27,20 +29,15 @@ pub trait ChombotPoiseUserData: Sync {
 
 pub type ChombotPoiseContext<'a, T> = Context<'a, T, anyhow::Error>;
 
-pub fn start_tournaments_watcher(
-    tournaments_watcher_channel_id: Option<u64>,
+pub fn start_tournaments_watcher<T: TournamentWatcherChannelListProvider + 'static>(
+    channel_list_provider: T,
     ctx: SerenityContext,
 ) {
     const MESSAGE_PREFIX: &str =
         "**TOURNAMENTS UPDATE** (http://mahjong-europe.org/ranking/Calendar.html)\n\n";
 
-    let tournaments_watcher_channel_id = tournaments_watcher_channel_id
-        .expect("Tournaments watcher feature enabled but no channel ID provided");
-
-    let notifier = TournamentsChannelMessageNotifier::new(
-        ChannelId(tournaments_watcher_channel_id),
-        String::from(MESSAGE_PREFIX),
-    );
+    let notifier =
+        TournamentsChannelMessageNotifier::new(channel_list_provider, String::from(MESSAGE_PREFIX));
     tokio::spawn(async move {
         DataWatcher::new(notifier, get_rcr_tournaments)
             .run(&ctx)
