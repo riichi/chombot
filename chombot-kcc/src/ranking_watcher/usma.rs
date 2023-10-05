@@ -1,14 +1,12 @@
 use std::convert::TryFrom;
 
 use anyhow::{anyhow, Context, Result};
-use chombot_common::scraping_utils::first_nonempty_text;
+use chombot_common::scraping_utils::{create_chombot_http_client, first_nonempty_text};
 use chombot_common::{select_all, select_one, unpack_children};
-use reqwest;
 use scraper::node::{Element, Node};
 use scraper::{CaseSensitivity, ElementRef, Html, Selector};
 
 const RANKING_URL: &str = "https://ranking.cvgo.re/";
-const USER_AGENT: &str = concat!("chombot/", env!("CARGO_PKG_VERSION"));
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum PositionChangeInfo {
@@ -126,9 +124,7 @@ fn parse_document(document: &str) -> Result<Ranking> {
 }
 
 pub async fn get_ranking() -> Result<Ranking> {
-    let body = reqwest::Client::builder()
-        .user_agent(USER_AGENT)
-        .build()?
+    let body = create_chombot_http_client()?
         .get(RANKING_URL)
         .send()
         .await?

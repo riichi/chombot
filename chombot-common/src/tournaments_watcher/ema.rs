@@ -6,14 +6,13 @@ use anyhow::{anyhow, bail};
 use itertools::Itertools;
 use scraper::{ElementRef, Html, Selector};
 
-use crate::scraping_utils::{cell_text, first_nonempty_text};
+use crate::scraping_utils::{cell_text, create_chombot_http_client, first_nonempty_text};
 use crate::{select_all, select_one};
 
 const CALENDAR_URL: &str = "http://mahjong-europe.org/ranking/Calendar.html";
 const HEADER_CLASS_PREFIX: &str = "TCTT_contenuEntete";
 const RCR_RULES_NAME: &str = "Riichi";
 const TABLE_COLUMN_NUM: usize = 6;
-const USER_AGENT: &str = concat!("chombot/", env!("CARGO_PKG_VERSION"));
 
 macro_rules! diff_option_for {
     ($old_object:ident, $new_object:ident, $field_name:ident) => {
@@ -214,10 +213,8 @@ pub async fn get_rcr_tournaments() -> Result<Tournaments, TournamentsFetchError>
 }
 
 pub async fn get_tournaments() -> Result<Tournaments, TournamentsFetchError> {
-    let body = reqwest::Client::builder()
-        .user_agent(USER_AGENT)
-        .build()
-        .map_err(|err| TournamentsFetchError::FetchError(err.into()))?
+    let body = create_chombot_http_client()
+        .map_err(TournamentsFetchError::FetchError)?
         .get(CALENDAR_URL)
         .send()
         .await
