@@ -6,7 +6,7 @@ use anyhow::{anyhow, bail};
 use itertools::Itertools;
 use scraper::{ElementRef, Html, Selector};
 
-use crate::scraping_utils::{cell_text, first_nonempty_text};
+use crate::scraping_utils::{cell_text, create_chombot_http_client, first_nonempty_text};
 use crate::{select_all, select_one};
 
 const CALENDAR_URL: &str = "http://mahjong-europe.org/ranking/Calendar.html";
@@ -213,7 +213,10 @@ pub async fn get_rcr_tournaments() -> Result<Tournaments, TournamentsFetchError>
 }
 
 pub async fn get_tournaments() -> Result<Tournaments, TournamentsFetchError> {
-    let body = reqwest::get(CALENDAR_URL)
+    let body = create_chombot_http_client()
+        .map_err(TournamentsFetchError::FetchError)?
+        .get(CALENDAR_URL)
+        .send()
         .await
         .map_err(|err| TournamentsFetchError::FetchError(err.into()))?
         .text()

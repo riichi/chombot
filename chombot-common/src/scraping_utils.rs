@@ -1,6 +1,8 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, Result};
 use itertools::Itertools;
 use scraper::ElementRef;
+
+const USER_AGENT: &str = concat!("chombot/", env!("CARGO_PKG_VERSION"));
 
 #[macro_export]
 macro_rules! unpack_children {
@@ -49,4 +51,8 @@ pub fn first_nonempty_text<'a>(e: &'a ElementRef) -> anyhow::Result<&'a str> {
 #[must_use]
 pub fn cell_text(e: &ElementRef) -> String {
     e.text().map(str::trim).join(" ").trim().to_owned()
+}
+
+pub fn create_chombot_http_client() -> Result<reqwest::Client> {
+    Ok(reqwest::Client::builder().user_agent(USER_AGENT).build()?)
 }

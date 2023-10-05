@@ -1,9 +1,8 @@
 use std::convert::TryFrom;
 
 use anyhow::{anyhow, Context, Result};
-use chombot_common::scraping_utils::first_nonempty_text;
+use chombot_common::scraping_utils::{create_chombot_http_client, first_nonempty_text};
 use chombot_common::{select_all, select_one, unpack_children};
-use reqwest;
 use scraper::node::{Element, Node};
 use scraper::{CaseSensitivity, ElementRef, Html, Selector};
 
@@ -102,12 +101,12 @@ fn parse_points_cell(points_cell: &ElementRef) -> Result<(u32, PositionChangeInf
 
 fn parse_row(row: ElementRef) -> Result<RankingEntry> {
     let [pos_cell, _id_cell, _rank_cell, player_cell, _address_cell, points_cell] =
-        unpack_children!(&row, 6).with_context(|| format!("Failed to unpack cells: {:?}", row))?;
+        unpack_children!(&row, 6).with_context(|| format!("Failed to unpack cells: {row:?}"))?;
     let (pos, pos_diff) = parse_pos_cell(&pos_cell)
-        .with_context(|| format!("Failed to parse position cell: {:?}", row))?;
+        .with_context(|| format!("Failed to parse position cell: {row:?}"))?;
     let name = first_nonempty_text(&player_cell).unwrap_or("");
     let (points, points_diff) = parse_points_cell(&points_cell)
-        .with_context(|| format!("Failed to parse points cell: {:?}", row))?;
+        .with_context(|| format!("Failed to parse points cell: {row:?}"))?;
     Ok(RankingEntry {
         pos,
         pos_diff,
@@ -125,7 +124,12 @@ fn parse_document(document: &str) -> Result<Ranking> {
 }
 
 pub async fn get_ranking() -> Result<Ranking> {
-    let body = reqwest::get(RANKING_URL).await?.text().await?;
+    let body = create_chombot_http_client()?
+        .get(RANKING_URL)
+        .send()
+        .await?
+        .text()
+        .await?;
     parse_document(&body)
 }
 
