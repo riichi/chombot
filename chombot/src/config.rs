@@ -117,9 +117,9 @@ impl<'a> DerefMut for ConfigUpdateGuard<'a> {
 
 #[cfg(test)]
 mod tests {
-    use poise::serenity_prelude::ChannelId;
     use std::collections::HashMap;
 
+    use poise::serenity_prelude::ChannelId;
     use tempfile::NamedTempFile;
 
     use crate::config::{ChombotConfig, Config, GuildConfig, GuildId};
