@@ -8,19 +8,8 @@ use std::path::PathBuf;
 use async_trait::async_trait;
 use chombot_common::tournaments_watcher::notifier::TournamentWatcherChannelListProvider;
 use log::info;
-use poise::serenity_prelude::ChannelId;
+use poise::serenity_prelude::{ChannelId, GuildId};
 use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct GuildId(String);
-
-impl GuildId {
-    #[must_use]
-    pub fn new(value: u64) -> Self {
-        Self(value.to_string())
-    }
-}
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Config {
@@ -32,7 +21,7 @@ pub struct Config {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Default)]
 pub struct GuildConfig {
     /// Tournaments watcher channel ID
-    pub tournaments_watcher_channel_id: Option<u64>,
+    pub tournaments_watcher_channel_id: Option<ChannelId>,
 }
 
 #[async_trait]
@@ -40,10 +29,11 @@ impl TournamentWatcherChannelListProvider for ChombotConfig {
     type TournamentWatcherChannelList = Vec<ChannelId>;
 
     async fn tournament_watcher_channels(&self) -> Self::TournamentWatcherChannelList {
-        let channel_ids =
-            self.config.guilds.iter().filter_map(|(_, config)| {
-                config.tournaments_watcher_channel_id.map(ChannelId::from)
-            });
+        let channel_ids = self
+            .config
+            .guilds
+            .iter()
+            .filter_map(|(_, config)| config.tournaments_watcher_channel_id);
 
         channel_ids.collect()
     }
