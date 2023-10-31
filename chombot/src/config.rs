@@ -117,6 +117,7 @@ impl<'a> DerefMut for ConfigUpdateGuard<'a> {
 
 #[cfg(test)]
 mod tests {
+    use poise::serenity_prelude::ChannelId;
     use std::collections::HashMap;
 
     use tempfile::NamedTempFile;
@@ -131,15 +132,15 @@ mod tests {
         let config = Config {
             guilds: HashMap::from([
                 (
-                    GuildId::new(69),
+                    GuildId(69),
                     GuildConfig {
-                        tournaments_watcher_channel_id: Some(2137),
+                        tournaments_watcher_channel_id: Some(ChannelId(2137)),
                     },
                 ),
                 (
-                    GuildId::new(420),
+                    GuildId(420),
                     GuildConfig {
-                        tournaments_watcher_channel_id: Some(69),
+                        tournaments_watcher_channel_id: Some(ChannelId(69)),
                     },
                 ),
             ]),
