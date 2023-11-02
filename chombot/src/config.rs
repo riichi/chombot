@@ -8,19 +8,8 @@ use std::path::PathBuf;
 use async_trait::async_trait;
 use chombot_common::tournaments_watcher::notifier::TournamentWatcherChannelListProvider;
 use log::info;
-use poise::serenity_prelude::ChannelId;
+use poise::serenity_prelude::{ChannelId, GuildId};
 use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct GuildId(String);
-
-impl GuildId {
-    #[must_use]
-    pub fn new(value: u64) -> Self {
-        Self(value.to_string())
-    }
-}
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Config {
@@ -32,7 +21,7 @@ pub struct Config {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Default)]
 pub struct GuildConfig {
     /// Tournaments watcher channel ID
-    pub tournaments_watcher_channel_id: Option<u64>,
+    pub tournaments_watcher_channel_id: Option<ChannelId>,
 }
 
 #[async_trait]
@@ -40,10 +29,11 @@ impl TournamentWatcherChannelListProvider for ChombotConfig {
     type TournamentWatcherChannelList = Vec<ChannelId>;
 
     async fn tournament_watcher_channels(&self) -> Self::TournamentWatcherChannelList {
-        let channel_ids =
-            self.config.guilds.iter().filter_map(|(_, config)| {
-                config.tournaments_watcher_channel_id.map(ChannelId::from)
-            });
+        let channel_ids = self
+            .config
+            .guilds
+            .iter()
+            .filter_map(|(_, config)| config.tournaments_watcher_channel_id);
 
         channel_ids.collect()
     }
@@ -129,6 +119,8 @@ impl<'a> DerefMut for ConfigUpdateGuard<'a> {
 mod tests {
     use std::collections::HashMap;
 
+    use chombot_common::tournaments_watcher::notifier::TournamentWatcherChannelListProvider;
+    use poise::serenity_prelude::ChannelId;
     use tempfile::NamedTempFile;
 
     use crate::config::{ChombotConfig, Config, GuildConfig, GuildId};
@@ -141,15 +133,15 @@ mod tests {
         let config = Config {
             guilds: HashMap::from([
                 (
-                    GuildId::new(69),
+                    GuildId(69),
                     GuildConfig {
-                        tournaments_watcher_channel_id: Some(2137),
+                        tournaments_watcher_channel_id: Some(ChannelId(2137)),
                     },
                 ),
                 (
-                    GuildId::new(420),
+                    GuildId(420),
                     GuildConfig {
-                        tournaments_watcher_channel_id: Some(69),
+                        tournaments_watcher_channel_id: Some(ChannelId(69)),
                     },
                 ),
             ]),
@@ -166,5 +158,43 @@ mod tests {
         }
 
         path.close().unwrap();
+    }
+
+    #[test]
+    fn test_tournament_watcher_channel_list_provider_for_chombo_config() -> std::io::Result<()> {
+        let file = NamedTempFile::new().unwrap();
+        let path = file.into_temp_path();
+
+        let config = Config {
+            guilds: HashMap::from([
+                (
+                    GuildId(69),
+                    GuildConfig {
+                        tournaments_watcher_channel_id: Some(ChannelId(2137)),
+                    },
+                ),
+                (
+                    GuildId(420),
+                    GuildConfig {
+                        tournaments_watcher_channel_id: Some(ChannelId(69)),
+                    },
+                ),
+            ]),
+        };
+
+        let channel_ids: Vec<ChannelId> = vec![ChannelId(69), ChannelId(2137)];
+
+        {
+            let chombot_config = ChombotConfig::new(path.to_path_buf(), config.clone());
+            let mut ids = tokio::runtime::Builder::new_current_thread()
+                .build()?
+                .block_on(async { chombot_config.tournament_watcher_channels().await });
+            ids.sort();
+            assert_eq!(ids, channel_ids);
+        }
+
+        path.close().unwrap();
+
+        Ok(())
     }
 }

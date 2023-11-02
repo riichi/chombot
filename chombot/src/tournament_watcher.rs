@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use poise::serenity_prelude::ChannelId;
+use poise::serenity_prelude::{ChannelId, GuildId};
 
 use crate::{config, PoiseContext};
 
@@ -16,9 +16,9 @@ pub async fn tournament_watcher(
         config
             .config_mut()
             .guilds
-            .entry(config::GuildId::new(guild.0))
+            .entry(guild)
             .or_default()
-            .tournaments_watcher_channel_id = channel.map(|x| x.0);
+            .tournaments_watcher_channel_id = channel;
     }
 
     let reply_content = channel.as_ref().map_or_else(
