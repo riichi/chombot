@@ -119,6 +119,7 @@ impl<'a> DerefMut for ConfigUpdateGuard<'a> {
 mod tests {
     use std::collections::HashMap;
 
+    use chombot_common::tournaments_watcher::notifier::TournamentWatcherChannelListProvider;
     use poise::serenity_prelude::ChannelId;
     use tempfile::NamedTempFile;
 
@@ -157,5 +158,43 @@ mod tests {
         }
 
         path.close().unwrap();
+    }
+
+    #[test]
+    fn test_tournament_watcher_channel_list_provider_for_chombo_config() -> std::io::Result<()> {
+        let file = NamedTempFile::new().unwrap();
+        let path = file.into_temp_path();
+
+        let config = Config {
+            guilds: HashMap::from([
+                (
+                    GuildId(69),
+                    GuildConfig {
+                        tournaments_watcher_channel_id: Some(ChannelId(2137)),
+                    },
+                ),
+                (
+                    GuildId(420),
+                    GuildConfig {
+                        tournaments_watcher_channel_id: Some(ChannelId(69)),
+                    },
+                ),
+            ]),
+        };
+
+        let channel_ids: Vec<ChannelId> = vec![ChannelId(69), ChannelId(2137)];
+
+        {
+            let chombot_config = ChombotConfig::new(path.to_path_buf(), config.clone());
+            let mut ids = tokio::runtime::Builder::new_current_thread()
+                .build()?
+                .block_on(async { chombot_config.tournament_watcher_channels().await });
+            ids.sort();
+            assert_eq!(ids, channel_ids);
+        }
+
+        path.close().unwrap();
+
+        Ok(())
     }
 }
