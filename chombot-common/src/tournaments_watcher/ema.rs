@@ -7,6 +7,7 @@ use itertools::Itertools;
 use log::info;
 use scraper::{ElementRef, Html, Selector};
 
+use crate::data_watcher::WatchableData;
 use crate::scraping_utils::{cell_text, create_chombot_http_client, first_nonempty_text};
 use crate::{select_all, select_one};
 
@@ -39,6 +40,22 @@ impl Tournaments {
             .filter(|entry| entry.rules == RCR_RULES_NAME)
             .collect();
         Self(filtered)
+    }
+}
+
+impl WatchableData for Tournaments {
+    type Diff = TournamentStatuses;
+
+    fn should_notify<'a>(&'a self, new: &'a Self) -> Option<Self::Diff> {
+        if self == new {
+            None
+        } else {
+            Some(tournaments_diff(self, new))
+        }
+    }
+
+    fn update(&mut self, new: Self) {
+        *self = new;
     }
 }
 
@@ -209,14 +226,14 @@ fn make_entry(last_header: &str, cells: &[ElementRef]) -> anyhow::Result<Tournam
     Ok(entry)
 }
 
-pub async fn get_rcr_tournaments() -> Result<Tournaments, TournamentsFetchError> {
+pub async fn get_rcr_tournaments() -> Result<Option<Tournaments>, TournamentsFetchError> {
     let tournaments = get_tournaments().await?.into_rcr_only();
     info!(
         "Got {} RCR tournaments: {:?}",
         tournaments.get().len(),
         tournaments.get()
     );
-    Ok(tournaments)
+    Ok(Some(tournaments))
 }
 
 pub async fn get_tournaments() -> Result<Tournaments, TournamentsFetchError> {

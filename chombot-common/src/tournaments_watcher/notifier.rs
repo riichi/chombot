@@ -9,9 +9,7 @@ use tokio::sync::RwLock;
 
 use crate::data_watcher::DataUpdateNotifier;
 use crate::discord_utils::send_with_overflow;
-use crate::tournaments_watcher::ema::{
-    tournaments_diff, TournamentStatus, TournamentStatuses, Tournaments,
-};
+use crate::tournaments_watcher::ema::{TournamentStatus, TournamentStatuses, Tournaments};
 
 #[async_trait]
 pub trait TournamentsUpdateNotifier<R: Send + Sync> {
@@ -120,17 +118,10 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
 }
 
 #[async_trait]
-impl<T: TournamentWatcherChannelListProvider> DataUpdateNotifier<Tournaments>
+impl<T: TournamentWatcherChannelListProvider> DataUpdateNotifier<Option<Tournaments>>
     for TournamentsChannelMessageNotifier<T>
 {
-    async fn notify(
-        &self,
-        old_tournaments: &Tournaments,
-        new_tournaments: &Tournaments,
-        ctx: &Context,
-    ) {
-        let diff = tournaments_diff(old_tournaments, new_tournaments);
-
+    async fn notify(&self, diff: TournamentStatuses, ctx: &Context) {
         let text = self.build_message(&diff);
 
         let channel_list: Vec<ChannelId> = self

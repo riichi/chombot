@@ -4,7 +4,8 @@ use chombot_common::discord_utils::send_with_overflow;
 use log::error;
 use poise::serenity_prelude::{ChannelId, Context};
 
-use crate::ranking_watcher::usma::{PositionChangeInfo, Ranking};
+use super::usma::{Ranking, RankingEntry};
+use crate::ranking_watcher::usma::PositionChangeInfo;
 
 pub struct ChannelMessageNotifier {
     channel_id: ChannelId,
@@ -38,10 +39,9 @@ impl ChannelMessageNotifier {
         }
     }
 
-    fn build_message(&self, ranking: &Ranking) -> String {
+    fn build_message(&self, rows: Vec<RankingEntry>) -> String {
         let mut base = self.message.clone();
-        let ppl = ranking
-            .get_changed()
+        let ppl = rows
             .into_iter()
             .map(|e| {
                 format!(
@@ -62,9 +62,9 @@ impl ChannelMessageNotifier {
 
 #[async_trait]
 impl DataUpdateNotifier<Ranking> for ChannelMessageNotifier {
-    async fn notify(&self, _old_ranking: &Ranking, new_ranking: &Ranking, ctx: &Context) {
+    async fn notify(&self, diff: Vec<RankingEntry>, ctx: &Context) {
         let channel_id = self.channel_id;
-        let text = self.build_message(new_ranking);
+        let text = self.build_message(diff);
 
         if let Err(why) = send_with_overflow(channel_id, ctx, &text).await {
             error!("Could not send Ranking update: {why:?}");
@@ -80,7 +80,7 @@ mod tests {
     #[test]
     fn test_channel_message_notifier_build_message() {
         let notifier = ChannelMessageNotifier::new(ChannelId::new(123), "TEST_MESSAGE".into());
-        let ranking = Ranking(vec![
+        let ranking_changes = vec![
             RankingEntry {
                 pos: 1,
                 pos_diff: PositionChangeInfo::Diff(0),
@@ -109,9 +109,9 @@ mod tests {
                 points: 1718,
                 points_diff: PositionChangeInfo::Diff(73),
             },
-        ]);
+        ];
 
-        let message = notifier.build_message(&ranking);
+        let message = notifier.build_message(ranking_changes);
 
         assert_eq!(
             message,
@@ -119,6 +119,7 @@ mod tests {
                 "TEST_MESSAGE\n",
                 "\n",
                 "Latest changes:\n",
+                "• 1 / player-name-001 / 1966 pkt\n",
                 "• 3 (↑3) / player-name-002 / 1893 pkt\n",
                 "• 5 (NEW) / player-name-003 / 1830 (-60) pkt\n",
                 "• 8 (↓3) / player-name-004 / 1718 (+73) pkt"
