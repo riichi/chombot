@@ -133,15 +133,15 @@ mod tests {
         let config = Config {
             guilds: HashMap::from([
                 (
-                    GuildId(69),
+                    GuildId::new(69),
                     GuildConfig {
-                        tournaments_watcher_channel_id: Some(ChannelId(2137)),
+                        tournaments_watcher_channel_id: Some(ChannelId::new(2137)),
                     },
                 ),
                 (
-                    GuildId(420),
+                    GuildId::new(420),
                     GuildConfig {
-                        tournaments_watcher_channel_id: Some(ChannelId(69)),
+                        tournaments_watcher_channel_id: Some(ChannelId::new(69)),
                     },
                 ),
             ]),
@@ -168,24 +168,24 @@ mod tests {
         let config = Config {
             guilds: HashMap::from([
                 (
-                    GuildId(69),
+                    GuildId::new(69),
                     GuildConfig {
-                        tournaments_watcher_channel_id: Some(ChannelId(2137)),
+                        tournaments_watcher_channel_id: Some(ChannelId::new(2137)),
                     },
                 ),
                 (
-                    GuildId(420),
+                    GuildId::new(420),
                     GuildConfig {
-                        tournaments_watcher_channel_id: Some(ChannelId(69)),
+                        tournaments_watcher_channel_id: Some(ChannelId::new(69)),
                     },
                 ),
             ]),
         };
 
-        let channel_ids: Vec<ChannelId> = vec![ChannelId(69), ChannelId(2137)];
+        let channel_ids: Vec<ChannelId> = vec![ChannelId::new(69), ChannelId::new(2137)];
 
         {
-            let chombot_config = ChombotConfig::new(path.to_path_buf(), config.clone());
+            let chombot_config = ChombotConfig::new(path.to_path_buf(), config);
             let mut ids = tokio::runtime::Builder::new_current_thread()
                 .build()?
                 .block_on(async { chombot_config.tournament_watcher_channels().await });

@@ -2,7 +2,7 @@ use anyhow::Result;
 use log::info;
 use num_bigint::BigInt;
 use poise::serenity_prelude::{Color, CreateEmbed};
-use poise::ChoiceParameter;
+use poise::{ChoiceParameter, CreateReply};
 use riichi_hand::points::{Fu, Han, Honbas, PointsCalculationMode, PointsCustom};
 
 use crate::{ChombotPoiseContext, ChombotPoiseUserData};
@@ -58,20 +58,19 @@ pub async fn score<T: ChombotPoiseUserData>(
     let points = Points::from_calculated(points_calculation_mode, han, fu, honbas)?;
     let fields = create_points_embed_fields(&points);
 
-    ctx.send(|reply| reply.embed(move |embed| create_points_embed(embed, han, fu, honbas, fields)))
+    ctx.send(CreateReply::default().embed(create_points_embed(han, fu, honbas, fields)))
         .await?;
 
     Ok(())
 }
 
 fn create_points_embed(
-    embed: &mut CreateEmbed,
     han: Han,
     fu: Fu,
     honbas: Honbas,
     fields: impl Iterator<Item = (&'static str, String, bool)>,
-) -> &mut CreateEmbed {
-    embed
+) -> CreateEmbed {
+    CreateEmbed::new()
         .title(format!("**{han} {fu} {honbas}**"))
         .color(Color::DARK_GREEN)
         .fields(fields)

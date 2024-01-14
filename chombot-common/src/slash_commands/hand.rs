@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use anyhow::Result;
 use image::DynamicImage;
-use poise::serenity_prelude::AttachmentType;
+use poise::serenity_prelude::{CreateAttachment, CreateMessage};
 use poise::ChoiceParameter;
 
 use crate::chombot::{ChombotBase, TileStyle};
@@ -50,9 +50,9 @@ pub async fn hand<T: ChombotPoiseUserData>(
     DynamicImage::ImageRgba8(image)
         .write_to(&mut Cursor::new(&mut buf), image::ImageOutputFormat::Png)?;
 
-    let files: Vec<AttachmentType> = vec![(buf.as_slice(), "hand.png").into()];
+    let files: Vec<CreateAttachment> = vec![CreateAttachment::bytes(buf.as_slice(), "hand.png")];
     ctx.channel_id()
-        .send_files(&ctx.http(), files, |m| m)
+        .send_files(&ctx.http(), files, CreateMessage::new())
         .await?;
 
     ctx.say("<:Ichiwink:591396074141515776>").await?;

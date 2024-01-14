@@ -1,1 +1,2 @@
 pub const DISCORD_MESSAGE_SIZE_LIMIT: usize = 2000;
+pub const DISCORD_EMBED_FIELD_LIMIT: usize = 25;

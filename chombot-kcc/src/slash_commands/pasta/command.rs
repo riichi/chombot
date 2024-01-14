@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chombot_common::data::DISCORD_MESSAGE_SIZE_LIMIT;
-use poise::serenity_prelude::CacheHttp;
+use poise::serenity_prelude::{CacheHttp, CreateMessage};
 use poise::ChoiceParameter;
 
 use crate::PoiseContext;
@@ -64,7 +64,7 @@ async fn send_pasta_slice(ctx: &PoiseContext<'_>, message: &str, first: &mut boo
         ctx.say(message).await?;
     } else {
         ctx.channel_id()
-            .send_message(&ctx.http(), |m| m.content(message))
+            .send_message(&ctx.http(), CreateMessage::new().content(message))
             .await?;
     }
 

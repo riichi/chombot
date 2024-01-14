@@ -1,6 +1,7 @@
 use anyhow::Result;
-use chombot_common::data::DISCORD_MESSAGE_SIZE_LIMIT;
-use poise::serenity_prelude::{Color, CreateEmbed, User};
+use chombot_common::data::{DISCORD_EMBED_FIELD_LIMIT, DISCORD_MESSAGE_SIZE_LIMIT};
+use poise::serenity_prelude::{Color, CreateAllowedMentions, CreateEmbed, User};
+use poise::CreateReply;
 use slug::slugify;
 
 use crate::chombot::Chombot;
@@ -18,7 +19,7 @@ pub async fn chombo(_: PoiseContext<'_>) -> Result<()> {
 async fn ranking(ctx: PoiseContext<'_>) -> Result<()> {
     let entries = get_chombos_embed_entries(&ctx.data().kcc_chombot).await?;
 
-    ctx.send(|response| response.embed(|embed| create_chombos_embed(embed, entries)))
+    ctx.send(CreateReply::default().embed(create_chombos_embed(entries)))
         .await?;
 
     Ok(())
@@ -29,11 +30,11 @@ async fn ranking(ctx: PoiseContext<'_>) -> Result<()> {
 async fn list(ctx: PoiseContext<'_>) -> Result<()> {
     let chombos = create_chombos_list(&ctx.data().kcc_chombot).await?;
 
-    ctx.send(|response| {
-        response
+    ctx.send(
+        CreateReply::default()
             .content(chombos)
-            .allowed_mentions(|mentions| mentions.empty_parse())
-    })
+            .allowed_mentions(CreateAllowedMentions::new().empty_users().empty_roles()),
+    )
     .await?;
 
     Ok(())
@@ -64,11 +65,11 @@ async fn add(
     let message_content = format_add_message(&user, &description);
     let entries = get_chombos_embed_entries(chombot).await?;
 
-    ctx.send(|response| {
-        response
+    ctx.send(
+        CreateReply::default()
             .content(message_content)
-            .embed(|embed| create_chombos_embed(embed, entries))
-    })
+            .embed(create_chombos_embed(entries)),
+    )
     .await?;
 
     Ok(())
@@ -76,18 +77,16 @@ async fn add(
 
 async fn get_chombos_embed_entries(
     chombot: &Chombot,
-) -> Result<impl Iterator<Item = (String, usize, bool)>> {
+) -> Result<impl Iterator<Item = (String, String, bool)>> {
     let chombo_ranking = chombot.create_chombo_ranking().await?;
     Ok(chombo_ranking
         .into_iter()
-        .map(|(player, num)| (player.short_name(), num, true)))
+        .take(DISCORD_EMBED_FIELD_LIMIT)
+        .map(|(player, num)| (player.short_name(), num.to_string(), true)))
 }
 
-fn create_chombos_embed(
-    embed: &mut CreateEmbed,
-    entries: impl Iterator<Item = (String, usize, bool)>,
-) -> &mut CreateEmbed {
-    embed
+fn create_chombos_embed(entries: impl Iterator<Item = (String, String, bool)>) -> CreateEmbed {
+    CreateEmbed::new()
             .title("**CHOMBO COUNTER**")
             .color(Color::RED)
             .thumbnail("https://cdn.discordapp.com/attachments/591385176685281293/597292309792686090/1562356453777.png")
