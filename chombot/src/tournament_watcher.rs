@@ -1,7 +1,8 @@
 use anyhow::anyhow;
-use poise::serenity_prelude::{ChannelId, GuildId};
+use poise::serenity_prelude::ChannelId;
+use poise::CreateReply;
 
-use crate::{config, PoiseContext};
+use crate::PoiseContext;
 
 /// Set the notification channel for the tournament watcher.
 #[poise::command(slash_command, guild_only, required_permissions = "ADMINISTRATOR")]
@@ -23,9 +24,15 @@ pub async fn tournament_watcher(
 
     let reply_content = channel.as_ref().map_or_else(
         || "Disabled the tournament watcher.".to_string(),
-        |channel| format!("Set the tournament watcher channel to <#{}>.", channel.0),
+        |channel| {
+            format!(
+                "Set the tournament watcher channel to <#{}>.",
+                channel.get()
+            )
+        },
     );
-    ctx.send(|reply| reply.content(reply_content)).await?;
+    ctx.send(CreateReply::default().content(reply_content))
+        .await?;
 
     Ok(())
 }

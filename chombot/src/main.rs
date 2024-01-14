@@ -14,7 +14,7 @@ use chombot_common::slash_commands::score::score;
 use chombot_common::{start_tournaments_watcher, ChombotPoiseUserData};
 use clap::Parser;
 use log::{error, info, LevelFilter};
-use poise::serenity_prelude::GatewayIntents;
+use poise::serenity_prelude::{ClientBuilder, GatewayIntents};
 use poise::{Command, Context, Framework, FrameworkOptions};
 use tokio::sync::RwLock;
 
@@ -61,8 +61,6 @@ async fn main() {
             commands: get_command_list(),
             ..Default::default()
         })
-        .token(&args.discord_token)
-        .intents(GatewayIntents::non_privileged())
         .setup(move |ctx, ready, framework| {
             Box::pin(async move {
                 start_tournaments_watcher(config_ref.clone(), ctx.clone());
@@ -73,9 +71,15 @@ async fn main() {
                     config: config_ref,
                 })
             })
-        });
+        })
+        .build();
 
-    if let Err(why) = framework.run().await {
+    let mut client = ClientBuilder::new(&args.discord_token, GatewayIntents::non_privileged())
+        .framework(framework)
+        .await
+        .expect("Could not create client");
+
+    if let Err(why) = client.start().await {
         error!("Client error: {why:?}");
     }
 }

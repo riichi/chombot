@@ -1,4 +1,4 @@
-use poise::serenity_prelude::{ChannelId, Context, Error as SerenityError};
+use poise::serenity_prelude::{ChannelId, Context, CreateMessage, Error as SerenityError};
 
 use crate::data::DISCORD_MESSAGE_SIZE_LIMIT;
 
@@ -11,7 +11,7 @@ pub async fn send_with_overflow(
     for line in text.lines() {
         if message.len() + line.len() + "\n".len() > DISCORD_MESSAGE_SIZE_LIMIT {
             channel_id
-                .send_message(ctx, |m| m.content(&message))
+                .send_message(ctx, CreateMessage::new().content(&message))
                 .await?;
             message.clear();
         }
@@ -20,7 +20,9 @@ pub async fn send_with_overflow(
         message.push('\n');
     }
     if !message.is_empty() {
-        channel_id.send_message(ctx, |m| m.content(message)).await?;
+        channel_id
+            .send_message(ctx, CreateMessage::new().content(&message))
+            .await?;
     }
 
     Ok(())

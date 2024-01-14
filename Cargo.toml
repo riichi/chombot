@@ -11,19 +11,19 @@ codegen-units = 1
 lto = true
 
 [workspace.dependencies]
-anyhow = "1.0.75"
-async-trait = "0.1.74"
-chrono = { version = "0.4.28", features = ["serde"] }
-image = { version = "0.24.7", default-features = false, features = ["png"] }
-reqwest = "0.11.22"
-riichi_hand = "0.6.0"
-scraper = "0.17.1"
-serde = "1.0.190"
-tokio = { version = "1.33.0", features = ["macros", "rt-multi-thread"] }
-slug = "0.1.4"
-clap = { version = "4.4.7", features = ["derive", "env"] }
-env_logger = "0.10.0"
+anyhow = "1.0.79"
+async-trait = "0.1.77"
+chrono = { version = "0.4.31", features = ["serde"] }
+image = { version = "0.24.8", default-features = false, features = ["png"] }
+reqwest = { version = "0.11.23", features = ["json"] }
+riichi_hand = "0.6.1"
+scraper = "0.18.1"
+serde = "1.0.195"
+tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
+slug = "0.1.5"
+clap = { version = "4.4.16", features = ["derive", "env"] }
+env_logger = "0.10.1"
 log = "0.4.20"
 num-bigint = "0.4.4"
-itertools = "0.11.0"
-poise = "0.5.7"
+itertools = "0.12.0"
+poise = "0.6.1"

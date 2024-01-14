@@ -13,8 +13,10 @@ use chombot_common::slash_commands::score::score;
 use chombot_common::{start_tournaments_watcher, ChombotPoiseUserData};
 use clap::Parser;
 use log::{error, info, LevelFilter};
-use poise::serenity_prelude::{ChannelId, Context as SerenityContext, GatewayIntents};
-use poise::{BoxFuture, Command, Context, Event, Framework, FrameworkContext, FrameworkOptions};
+use poise::serenity_prelude::{
+    ChannelId, ClientBuilder, Context as SerenityContext, FullEvent, GatewayIntents,
+};
+use poise::{BoxFuture, Command, Context, Framework, FrameworkContext, FrameworkOptions};
 
 use crate::args::Arguments;
 use crate::chombot::Chombot;
@@ -49,7 +51,7 @@ fn start_ranking_watcher(ranking_watcher_channel_id: Option<u64>, ctx: SerenityC
     let ranking_watcher_channel_id = ranking_watcher_channel_id
         .expect("Ranking watcher feature enabled but no channel ID provided");
     let notifier = ChannelMessageNotifier::new(
-        ChannelId(ranking_watcher_channel_id),
+        ChannelId::new(ranking_watcher_channel_id),
         String::from("https://ranking.cvgo.re/ ranking update"),
     );
     tokio::spawn(async move {
@@ -74,11 +76,11 @@ fn get_kcc3_client(args: &Arguments) -> Kcc3ClientResult<Option<kcc3::Kcc3Client
 
 fn event_handler<'a>(
     ctx: &'a SerenityContext,
-    event: &'a Event<'a>,
+    event: &'a FullEvent,
     _framework_ctx: FrameworkContext<'a, PoiseUserData, Error>,
     _user_data: &'a PoiseUserData,
 ) -> BoxFuture<'a, anyhow::Result<()>> {
-    if let Event::Message { new_message } = event {
+    if let FullEvent::Message { new_message } = event {
         return Box::pin(async move {
             if !new_message.mention_everyone {
                 return Ok(());
@@ -133,8 +135,6 @@ async fn main() {
             event_handler,
             ..Default::default()
         })
-        .token(&args.discord_token)
-        .intents(GatewayIntents::non_privileged())
         .setup(move |ctx, ready, framework| {
             Box::pin(async move {
                 if args.feature_ranking_watcher {
@@ -154,9 +154,15 @@ async fn main() {
                     kcc_chombot,
                 })
             })
-        });
+        })
+        .build();
 
-    if let Err(why) = framework.run().await {
+    let mut client = ClientBuilder::new(&args.discord_token, GatewayIntents::non_privileged())
+        .framework(framework)
+        .await
+        .expect("Could not create client");
+
+    if let Err(why) = client.start().await {
         error!("Client error: {why:?}");
     }
 }

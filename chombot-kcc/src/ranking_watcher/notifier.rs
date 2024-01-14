@@ -79,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_channel_message_notifier_build_message() {
-        let notifier = ChannelMessageNotifier::new(ChannelId(123), "TEST_MESSAGE".into());
+        let notifier = ChannelMessageNotifier::new(ChannelId::new(123), "TEST_MESSAGE".into());
         let ranking = Ranking(vec![
             RankingEntry {
                 pos: 1,
