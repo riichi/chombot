@@ -48,17 +48,13 @@ impl Ranking {
 impl WatchableData for Ranking {
     type Diff = Vec<RankingEntry>;
 
-    fn should_notify<'a>(&'a self, new: &'a Self) -> Option<Vec<RankingEntry>> {
+    fn should_notify(&self, new: &Self) -> Option<Vec<RankingEntry>> {
         let new_changed = new.get_changed();
         if new_changed.is_empty() || new_changed == self.get_changed() {
             None
         } else {
             Some(new_changed.into_iter().cloned().collect())
         }
-    }
-
-    fn update(&mut self, new: Self) {
-        *self = new;
     }
 }
 
