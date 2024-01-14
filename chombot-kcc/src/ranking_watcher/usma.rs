@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 
 use anyhow::{anyhow, Context, Result};
+use chombot_common::data_watcher::WatchableData;
 use chombot_common::scraping_utils::{create_chombot_http_client, first_nonempty_text};
 use chombot_common::{select_all, select_one, unpack_children};
 use scraper::node::{Element, Node};
@@ -8,7 +9,7 @@ use scraper::{CaseSensitivity, ElementRef, Html, Selector};
 
 const RANKING_URL: &str = "https://ranking.cvgo.re/";
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PositionChangeInfo {
     New,
     Diff(i32),
@@ -20,7 +21,7 @@ impl PositionChangeInfo {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RankingEntry {
     pub pos: u32,
     pub pos_diff: PositionChangeInfo,
@@ -35,6 +36,7 @@ impl RankingEntry {
     }
 }
 
+#[derive(Default)]
 pub struct Ranking(pub Vec<RankingEntry>);
 
 impl Ranking {
@@ -43,13 +45,22 @@ impl Ranking {
     }
 }
 
-impl PartialEq for Ranking {
-    fn eq(&self, other: &Self) -> bool {
-        self.get_changed() == other.get_changed()
+impl WatchableData for Ranking {
+    type Diff = Vec<RankingEntry>;
+
+    fn should_notify<'a>(&'a self, new: &'a Self) -> Option<Vec<RankingEntry>> {
+        let new_changed = new.get_changed();
+        if new_changed.is_empty() || new_changed == self.get_changed() {
+            None
+        } else {
+            Some(new_changed.into_iter().cloned().collect())
+        }
+    }
+
+    fn update(&mut self, new: Self) {
+        *self = new;
     }
 }
-
-impl Eq for Ranking {}
 
 fn first_element_child<'a>(e: &'a ElementRef) -> Option<&'a Element> {
     e.children().find_map(|chld| match chld.value() {
