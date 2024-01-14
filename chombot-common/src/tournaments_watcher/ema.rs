@@ -46,16 +46,12 @@ impl Tournaments {
 impl WatchableData for Tournaments {
     type Diff = TournamentStatuses;
 
-    fn should_notify<'a>(&'a self, new: &'a Self) -> Option<Self::Diff> {
+    fn should_notify(&self, new: &Self) -> Option<Self::Diff> {
         if self == new {
             None
         } else {
             Some(tournaments_diff(self, new))
         }
-    }
-
-    fn update(&mut self, new: Self) {
-        *self = new;
     }
 }
 

@@ -9,19 +9,22 @@ use tokio::time::sleep;
 
 const DATA_UPDATE_INTERVAL: Duration = Duration::from_secs(60 * 10);
 
-pub trait WatchableData {
+pub trait WatchableData: Sized {
     type Diff;
 
     #[must_use]
-    fn should_notify<'a>(&'a self, new: &'a Self) -> Option<Self::Diff>;
-    fn update(&mut self, new: Self);
+    fn should_notify(&self, new: &Self) -> Option<Self::Diff>;
+
+    fn update(&mut self, new: Self) {
+        *self = new;
+    }
 }
 
 impl<T: WatchableData> WatchableData for Option<T> {
     type Diff = T::Diff;
 
     #[must_use]
-    fn should_notify<'a>(&'a self, new: &'a Self) -> Option<T::Diff> {
+    fn should_notify(&self, new: &Self) -> Option<T::Diff> {
         match (&self, &new) {
             (Some(o), Some(n)) => o.should_notify(n),
             _ => None,
