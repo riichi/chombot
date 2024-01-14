@@ -4,6 +4,7 @@ use std::fmt::{Display, Formatter};
 
 use anyhow::{anyhow, bail};
 use itertools::Itertools;
+use log::info;
 use scraper::{ElementRef, Html, Selector};
 
 use crate::scraping_utils::{cell_text, create_chombot_http_client, first_nonempty_text};
@@ -209,7 +210,13 @@ fn make_entry(last_header: &str, cells: &[ElementRef]) -> anyhow::Result<Tournam
 }
 
 pub async fn get_rcr_tournaments() -> Result<Tournaments, TournamentsFetchError> {
-    Ok(get_tournaments().await?.into_rcr_only())
+    let tournaments = get_tournaments().await?.into_rcr_only();
+    info!(
+        "Got {} RCR tournaments: {:?}",
+        tournaments.get().len(),
+        tournaments.get()
+    );
+    Ok(tournaments)
 }
 
 pub async fn get_tournaments() -> Result<Tournaments, TournamentsFetchError> {
