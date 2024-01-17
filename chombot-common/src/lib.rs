@@ -33,11 +33,7 @@ pub fn start_tournaments_watcher<T: TournamentWatcherChannelListProvider + 'stat
     channel_list_provider: T,
     ctx: SerenityContext,
 ) {
-    const MESSAGE_PREFIX: &str =
-        "**TOURNAMENTS UPDATE** (http://mahjong-europe.org/ranking/Calendar.html)\n\n";
-
-    let notifier =
-        TournamentsChannelMessageNotifier::new(channel_list_provider, String::from(MESSAGE_PREFIX));
+    let notifier = TournamentsChannelMessageNotifier::new(channel_list_provider);
     tokio::spawn(async move {
         DataWatcher::new(notifier, get_rcr_tournaments)
             .run(&ctx)
