@@ -11,6 +11,9 @@ use crate::data_watcher::DataUpdateNotifier;
 use crate::discord_utils::send_with_overflow;
 use crate::tournaments_watcher::ema::{TournamentStatus, TournamentStatuses, Tournaments};
 
+const MESSAGE_PREFIX: &str =
+    "**TOURNAMENTS UPDATE** (http://mahjong-europe.org/ranking/Calendar.html)\n\n";
+
 #[async_trait]
 pub trait TournamentsUpdateNotifier<R: Send + Sync> {
     async fn notify(&self, ranking: &R);
@@ -45,21 +48,19 @@ impl<T: TournamentWatcherChannelListProvider> TournamentWatcherChannelListProvid
 
 pub struct TournamentsChannelMessageNotifier<T> {
     channel_list_provider: T,
-    message: String,
 }
 
 impl<T: TournamentWatcherChannelListProvider> TournamentsChannelMessageNotifier<T> {
     #[must_use]
-    pub const fn new(channel_list_provider: T, message: String) -> Self {
+    pub const fn new(channel_list_provider: T) -> Self {
         Self {
             channel_list_provider,
-            message,
         }
     }
 
     #[must_use]
-    fn build_message(&self, tournament_statuses: &TournamentStatuses) -> String {
-        format!("{}{}", self.message, build_message(tournament_statuses))
+    fn build_message(tournament_statuses: &TournamentStatuses) -> String {
+        format!("{}{}", MESSAGE_PREFIX, build_message(tournament_statuses))
     }
 }
 
@@ -122,7 +123,7 @@ impl<T: TournamentWatcherChannelListProvider> DataUpdateNotifier<Option<Tourname
     for TournamentsChannelMessageNotifier<T>
 {
     async fn notify(&self, diff: TournamentStatuses, ctx: &Context) {
-        let text = self.build_message(&diff);
+        let text = Self::build_message(&diff);
 
         let channel_list: Vec<ChannelId> = self
             .channel_list_provider
