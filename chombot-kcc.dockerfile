@@ -2,9 +2,9 @@ FROM rust:1.75.0 as builder
 
 RUN USER=root cargo new --bin chombot
 
-WORKDIR ./chombot
+WORKDIR /chombot
 
-ADD . ./
+COPY . ./
 
 RUN cargo build --bin chombot-kcc --release
 
@@ -12,7 +12,9 @@ FROM debian:bookworm-slim
 ARG APP=/app
 
 RUN apt-get update \
-    && apt-get install -y ca-certificates
+    && apt-get install --no-install-recommends -y ca-certificates=* \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV APP_USER=chombot
 
@@ -27,4 +29,4 @@ RUN chown -R $APP_USER:$APP_USER ${APP}
 USER $APP_USER
 WORKDIR ${APP}
 
-CMD ["./chombot"]
+CMD ["/app/chombot"]

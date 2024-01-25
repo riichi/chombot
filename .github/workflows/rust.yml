@@ -2,6 +2,9 @@ name: Rust CI
 
 on:
   push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * *'
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,8 +19,9 @@ jobs:
   build:
     strategy:
       matrix:
-        rust: [ "stable", "nightly" ]
-        os: [ ubuntu-latest ]
+        rust: [ stable, nightly ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout source
@@ -37,10 +41,10 @@ jobs:
           toolchain: ${{ matrix.rust }}
 
       - name: Build
-        run: cargo +${{ matrix.rust }} build
+        run: cargo +${{ matrix.rust }} build --features=${{ matrix.features }}
 
       - name: Test
-        run: cargo +${{ matrix.rust }} test
+        run: cargo +${{ matrix.rust }} test --features=${{ matrix.features }}
 
   clippy:
     runs-on: ubuntu-latest

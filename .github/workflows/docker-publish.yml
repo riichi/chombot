@@ -2,7 +2,7 @@ name: Docker
 
 on:
   push:
-    branches: [ master ]
+  pull_request:
 
 env:
   REGISTRY: ghcr.io
@@ -20,6 +20,7 @@ jobs:
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
+        if: github.ref == 'refs/heads/master'
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -36,7 +37,7 @@ jobs:
         with:
           context: .
           file: chombot.dockerfile
-          push: true
+          push: ${{ github.ref == 'refs/heads/master' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -52,6 +53,7 @@ jobs:
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
+        if: github.ref == 'refs/heads/master'
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -68,6 +70,6 @@ jobs:
         with:
           context: .
           file: chombot-kcc.dockerfile
-          push: true
+          push: ${{ github.ref == 'refs/heads/master' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

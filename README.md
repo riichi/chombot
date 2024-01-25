@@ -1,9 +1,9 @@
 chombot
 =======
 
-[![Build Status](https://github.com/riichi/chombot/workflows/Rust%20CI/badge.svg)](https://github.com/riichi/chombot/actions)
-[![Docker Builds](https://github.com/riichi/chombot/workflows/Docker/badge.svg)](https://github.com/riichi/chombot/actions)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/riichi/chombot/blob/master/LICENSE)
+[![Rust Build Status](https://github.com/riichi/chombot/workflows/Rust%20CI/badge.svg)](https://github.com/riichi/chombot/actions/workflows/rust.yml)
+[![Docker Build Status](https://github.com/riichi/chombot/workflows/Docker/badge.svg)](https://github.com/riichi/chombot/actions/workflows/docker-publish.yml)
+[![MIT licensed](https://img.shields.io/github/license/riichi/chombot)](https://github.com/riichi/chombot/blob/master/LICENSE)
 [![codecov](https://codecov.io/gh/riichi/chombot/branch/master/graph/badge.svg)](https://codecov.io/gh/riichi/chombot)
 
 Discord bot with many features built for Riichi Mahjong servers.
