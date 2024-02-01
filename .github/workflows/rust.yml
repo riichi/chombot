@@ -4,7 +4,7 @@ on:
   push:
   pull_request:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
 
 env:
   CARGO_TERM_COLOR: always
@@ -19,8 +19,8 @@ jobs:
   build:
     strategy:
       matrix:
-        rust: [ stable, nightly ]
-        os: [ ubuntu-latest, macos-latest ]
+        rust: [stable, nightly]
+        os: [ubuntu-latest, macos-latest]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -48,7 +48,7 @@ jobs:
 
   clippy:
     runs-on: ubuntu-latest
-    needs: [ "build" ]
+    needs: ["build"]
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -62,8 +62,9 @@ jobs:
           key: ${{ runner.os }}-cargo-debug-${{ hashFiles('**/Cargo.toml') }}
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@beta
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: stable
           components: clippy
 
       - name: Run clippy
@@ -71,7 +72,7 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    needs: [ "build" ]
+    needs: ["build"]
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -93,8 +94,8 @@ jobs:
       - name: Test
         run: cargo test --all-features --no-fail-fast
         env:
-          CARGO_INCREMENTAL: '0'
-          RUSTFLAGS: '-Cinstrument-coverage'
+          CARGO_INCREMENTAL: "0"
+          RUSTFLAGS: "-Cinstrument-coverage"
 
       - name: Install grcov
         uses: baptiste0928/cargo-install@v2
@@ -104,16 +105,17 @@ jobs:
       - name: Run grcov
         run: grcov . --binary-path target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore '../**' --ignore '/*' -o coverage.lcov
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         with:
           files: ./coverage.lcov
           flags: rust
           fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   rustfmt:
     runs-on: ubuntu-latest
-    needs: [ "build" ]
+    needs: ["build"]
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
