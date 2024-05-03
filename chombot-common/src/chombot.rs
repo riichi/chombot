@@ -54,6 +54,7 @@ pub enum TileStyle {
     MartinPersson,
 }
 
+#[derive(Default)]
 pub struct ChombotBase {}
 
 impl ChombotBase {
