@@ -268,7 +268,6 @@ dependencies = [
  "chrono",
  "clap",
  "env_logger",
- "image 0.24.9",
  "itertools",
  "log",
  "num-bigint",
@@ -291,7 +290,6 @@ dependencies = [
  "async-trait",
  "chrono",
  "clap",
- "image 0.24.9",
  "itertools",
  "log",
  "num-bigint",
@@ -314,7 +312,6 @@ dependencies = [
  "chrono",
  "clap",
  "env_logger",
- "image 0.24.9",
  "itertools",
  "log",
  "num-bigint",
@@ -1093,19 +1090,6 @@ dependencies = [
 
 [[package]]
 name = "image"
-version = "0.24.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5690139d2f55868e080017335e4b94cb7414274c74f1669c84fb5feba2c9f69d"
-dependencies = [
- "bytemuck",
- "byteorder",
- "color_quant",
- "num-traits",
- "png",
-]
-
-[[package]]
-name = "image"
 version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd54d660e773627692c524beaad361aca785a4f9f5730ce91f42aabe5bce3d11"
@@ -1827,11 +1811,11 @@ dependencies = [
 
 [[package]]
 name = "riichi_hand"
-version = "0.6.2"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e87e4bce9578bae3ee1637abc7010e181b005e2ed9840c512906c55c475c854f"
+checksum = "f9618da5a189b4bb5bdbeb77cfd45657548fa8a698ce939aa7b07b3a659be813"
 dependencies = [
- "image 0.25.1",
+ "image",
  "lazy_static",
  "num-traits",
  "rayon",

@@ -12,7 +12,6 @@ categories = ["multimedia::images"]
 anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
-image.workspace = true
 reqwest.workspace = true
 riichi_hand.workspace = true
 scraper.workspace = true

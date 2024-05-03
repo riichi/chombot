@@ -1,9 +1,9 @@
 use std::io::Cursor;
 
 use anyhow::Result;
-use image::DynamicImage;
 use poise::serenity_prelude::{CreateAttachment, CreateMessage};
 use poise::ChoiceParameter;
+use riichi_hand::image::{DynamicImage, ImageFormat};
 
 use crate::chombot::{ChombotBase, TileStyle};
 use crate::{ChombotPoiseContext, ChombotPoiseUserData};
@@ -47,8 +47,7 @@ pub async fn hand<T: ChombotPoiseUserData>(
 
     let image = ChombotBase::render_hand(&hand, &tile_style)?;
     let mut buf = Vec::new();
-    DynamicImage::ImageRgba8(image)
-        .write_to(&mut Cursor::new(&mut buf), image::ImageOutputFormat::Png)?;
+    DynamicImage::ImageRgba8(image).write_to(&mut Cursor::new(&mut buf), ImageFormat::Png)?;
 
     let files: Vec<CreateAttachment> = vec![CreateAttachment::bytes(buf.as_slice(), "hand.png")];
     ctx.channel_id()
