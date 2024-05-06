@@ -11,14 +11,13 @@ codegen-units = 1
 lto = true
 
 [workspace.dependencies]
-anyhow = "1.0.81"
-async-trait = "0.1.79"
-chrono = { version = "0.4.37", features = ["serde"] }
-image = { version = "0.24.9", default-features = false, features = ["png"] }
+anyhow = "1.0.82"
+async-trait = "0.1.80"
+chrono = { version = "0.4.38", features = ["serde"] }
 reqwest = { version = "0.11.27", features = ["json"] }
-riichi_hand = "0.6.1"
+riichi_hand = "0.6.3"
 scraper = "0.18.1"
-serde = "1.0.197"
+serde = "1.0.199"
 tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
 slug = "0.1.5"
 clap = { version = "4.5.4", features = ["derive", "env"] }

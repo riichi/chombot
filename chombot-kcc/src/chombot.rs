@@ -3,7 +3,7 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 
 use chrono::Utc;
-use image::RgbaImage;
+use riichi_hand::image::RgbaImage;
 use riichi_hand::parser::{HandParseError, HandParser};
 use riichi_hand::raster_renderer::fluffy_stuff_tile_sets::{
     BLACK_FLUFFY_STUFF_TILE_SET, RED_FLUFFY_STUFF_TILE_SET, YELLOW_FLUFFY_STUFF_TILE_SET,

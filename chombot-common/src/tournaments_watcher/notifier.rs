@@ -109,8 +109,11 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
                 str += &format!("results: \"{results}\"; ");
             }
 
-            if let Some(trimmed) = str.strip_suffix("; ") {
-                str = trimmed.to_owned();
+            {
+                const SUFFIX: &str = "; ";
+                if str.ends_with(SUFFIX) {
+                    str.truncate(str.len() - SUFFIX.len());
+                }
             }
         }
     };
