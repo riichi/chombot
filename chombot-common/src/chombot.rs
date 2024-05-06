@@ -56,12 +56,6 @@ pub enum TileStyle {
 
 pub struct ChombotBase {}
 
-impl Default for ChombotBase {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl ChombotBase {
     #[must_use]
     pub const fn new() -> Self {

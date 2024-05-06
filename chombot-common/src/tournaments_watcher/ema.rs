@@ -174,7 +174,7 @@ pub fn parse_tournaments(body: &str) -> anyhow::Result<Tournaments> {
     for row in select_all!("div", table) {
         let cells: Vec<_> = select_all!("p", row).collect();
         if is_header(&cells) {
-            first_nonempty_text(&cells[0])?.clone_into(&mut last_header);
+            last_header = first_nonempty_text(&cells[0])?.to_owned();
         } else {
             let entry = make_entry(&last_header, &cells)?;
             entries.push(entry);
