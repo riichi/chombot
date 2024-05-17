@@ -38,4 +38,8 @@ pub struct Arguments {
     /// Enable pasta slash command (hermetic humour warning)
     #[arg(long, env, default_value_t = false)]
     pub feature_pasta: bool,
+
+    /// Enable fancy text generator slash command
+    #[arg(long, env, default_value_t = true)]
+    pub feature_fancy_text: bool,
 }
