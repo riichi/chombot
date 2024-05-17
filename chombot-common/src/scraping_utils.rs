@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
+use reqwest::ClientBuilder;
 use scraper::ElementRef;
 
 const USER_AGENT: &str = concat!("chombot/", env!("CARGO_PKG_VERSION"));
@@ -54,5 +55,15 @@ pub fn cell_text(e: &ElementRef) -> String {
 }
 
 pub fn create_chombot_http_client() -> Result<reqwest::Client> {
-    Ok(reqwest::Client::builder().user_agent(USER_AGENT).build()?)
+    Ok(create_chombot_http_client_base().build()?)
+}
+
+pub fn create_chombot_http_client_insecure() -> Result<reqwest::Client> {
+    Ok(create_chombot_http_client_base()
+        .danger_accept_invalid_certs(true)
+        .build()?)
+}
+
+fn create_chombot_http_client_base() -> ClientBuilder {
+    reqwest::Client::builder().user_agent(USER_AGENT)
 }

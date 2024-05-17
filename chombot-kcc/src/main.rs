@@ -5,6 +5,8 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
+extern crate core;
+
 use anyhow::Error;
 use chombot_common::chombot::ChombotBase;
 use chombot_common::data_watcher::DataWatcher;
@@ -115,6 +117,10 @@ fn get_command_list(args: &Arguments) -> Vec<Command<PoiseUserData, Error>> {
     if args.feature_pasta {
         ret.push(pasta());
     }
+    if args.feature_fancy_text {
+        ret.push(slash_commands::fancy_text::fancy_text());
+    }
+
     ret
 }
 
