@@ -3,13 +3,8 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 
 use chrono::Utc;
-use riichi_hand::image::RgbaImage;
-use riichi_hand::parser::{HandParseError, HandParser};
-use riichi_hand::raster_renderer::fluffy_stuff_tile_sets::{
-    BLACK_FLUFFY_STUFF_TILE_SET, RED_FLUFFY_STUFF_TILE_SET, YELLOW_FLUFFY_STUFF_TILE_SET,
-};
-use riichi_hand::raster_renderer::martin_persson_tile_sets::MARTIN_PERSSON_TILE_SET;
-use riichi_hand::raster_renderer::{HandRenderError, RasterRenderer, RenderOptions, TileSet};
+use riichi_hand::parser::HandParseError;
+use riichi_hand::raster_renderer::HandRenderError;
 use tokio::try_join;
 
 use crate::kcc3::data_types::{Chombo, Player, PlayerId};
@@ -64,13 +59,6 @@ impl Error for ChombotError {
 }
 
 type ChombotResult<T> = Result<T, ChombotError>;
-
-pub enum TileStyle {
-    Yellow,
-    Red,
-    Black,
-    MartinPersson,
-}
 
 pub struct Chombot {
     kcc3client: Option<Kcc3Client>,
@@ -149,21 +137,5 @@ impl Chombot {
             .collect();
 
         Ok(chombos)
-    }
-
-    pub fn render_hand(hand: &str, tile_style: &TileStyle) -> ChombotResult<RgbaImage> {
-        let tile_set: Box<dyn TileSet> = match tile_style {
-            TileStyle::Yellow => Box::new(&*YELLOW_FLUFFY_STUFF_TILE_SET),
-            TileStyle::Red => Box::new(&*RED_FLUFFY_STUFF_TILE_SET),
-            TileStyle::Black => Box::new(&*BLACK_FLUFFY_STUFF_TILE_SET),
-            TileStyle::MartinPersson => Box::new(&*MARTIN_PERSSON_TILE_SET),
-        };
-
-        let hand = HandParser::parse(hand)?;
-        Ok(RasterRenderer::render(
-            &hand,
-            &tile_set,
-            RenderOptions::default(),
-        )?)
     }
 }
