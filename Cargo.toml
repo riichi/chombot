@@ -11,18 +11,18 @@ codegen-units = 1
 lto = true
 
 [workspace.dependencies]
-anyhow = "1.0.82"
+anyhow = "1.0.86"
 async-trait = "0.1.80"
 chrono = { version = "0.4.38", features = ["serde"] }
-reqwest = { version = "0.11.27", features = ["json"] }
+reqwest = { version = "0.12.4", features = ["json"] }
 riichi_hand = "0.6.3"
-scraper = "0.18.1"
-serde = "1.0.199"
+scraper = "0.19.0"
+serde = "1.0.203"
 tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
 slug = "0.1.5"
 clap = { version = "4.5.4", features = ["derive", "env"] }
-env_logger = "0.10.2"
+env_logger = "0.11.3"
 log = "0.4.21"
-num-bigint = "0.4.4"
-itertools = "0.12.1"
+num-bigint = "0.4.5"
+itertools = "0.13.0"
 poise = "0.6.1"
