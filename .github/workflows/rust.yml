@@ -101,6 +101,8 @@ jobs:
         uses: baptiste0928/cargo-install@v3
         with:
           crate: grcov
+          # todo: remove after grcov bumps locked `time` from 0.3.23 to something that compiles on Rust 1.78+
+          # https://github.com/time-rs/time/issues/681
           locked: false
 
       - name: Run grcov
