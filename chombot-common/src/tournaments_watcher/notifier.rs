@@ -97,7 +97,7 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
 
             if let Some(url) = &change.url {
                 if !url.is_empty() {
-                    str += &format!("website: {url}");
+                    str += &format!("website: {url}; ");
                 }
             }
             if let Some(date) = &change.date {
@@ -180,7 +180,7 @@ mod tests {
                 rules: None,
                 date: None,
                 place: None,
-                approval_status: None,
+                approval_status: Some("OK".to_owned()),
                 results_status: None,
             }),
             TournamentStatus::Changed(TournamentChange {
