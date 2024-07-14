@@ -80,8 +80,7 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
 
     match diff {
         TournamentStatus::New(entry) => {
-            str += "**NEW**: ";
-            str += &format!("_{}_", entry.name);
+            str += &format!("**NEW**: _{}_", entry.name);
             if !entry.url.is_empty() {
                 str += &format!(" ({})", entry.url);
             }
@@ -96,6 +95,11 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
         TournamentStatus::Changed(change) => {
             str += &format!("**CHANGED**: _{}_; ", change.name);
 
+            if let Some(url) = &change.url {
+                if !url.is_empty() {
+                    str += &format!("website: {url}");
+                }
+            }
             if let Some(date) = &change.date {
                 str += &format!("date: {date}; ");
             }
@@ -169,6 +173,24 @@ mod tests {
                 place: "Krakow".to_owned(),
                 approval_status: "OK".to_owned(),
                 results_status: String::new(),
+            }),
+            TournamentStatus::Changed(TournamentChange {
+                name: "ERMC 2024".to_owned(),
+                url: Some("abc.com".to_owned()),
+                rules: None,
+                date: None,
+                place: None,
+                approval_status: None,
+                results_status: None,
+            }),
+            TournamentStatus::Changed(TournamentChange {
+                name: "ERMC 2025".to_owned(),
+                url: Some("".to_owned()),
+                rules: None,
+                date: None,
+                place: None,
+                approval_status: None,
+                results_status: None,
             }),
         ];
 
