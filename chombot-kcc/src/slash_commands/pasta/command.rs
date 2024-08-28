@@ -29,7 +29,7 @@ impl Pasta {
             Self::Stowarzyszenie => include_str!("stowarzyszenie.txt"),
             Self::Yostar => include_str!("yostar.txt"),
             Self::MalyKsiaze => include_str!("ksiaze.txt"),
-            Self::Fanatyk => include_str!("fanatyk.txt  "),
+            Self::Fanatyk => include_str!("fanatyk.txt"),
         }
     }
 }
