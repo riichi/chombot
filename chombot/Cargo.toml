@@ -28,4 +28,4 @@ toml = "0.8.19"
 chombot-common = { path = "../chombot-common" }
 
 [dev-dependencies]
-tempfile = "3.10.1"
+tempfile = "3.12.0"
