@@ -14,12 +14,12 @@ lto = true
 anyhow = "1.0.86"
 async-trait = "0.1.81"
 chrono = { version = "0.4.38", features = ["serde"] }
-reqwest = { version = "0.12.5", features = ["json"] }
+reqwest = { version = "0.12.7", features = ["json"] }
 riichi_hand = "0.6.3"
 scraper = "0.19.1"
-serde = "1.0.204"
-tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
-slug = "0.1.5"
+serde = "1.0.209"
+tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
+slug = "0.1.6"
 clap = { version = "4.5.13", features = ["derive", "env"] }
 env_logger = "0.11.5"
 log = "0.4.22"
