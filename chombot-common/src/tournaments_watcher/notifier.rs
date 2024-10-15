@@ -88,6 +88,9 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
             str += &format!("{}; ", entry.date);
             str += &format!("{}; ", entry.place);
             str += &format!("MERS: {}", entry.approval_status);
+            if !entry.registration_start.is_empty() {
+                str += &format!("; registration start: {}", entry.registration_start);
+            }
             if !entry.results_status.is_empty() {
                 str += &format!("; {}", entry.results_status);
             }
@@ -108,6 +111,9 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
             }
             if let Some(approval_status) = &change.approval_status {
                 str += &format!("MERS approval: {approval_status}; ");
+            }
+            if let Some(registration_start) = &change.registration_start {
+                str += &format!("registration start: {registration_start}; ");
             }
             if let Some(results) = &change.results_status {
                 str += &format!("results: \"{results}\"; ");
@@ -163,6 +169,7 @@ mod tests {
                 date: Some("1-2 November 2023".to_owned()),
                 place: None,
                 approval_status: None,
+                registration_start: None,
                 results_status: Some("Results".to_owned()),
             }),
             TournamentStatus::New(TournamentEntry {
@@ -172,6 +179,7 @@ mod tests {
                 date: "27-31 November 2023".to_owned(),
                 place: "Krakow".to_owned(),
                 approval_status: "OK".to_owned(),
+                registration_start: "Sept. 1st 2024".to_owned(),
                 results_status: String::new(),
             }),
             TournamentStatus::Changed(TournamentChange {
@@ -181,6 +189,7 @@ mod tests {
                 date: None,
                 place: None,
                 approval_status: Some("OK".to_owned()),
+                registration_start: Some("Sept. 1st 2024".to_owned()),
                 results_status: None,
             }),
             TournamentStatus::Changed(TournamentChange {
@@ -190,6 +199,7 @@ mod tests {
                 date: None,
                 place: None,
                 approval_status: None,
+                registration_start: None,
                 results_status: None,
             }),
         ];

@@ -14,7 +14,7 @@ use crate::{select_all, select_one};
 const CALENDAR_URL: &str = "http://mahjong-europe.org/ranking/Calendar.html";
 const HEADER_CLASS_PREFIX: &str = "TCTT_contenuEntete";
 const RCR_RULES_NAME: &str = "Riichi";
-const TABLE_COLUMN_NUM: usize = 6;
+const TABLE_COLUMN_NUM: usize = 7;
 
 macro_rules! diff_option_for {
     ($old_object:ident, $new_object:ident, $field_name:ident) => {
@@ -63,6 +63,7 @@ pub struct TournamentEntry {
     pub date: String,
     pub place: String,
     pub approval_status: String,
+    pub registration_start: String,
     pub results_status: String,
 }
 
@@ -74,6 +75,7 @@ pub struct TournamentChange {
     pub date: Option<String>,
     pub place: Option<String>,
     pub approval_status: Option<String>,
+    pub registration_start: Option<String>,
     pub results_status: Option<String>,
 }
 
@@ -104,6 +106,7 @@ impl TournamentStatus {
                 date: diff_option_for!(old_entry, new_entry, date),
                 place: diff_option_for!(old_entry, new_entry, place),
                 approval_status: diff_option_for!(old_entry, new_entry, approval_status),
+                registration_start: diff_option_for!(old_entry, new_entry, registration_start),
                 results_status: diff_option_for!(old_entry, new_entry, results_status),
             };
 
@@ -217,7 +220,8 @@ fn make_entry(last_header: &str, cells: &[ElementRef]) -> anyhow::Result<Tournam
         date: format!("{} {}", texts[2], last_header),
         place: texts[3].clone(),
         approval_status: texts[4].clone(),
-        results_status: texts[5].clone(),
+        registration_start: texts[5].clone(),
+        results_status: texts[6].clone(),
     };
     Ok(entry)
 }
@@ -290,6 +294,7 @@ mod tests {
                     date: Some("1-2 November 2023".to_owned()),
                     place: None,
                     approval_status: None,
+                    registration_start: Some("Sept. 1st 2024".to_owned()),
                     results_status: Some("Results".to_owned()),
                 }),
                 TournamentStatus::New(TournamentEntry {
@@ -299,6 +304,7 @@ mod tests {
                     date: "27-31 November 2023".to_owned(),
                     place: "Krakow".to_owned(),
                     approval_status: "OK".to_owned(),
+                    registration_start: String::new(),
                     results_status: String::new(),
                 }),
             ]
