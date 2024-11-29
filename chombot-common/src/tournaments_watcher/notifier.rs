@@ -194,7 +194,7 @@ mod tests {
             }),
             TournamentStatus::Changed(TournamentChange {
                 name: "ERMC 2025".to_owned(),
-                url: Some("".to_owned()),
+                url: Some(String::new()),
                 rules: None,
                 date: None,
                 place: None,

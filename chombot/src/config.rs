@@ -95,13 +95,13 @@ impl<'a> ConfigUpdateGuard<'a> {
     }
 }
 
-impl<'a> Drop for ConfigUpdateGuard<'a> {
+impl Drop for ConfigUpdateGuard<'_> {
     fn drop(&mut self) {
         self.config.save().expect("Could not save Chombot config");
     }
 }
 
-impl<'a> Deref for ConfigUpdateGuard<'a> {
+impl Deref for ConfigUpdateGuard<'_> {
     type Target = Config;
 
     fn deref(&self) -> &Self::Target {
@@ -109,7 +109,7 @@ impl<'a> Deref for ConfigUpdateGuard<'a> {
     }
 }
 
-impl<'a> DerefMut for ConfigUpdateGuard<'a> {
+impl DerefMut for ConfigUpdateGuard<'_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.config.config
     }
