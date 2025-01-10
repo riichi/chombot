@@ -4,6 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use chombot_common::data_watcher::WatchableData;
 use chombot_common::scraping_utils::{create_chombot_http_client, first_nonempty_text};
 use chombot_common::{select_all, select_one, unpack_children};
+use log::info;
 use scraper::node::{Element, Node};
 use scraper::{CaseSensitivity, ElementRef, Html, Selector};
 
@@ -36,7 +37,7 @@ impl RankingEntry {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Ranking(pub Vec<RankingEntry>);
 
 impl Ranking {
@@ -137,7 +138,14 @@ pub async fn get_ranking() -> Result<Ranking> {
         .await?
         .text()
         .await?;
-    parse_document(&body)
+    let ranking = parse_document(&body)?;
+    info!(
+        "Got {} USMA ranking entries: {:?}",
+        ranking.0.len(),
+        ranking
+    );
+
+    Ok(ranking)
 }
 
 #[cfg(test)]
