@@ -24,7 +24,7 @@ env_logger.workspace = true
 num-bigint.workspace = true
 itertools.workspace = true
 poise.workspace = true
-toml = "0.8.20"
+toml = "0.8.22"
 chombot-common = { path = "../chombot-common" }
 
 [dev-dependencies]
