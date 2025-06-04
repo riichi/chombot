@@ -50,7 +50,14 @@ impl WatchableData for Tournaments {
         if self == new {
             None
         } else {
-            Some(tournaments_diff(self, new))
+            let diff = tournaments_diff(self, new);
+            if diff.0.is_empty() {
+                // if the only difference is that some tournaments were removed,
+                // we shouldn't create an empty message about it
+                None
+            } else {
+                Some(diff)
+            }
         }
     }
 }
