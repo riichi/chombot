@@ -24,5 +24,5 @@ clap = { version = "4.5.51", features = ["derive", "env"] }
 env_logger = "0.11.6"
 log = "0.4.28"
 num-bigint = "0.4.6"
-itertools = "0.13.0"
+itertools = "0.14.0"
 poise = "0.6.1"
