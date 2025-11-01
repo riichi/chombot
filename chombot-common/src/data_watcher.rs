@@ -23,7 +23,6 @@ pub trait WatchableData: Sized {
 impl<T: WatchableData> WatchableData for Option<T> {
     type Diff = T::Diff;
 
-    #[must_use]
     fn should_notify(&self, new: &Self) -> Option<T::Diff> {
         match (&self, &new) {
             (Some(o), Some(n)) => o.should_notify(n),

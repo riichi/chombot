@@ -78,7 +78,7 @@ impl ChombotConfig {
         &self.config
     }
 
-    pub fn config_mut(&mut self) -> ConfigUpdateGuard<'_> {
+    pub const fn config_mut(&mut self) -> ConfigUpdateGuard<'_> {
         ConfigUpdateGuard::new(self)
     }
 }
@@ -90,7 +90,7 @@ pub struct ConfigUpdateGuard<'a> {
 }
 
 impl<'a> ConfigUpdateGuard<'a> {
-    pub fn new(config: &'a mut ChombotConfig) -> Self {
+    pub const fn new(config: &'a mut ChombotConfig) -> Self {
         Self { config }
     }
 }

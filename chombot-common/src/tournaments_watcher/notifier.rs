@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::iter;
 use std::iter::Once;
 use std::sync::Arc;
@@ -68,7 +69,7 @@ impl<T: TournamentWatcherChannelListProvider> TournamentsChannelMessageNotifier<
 fn build_message(tournaments: &TournamentStatuses) -> String {
     let mut str = String::new();
     for diff in &tournaments.0 {
-        str += &format!("* {}\n", diff_as_message(diff));
+        let _ = writeln!(str, "* {}", diff_as_message(diff));
     }
 
     str
@@ -80,43 +81,43 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
 
     match diff {
         TournamentStatus::New(entry) => {
-            str += &format!("**NEW**: _{}_", entry.name);
+            let _ = write!(str, "**NEW**: _{}_", entry.name);
             if !entry.url.is_empty() {
-                str += &format!(" ({})", entry.url);
+                let _ = write!(str, " ({})", entry.url);
             }
             str += "; ";
-            str += &format!("{}; ", entry.date);
-            str += &format!("{}; ", entry.place);
-            str += &format!("MERS: {}", entry.approval_status);
+            let _ = write!(str, "{}; ", entry.date);
+            let _ = write!(str, "{}; ", entry.place);
+            let _ = write!(str, "MERS: {}", entry.approval_status);
             if !entry.registration_start.is_empty() {
-                str += &format!("; registration start: {}", entry.registration_start);
+                let _ = write!(str, "; registration start: {}", entry.registration_start);
             }
             if !entry.results_status.is_empty() {
-                str += &format!("; {}", entry.results_status);
+                let _ = write!(str, "; {}", entry.results_status);
             }
         }
         TournamentStatus::Changed(change) => {
-            str += &format!("**CHANGED**: _{}_; ", change.name);
+            let _ = write!(str, "**CHANGED**: _{}_; ", change.name);
 
             if let Some(url) = &change.url {
                 if !url.is_empty() {
-                    str += &format!("website: {url}; ");
+                    let _ = write!(str, "website: {url}; ");
                 }
             }
             if let Some(date) = &change.date {
-                str += &format!("date: {date}; ");
+                let _ = write!(str, "date: {date}; ");
             }
             if let Some(place) = &change.place {
-                str += &format!("place: {place}; ");
+                let _ = write!(str, "place: {place}; ");
             }
             if let Some(approval_status) = &change.approval_status {
-                str += &format!("MERS approval: {approval_status}; ");
+                let _ = write!(str, "MERS approval: {approval_status}; ");
             }
             if let Some(registration_start) = &change.registration_start {
-                str += &format!("registration start: {registration_start}; ");
+                let _ = write!(str, "registration start: {registration_start}; ");
             }
             if let Some(results) = &change.results_status {
-                str += &format!("results: \"{results}\"; ");
+                let _ = write!(str, "results: \"{results}\"; ");
             }
 
             {
@@ -126,7 +127,7 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
                 }
             }
         }
-    };
+    }
 
     str
 }

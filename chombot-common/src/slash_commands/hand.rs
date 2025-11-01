@@ -8,19 +8,14 @@ use riichi_hand::image::{DynamicImage, ImageFormat};
 use crate::chombot::{ChombotBase, TileStyle};
 use crate::{ChombotPoiseContext, ChombotPoiseUserData};
 
-#[derive(Debug, ChoiceParameter)]
+#[derive(Debug, ChoiceParameter, Default)]
 pub enum Tileset {
+    #[default]
     Yellow,
     Red,
     Black,
     #[name = "Martin Persson"]
     MartinPersson,
-}
-
-impl Default for Tileset {
-    fn default() -> Self {
-        Self::Yellow
-    }
 }
 
 impl From<Tileset> for TileStyle {

@@ -9,17 +9,12 @@ use crate::{ChombotPoiseContext, ChombotPoiseUserData};
 
 type Points = PointsCustom<BigInt>;
 
-#[derive(Debug, ChoiceParameter)]
+#[derive(Debug, ChoiceParameter, Default)]
 pub enum Mode {
+    #[default]
     Default,
     Loose,
     Unlimited,
-}
-
-impl Default for Mode {
-    fn default() -> Self {
-        Self::Default
-    }
 }
 
 impl From<Mode> for PointsCalculationMode {
