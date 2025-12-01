@@ -20,7 +20,7 @@ scraper = "0.24.0"
 serde = "1.0.228"
 tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }
 slug = "0.1.6"
-clap = { version = "4.5.51", features = ["derive", "env"] }
+clap = { version = "4.5.53", features = ["derive", "env"] }
 env_logger = "0.11.6"
 log = "0.4.28"
 num-bigint = "0.4.6"
