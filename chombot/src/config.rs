@@ -4,12 +4,14 @@ use std::collections::HashMap;
 use std::fs;
 use std::ops::{Deref, DerefMut};
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use chombot_common::tournaments_watcher::notifier::TournamentWatcherChannelListProvider;
 use log::info;
 use poise::serenity_prelude::{ChannelId, GuildId};
 use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 
 #[derive(Clone, Default, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Config {
@@ -22,6 +24,8 @@ pub struct Config {
 pub struct GuildConfig {
     /// Tournaments watcher channel ID
     pub tournaments_watcher_channel_id: Option<ChannelId>,
+    /// Ranking watcher channel ID
+    pub ranking_watcher_channel_id: Option<ChannelId>,
 }
 
 #[async_trait]
@@ -36,6 +40,37 @@ impl TournamentWatcherChannelListProvider for ChombotConfig {
             .filter_map(|(_, config)| config.tournaments_watcher_channel_id);
 
         channel_ids.collect()
+    }
+}
+
+#[async_trait]
+pub trait RankingWatcherChannelListProvider: Send + Sync {
+    type RankingWatcherChannelList: IntoIterator<Item = ChannelId> + Send;
+
+    async fn ranking_watcher_channels(&self) -> Self::RankingWatcherChannelList;
+}
+
+#[async_trait]
+impl RankingWatcherChannelListProvider for ChombotConfig {
+    type RankingWatcherChannelList = Vec<ChannelId>;
+
+    async fn ranking_watcher_channels(&self) -> Self::RankingWatcherChannelList {
+        let channel_ids = self
+            .config
+            .guilds
+            .iter()
+            .filter_map(|(_, config)| config.ranking_watcher_channel_id);
+
+        channel_ids.collect()
+    }
+}
+
+#[async_trait]
+impl<T: RankingWatcherChannelListProvider> RankingWatcherChannelListProvider for Arc<RwLock<T>> {
+    type RankingWatcherChannelList = T::RankingWatcherChannelList;
+
+    async fn ranking_watcher_channels(&self) -> Self::RankingWatcherChannelList {
+        self.read().await.ranking_watcher_channels().await
     }
 }
 
@@ -136,12 +171,14 @@ mod tests {
                     GuildId::new(69),
                     GuildConfig {
                         tournaments_watcher_channel_id: Some(ChannelId::new(2137)),
+                        ranking_watcher_channel_id: None,
                     },
                 ),
                 (
                     GuildId::new(420),
                     GuildConfig {
                         tournaments_watcher_channel_id: Some(ChannelId::new(69)),
+                        ranking_watcher_channel_id: None,
                     },
                 ),
             ]),
@@ -171,12 +208,14 @@ mod tests {
                     GuildId::new(69),
                     GuildConfig {
                         tournaments_watcher_channel_id: Some(ChannelId::new(2137)),
+                        ranking_watcher_channel_id: None,
                     },
                 ),
                 (
                     GuildId::new(420),
                     GuildConfig {
                         tournaments_watcher_channel_id: Some(ChannelId::new(69)),
+                        ranking_watcher_channel_id: None,
                     },
                 ),
             ]),

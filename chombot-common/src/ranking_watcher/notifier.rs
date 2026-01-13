@@ -1,10 +1,10 @@
 use async_trait::async_trait;
-use crate::data_watcher::DataUpdateNotifier;
-use crate::discord_utils::send_with_overflow;
 use log::error;
 use poise::serenity_prelude::{ChannelId, Context};
 
 use super::usma::{Ranking, RankingEntry};
+use crate::data_watcher::DataUpdateNotifier;
+use crate::discord_utils::send_with_overflow;
 use crate::ranking_watcher::usma::PositionChangeInfo;
 
 pub struct ChannelMessageNotifier {
