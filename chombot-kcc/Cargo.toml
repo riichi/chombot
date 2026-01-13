@@ -25,4 +25,3 @@ num-bigint.workspace = true
 itertools.workspace = true
 poise.workspace = true
 chombot-common.workspace = true
-chombot.workspace = true

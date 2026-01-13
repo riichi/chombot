@@ -284,7 +284,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "chombot",
  "chombot-common",
  "chrono",
  "clap",

@@ -23,8 +23,8 @@ use poise::{BoxFuture, Command, Context, Framework, FrameworkContext, FrameworkO
 use crate::args::Arguments;
 use crate::chombot::Chombot;
 use crate::kcc3::Kcc3ClientResult;
-use chombot::ranking_watcher::notifier::ChannelMessageNotifier;
-use chombot::ranking_watcher::usma::get_ranking;
+use chombot_common::ranking_watcher::notifier::ChannelMessageNotifier;
+use chombot_common::ranking_watcher::usma::get_ranking;
 use crate::slash_commands::chombo::chombo;
 use crate::slash_commands::pasta::pasta;
 

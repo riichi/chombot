@@ -1,9 +1,9 @@
 use std::convert::TryFrom;
 
 use anyhow::{anyhow, Context, Result};
-use chombot_common::data_watcher::WatchableData;
-use chombot_common::scraping_utils::{create_chombot_http_client, first_nonempty_text};
-use chombot_common::{select_all, select_one, unpack_children};
+use crate::data_watcher::WatchableData;
+use crate::scraping_utils::{create_chombot_http_client, first_nonempty_text};
+use crate::{select_all, select_one, unpack_children};
 use log::info;
 use scraper::node::{Element, Node};
 use scraper::{CaseSensitivity, ElementRef, Html, Selector};
