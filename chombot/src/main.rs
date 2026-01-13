@@ -9,17 +9,20 @@ use std::sync::Arc;
 
 use anyhow::Error;
 use chombot_common::chombot::ChombotBase;
+use chombot_common::data_watcher::DataWatcher;
+use chombot_common::ranking_watcher::notifier::ChannelMessageNotifier;
+use chombot_common::ranking_watcher::usma::get_ranking;
 use chombot_common::slash_commands::hand::hand;
 use chombot_common::slash_commands::score::score;
 use chombot_common::{start_tournaments_watcher, ChombotPoiseUserData};
 use clap::Parser;
 use log::{error, info, LevelFilter};
-use poise::serenity_prelude::{ClientBuilder, GatewayIntents};
+use poise::serenity_prelude::{ClientBuilder, Context as SerenityContext, GatewayIntents};
 use poise::{Command, Context, Framework, FrameworkOptions};
 use tokio::sync::RwLock;
 
 use crate::args::Arguments;
-use crate::config::ChombotConfig;
+use crate::config::{ChombotConfig, RankingWatcherChannelListProvider};
 use crate::tournament_watcher::tournament_watcher;
 
 mod args;
@@ -38,6 +41,27 @@ impl ChombotPoiseUserData for PoiseUserData {
 }
 
 pub type PoiseContext<'a> = Context<'a, PoiseUserData, anyhow::Error>;
+
+fn start_ranking_watcher<T: RankingWatcherChannelListProvider + 'static>(
+    channel_list_provider: T,
+    ctx: SerenityContext,
+) {
+    tokio::spawn(async move {
+        let channels = channel_list_provider.ranking_watcher_channels().await;
+        for channel_id in channels {
+            let notifier = ChannelMessageNotifier::new(
+                channel_id,
+                String::from("https://ranking.cvgo.re/ ranking update"),
+            );
+            let ctx_clone = ctx.clone();
+            tokio::spawn(async move {
+                DataWatcher::new(notifier, get_ranking)
+                    .run(&ctx_clone)
+                    .await;
+            });
+        }
+    });
+}
 
 fn get_command_list() -> Vec<Command<PoiseUserData, Error>> {
     vec![hand(), score(), tournament_watcher()]
@@ -63,6 +87,9 @@ async fn main() {
         })
         .setup(move |ctx, ready, framework| {
             Box::pin(async move {
+                if args.feature_ranking_watcher {
+                    start_ranking_watcher(config_ref.clone(), ctx.clone());
+                }
                 start_tournaments_watcher(config_ref.clone(), ctx.clone());
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 info!("{} is connected!", ready.user.name);

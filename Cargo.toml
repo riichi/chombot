@@ -26,3 +26,6 @@ log = "0.4.29"
 num-bigint = "0.4.6"
 itertools = "0.14.0"
 poise = "0.6.1"
+chombot-common = { version = "0.1.0", path = "chombot-common" }
+chombot = { version = "0.1.0", path = "chombot" }
+chombot-kcc = { version = "0.1.0", path = "chombot-kcc" }

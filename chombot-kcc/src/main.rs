@@ -10,6 +10,8 @@ extern crate core;
 use anyhow::Error;
 use chombot_common::chombot::ChombotBase;
 use chombot_common::data_watcher::DataWatcher;
+use chombot_common::ranking_watcher::notifier::ChannelMessageNotifier;
+use chombot_common::ranking_watcher::usma::get_ranking;
 use chombot_common::slash_commands::hand::hand;
 use chombot_common::slash_commands::score::score;
 use chombot_common::{start_tournaments_watcher, ChombotPoiseUserData};
@@ -23,15 +25,12 @@ use poise::{BoxFuture, Command, Context, Framework, FrameworkContext, FrameworkO
 use crate::args::Arguments;
 use crate::chombot::Chombot;
 use crate::kcc3::Kcc3ClientResult;
-use crate::ranking_watcher::notifier::ChannelMessageNotifier;
-use crate::ranking_watcher::usma::get_ranking;
 use crate::slash_commands::chombo::chombo;
 use crate::slash_commands::pasta::pasta;
 
 mod args;
 mod chombot;
 mod kcc3;
-mod ranking_watcher;
 mod slash_commands;
 
 const AT_EVERYONE_REACTIONS: [&str; 2] = ["Ichiangry", "Mikiknife"];

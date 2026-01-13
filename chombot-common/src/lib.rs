@@ -19,6 +19,7 @@ pub mod chombot;
 pub mod data;
 pub mod data_watcher;
 pub mod discord_utils;
+pub mod ranking_watcher;
 pub mod scraping_utils;
 pub mod slash_commands;
 pub mod tournaments_watcher;
