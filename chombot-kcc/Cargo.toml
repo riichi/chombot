@@ -25,3 +25,4 @@ num-bigint.workspace = true
 itertools.workspace = true
 poise.workspace = true
 chombot-common = { path = "../chombot-common" }
+chombot = { path = "../chombot" }
