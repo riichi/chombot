@@ -80,6 +80,7 @@ impl Chombot {
         predicate: P,
         create_new: F,
         comment: &str,
+        weight: f64,
     ) -> ChombotResult<Chombo>
     where
         P: (Fn(&Player) -> bool) + Send + Sync,
@@ -95,11 +96,11 @@ impl Chombot {
             client.add_player(&create_new()).await?
         };
 
-        let chombo = Chombo::new(Utc::now(), &player.id, comment);
+        let chombo = Chombo::new(Utc::now(), &player.id, comment, weight);
         Ok(client.add_chombo(&chombo).await?)
     }
 
-    pub async fn create_chombo_ranking(&self) -> ChombotResult<Vec<(Player, usize)>> {
+    pub async fn create_chombo_ranking(&self) -> ChombotResult<Vec<(Player, u64)>> {
         let client = self.get_client()?;
         let players_fut = client.get_players();
         let chombos_fut = client.get_chombos();
@@ -107,12 +108,13 @@ impl Chombot {
 
         let mut player_map: HashMap<PlayerId, Player> =
             players.into_iter().map(|x| (x.id.clone(), x)).collect();
-        let mut chombo_counts: HashMap<PlayerId, usize> = HashMap::new();
+        let mut player_scores: HashMap<PlayerId, u64> = HashMap::new();
         for chombo in chombos {
-            let entry = chombo_counts.entry(chombo.player).or_insert(0);
-            *entry += 1;
+            let hp = chombo.half_points();
+            let entry = player_scores.entry(chombo.player).or_insert(0);
+            *entry += hp;
         }
-        let mut result: Vec<(Player, usize)> = chombo_counts
+        let mut result: Vec<(Player, u64)> = player_scores
             .into_iter()
             .map(|(player_id, num)| (player_map.remove(&player_id).unwrap(), num))
             .collect();

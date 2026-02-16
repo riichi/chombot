@@ -47,27 +47,41 @@ impl Player {
     }
 }
 
+const fn default_weight() -> f64 {
+    1.0
+}
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Chombo {
     pub timestamp: DateTime<Utc>,
     pub player: PlayerId,
     #[serde(default)]
     pub comment: String,
+    #[serde(default = "default_weight")]
+    pub weight: f64,
 }
 
 impl Chombo {
-    pub fn new(timestamp: DateTime<Utc>, player: &PlayerId, comment: &str) -> Self {
+    pub fn new(timestamp: DateTime<Utc>, player: &PlayerId, comment: &str, weight: f64) -> Self {
         Self {
             timestamp,
             player: player.to_owned(),
             comment: comment.to_owned(),
+            weight,
         }
+    }
+
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    pub fn half_points(&self) -> u64 {
+        (self.weight * 2.0).round() as u64
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::kcc3::data_types::{DiscordId, Player, PlayerId};
+    use chrono::Utc;
+
+    use crate::kcc3::data_types::{Chombo, DiscordId, Player, PlayerId};
 
     #[test]
     fn short_name_should_return_nickname() {
@@ -91,5 +105,18 @@ mod tests {
             discord_id: DiscordId::default(),
         };
         assert_eq!(player.short_name(), "A B");
+    }
+
+    fn chombo_with_weight(weight: f64) -> Chombo {
+        Chombo::new(Utc::now(), &PlayerId::default(), "", weight)
+    }
+
+    #[test]
+    fn half_points() {
+        assert_eq!(chombo_with_weight(1.0).half_points(), 2);
+        assert_eq!(chombo_with_weight(1.5).half_points(), 3);
+        assert_eq!(chombo_with_weight(2.0).half_points(), 4);
+        assert_eq!(chombo_with_weight(2.5).half_points(), 5);
+        assert_eq!(chombo_with_weight(3.0).half_points(), 6);
     }
 }

@@ -46,6 +46,7 @@ async fn add(
     ctx: PoiseContext<'_>,
     #[description = "User that made a chombo"] user: User,
     #[description = "Chombo description"] description: String,
+    #[description = "MERS tournament weight (default: 1.0)"] weight: Option<f64>,
 ) -> Result<()> {
     let chombot = &ctx.data().kcc_chombot;
     chombot
@@ -59,6 +60,7 @@ async fn add(
                 )
             },
             &description,
+            weight.unwrap_or(1.0),
         )
         .await?;
 
@@ -82,7 +84,14 @@ async fn get_chombos_embed_entries(
     Ok(chombo_ranking
         .into_iter()
         .take(DISCORD_EMBED_FIELD_LIMIT)
-        .map(|(player, num)| (player.short_name(), num.to_string(), true)))
+        .map(|(player, half_pts)| {
+            let display = if half_pts % 2 == 0 {
+                format!("{}", half_pts / 2)
+            } else {
+                format!("{}.5", half_pts / 2)
+            };
+            (player.short_name(), display, true)
+        }))
 }
 
 fn create_chombos_embed(entries: impl Iterator<Item = (String, String, bool)>) -> CreateEmbed {
@@ -112,13 +121,71 @@ async fn create_chombos_list(chombot: &Chombot) -> Result<String> {
     Ok(result)
 }
 
+#[cfg(test)]
+mod tests {
+    use chrono::{TimeZone, Utc};
+
+    use super::*;
+
+    fn test_player() -> Player {
+        Player::new_from_discord(
+            PlayerId("test".to_string()),
+            "TestPlayer".to_string(),
+            DiscordId("123456".to_string()),
+        )
+    }
+
+    fn test_chombo(comment: &str, weight: f64) -> Chombo {
+        let timestamp = Utc.with_ymd_and_hms(2025, 3, 15, 14, 30, 0).unwrap();
+        Chombo::new(timestamp, &PlayerId("test".to_string()), comment, weight)
+    }
+
+    #[test]
+    fn format_chombo_entry_default_weight_with_comment() {
+        let result = format_chombo_entry(&test_player(), &test_chombo("broke the wall", 1.0));
+        assert_eq!(
+            result,
+            "<@!123456> at Saturday, 2025-03-15 14:30: *broke the wall*\n"
+        );
+    }
+
+    #[test]
+    fn format_chombo_entry_custom_weight_with_comment() {
+        let result = format_chombo_entry(&test_player(), &test_chombo("broke the wall", 2.5));
+        assert_eq!(
+            result,
+            "<@!123456> at Saturday, 2025-03-15 14:30 (x2.5): *broke the wall*\n"
+        );
+    }
+
+    #[test]
+    fn format_chombo_entry_default_weight_no_comment() {
+        let result = format_chombo_entry(&test_player(), &test_chombo("", 1.0));
+        assert_eq!(result, "<@!123456> at Saturday, 2025-03-15 14:30\n");
+    }
+
+    #[test]
+    fn format_chombo_entry_custom_weight_no_comment() {
+        let result = format_chombo_entry(&test_player(), &test_chombo("", 2.0));
+        assert_eq!(result, "<@!123456> at Saturday, 2025-03-15 14:30 (x2)\n");
+    }
+}
+
 fn format_chombo_entry(player: &Player, chombo: &Chombo) -> String {
     let comment = if chombo.comment.is_empty() {
         String::new()
     } else {
         format!(": *{}*", chombo.comment)
     };
+    let weight = if (chombo.weight - 1.0).abs() < f64::EPSILON {
+        String::new()
+    } else {
+        format!(" (x{})", chombo.weight)
+    };
     let timestamp = chombo.timestamp.format("%A, %Y-%m-%d %H:%M");
 
-    format!("<@!{}> at {}{}\n", player.discord_id, timestamp, comment)
+    format!(
+        "<@!{}> at {}{}{}\n",
+        player.discord_id, timestamp, weight, comment
+    )
 }
