@@ -5,7 +5,7 @@ use poise::CreateReply;
 use slug::slugify;
 
 use crate::chombot::Chombot;
-use crate::kcc3::data_types::{Chombo, DiscordId, Player, PlayerId};
+use crate::kcc3::data_types::{Chombo, ChomboWeight, DiscordId, Player, PlayerId};
 use crate::PoiseContext;
 
 #[poise::command(slash_command, subcommands("ranking", "list", "add"))]
@@ -46,7 +46,7 @@ async fn add(
     ctx: PoiseContext<'_>,
     #[description = "User that made a chombo"] user: User,
     #[description = "Chombo description"] description: String,
-    #[description = "MERS tournament weight (default: 1.0)"] weight: Option<f64>,
+    #[description = "MERS tournament weight (default: 1)"] weight: Option<ChomboWeight>,
 ) -> Result<()> {
     let chombot = &ctx.data().kcc_chombot;
     chombot
@@ -60,7 +60,7 @@ async fn add(
                 )
             },
             &description,
-            weight.unwrap_or(1.0),
+            weight.unwrap_or_default(),
         )
         .await?;
 
@@ -135,14 +135,17 @@ mod tests {
         )
     }
 
-    fn test_chombo(comment: &str, weight: f64) -> Chombo {
+    fn test_chombo(comment: &str, weight: ChomboWeight) -> Chombo {
         let timestamp = Utc.with_ymd_and_hms(2025, 3, 15, 14, 30, 0).unwrap();
         Chombo::new(timestamp, &PlayerId("test".to_string()), comment, weight)
     }
 
     #[test]
     fn format_chombo_entry_default_weight_with_comment() {
-        let result = format_chombo_entry(&test_player(), &test_chombo("broke the wall", 1.0));
+        let result = format_chombo_entry(
+            &test_player(),
+            &test_chombo("broke the wall", ChomboWeight::W1),
+        );
         assert_eq!(
             result,
             "<@!123456> at Saturday, 2025-03-15 14:30: *broke the wall*\n"
@@ -151,7 +154,10 @@ mod tests {
 
     #[test]
     fn format_chombo_entry_custom_weight_with_comment() {
-        let result = format_chombo_entry(&test_player(), &test_chombo("broke the wall", 2.5));
+        let result = format_chombo_entry(
+            &test_player(),
+            &test_chombo("broke the wall", ChomboWeight::W2_5),
+        );
         assert_eq!(
             result,
             "<@!123456> at Saturday, 2025-03-15 14:30 (x2.5): *broke the wall*\n"
@@ -160,13 +166,13 @@ mod tests {
 
     #[test]
     fn format_chombo_entry_default_weight_no_comment() {
-        let result = format_chombo_entry(&test_player(), &test_chombo("", 1.0));
+        let result = format_chombo_entry(&test_player(), &test_chombo("", ChomboWeight::W1));
         assert_eq!(result, "<@!123456> at Saturday, 2025-03-15 14:30\n");
     }
 
     #[test]
     fn format_chombo_entry_custom_weight_no_comment() {
-        let result = format_chombo_entry(&test_player(), &test_chombo("", 2.0));
+        let result = format_chombo_entry(&test_player(), &test_chombo("", ChomboWeight::W2));
         assert_eq!(result, "<@!123456> at Saturday, 2025-03-15 14:30 (x2)\n");
     }
 }
@@ -177,7 +183,7 @@ fn format_chombo_entry(player: &Player, chombo: &Chombo) -> String {
     } else {
         format!(": *{}*", chombo.comment)
     };
-    let weight = if (chombo.weight - 1.0).abs() < f64::EPSILON {
+    let weight = if chombo.weight == ChomboWeight::default() {
         String::new()
     } else {
         format!(" (x{})", chombo.weight)

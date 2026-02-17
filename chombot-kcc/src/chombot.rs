@@ -7,7 +7,7 @@ use riichi_hand::parser::HandParseError;
 use riichi_hand::raster_renderer::HandRenderError;
 use tokio::try_join;
 
-use crate::kcc3::data_types::{Chombo, Player, PlayerId};
+use crate::kcc3::data_types::{Chombo, ChomboWeight, Player, PlayerId};
 use crate::kcc3::{Kcc3Client, Kcc3ClientError};
 
 #[derive(Debug)]
@@ -80,7 +80,7 @@ impl Chombot {
         predicate: P,
         create_new: F,
         comment: &str,
-        weight: f64,
+        weight: ChomboWeight,
     ) -> ChombotResult<Chombo>
     where
         P: (Fn(&Player) -> bool) + Send + Sync,
@@ -100,7 +100,7 @@ impl Chombot {
         Ok(client.add_chombo(&chombo).await?)
     }
 
-    pub async fn create_chombo_ranking(&self) -> ChombotResult<Vec<(Player, u64)>> {
+    pub async fn create_chombo_ranking(&self) -> ChombotResult<Vec<(Player, u16)>> {
         let client = self.get_client()?;
         let players_fut = client.get_players();
         let chombos_fut = client.get_chombos();
@@ -108,13 +108,13 @@ impl Chombot {
 
         let mut player_map: HashMap<PlayerId, Player> =
             players.into_iter().map(|x| (x.id.clone(), x)).collect();
-        let mut player_scores: HashMap<PlayerId, u64> = HashMap::new();
+        let mut player_scores: HashMap<PlayerId, u16> = HashMap::new();
         for chombo in chombos {
-            let hp = chombo.half_points();
+            let hp = u16::from(chombo.half_points());
             let entry = player_scores.entry(chombo.player).or_insert(0);
             *entry += hp;
         }
-        let mut result: Vec<(Player, u64)> = player_scores
+        let mut result: Vec<(Player, u16)> = player_scores
             .into_iter()
             .map(|(player_id, num)| (player_map.remove(&player_id).unwrap(), num))
             .collect();
