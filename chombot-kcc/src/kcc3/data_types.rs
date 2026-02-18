@@ -76,39 +76,34 @@ pub enum ChomboWeight {
 }
 
 impl ChomboWeight {
-    pub const fn half_points(self) -> u8 {
+    pub const fn as_f64(self) -> f64 {
         match self {
-            Self::W1 => 2,
-            Self::W1_5 => 3,
-            Self::W2 => 4,
-            Self::W2_5 => 5,
-            Self::W3 => 6,
-            Self::W3_5 => 7,
-            Self::W4 => 8,
-            Self::W4_5 => 9,
-            Self::W5 => 10,
-            Self::W5_5 => 11,
-            Self::W6 => 12,
+            Self::W1 => 1.0,
+            Self::W1_5 => 1.5,
+            Self::W2 => 2.0,
+            Self::W2_5 => 2.5,
+            Self::W3 => 3.0,
+            Self::W3_5 => 3.5,
+            Self::W4 => 4.0,
+            Self::W4_5 => 4.5,
+            Self::W5 => 5.0,
+            Self::W5_5 => 5.5,
+            Self::W6 => 6.0,
         }
     }
 
-    fn as_f64(self) -> f64 {
-        f64::from(self.half_points()) / 2.0
-    }
-
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn from_f64(v: f64) -> Self {
-        match (v * 2.0) as u8 {
-            3 => Self::W1_5,
-            4 => Self::W2,
-            5 => Self::W2_5,
-            6 => Self::W3,
-            7 => Self::W3_5,
-            8 => Self::W4,
-            9 => Self::W4_5,
-            10 => Self::W5,
-            11 => Self::W5_5,
-            12 => Self::W6,
+        match v {
+            1.5 => Self::W1_5,
+            2.0 => Self::W2,
+            2.5 => Self::W2_5,
+            3.0 => Self::W3,
+            3.5 => Self::W3_5,
+            4.0 => Self::W4,
+            4.5 => Self::W4_5,
+            5.0 => Self::W5,
+            5.5 => Self::W5_5,
+            6.0 => Self::W6,
             _ => Self::W1,
         }
     }
@@ -157,17 +152,11 @@ impl Chombo {
             weight,
         }
     }
-
-    pub const fn half_points(&self) -> u8 {
-        self.weight.half_points()
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
-
-    use crate::kcc3::data_types::{Chombo, ChomboWeight, DiscordId, Player, PlayerId};
+    use crate::kcc3::data_types::{ChomboWeight, DiscordId, Player, PlayerId};
 
     #[test]
     fn short_name_should_return_nickname() {
@@ -193,23 +182,19 @@ mod tests {
         assert_eq!(player.short_name(), "A B");
     }
 
-    fn chombo_with_weight(weight: ChomboWeight) -> Chombo {
-        Chombo::new(Utc::now(), &PlayerId::default(), "", weight)
-    }
-
     #[test]
-    fn half_points() {
-        assert_eq!(chombo_with_weight(ChomboWeight::W1).half_points(), 2);
-        assert_eq!(chombo_with_weight(ChomboWeight::W1_5).half_points(), 3);
-        assert_eq!(chombo_with_weight(ChomboWeight::W2).half_points(), 4);
-        assert_eq!(chombo_with_weight(ChomboWeight::W2_5).half_points(), 5);
-        assert_eq!(chombo_with_weight(ChomboWeight::W3).half_points(), 6);
-        assert_eq!(chombo_with_weight(ChomboWeight::W3_5).half_points(), 7);
-        assert_eq!(chombo_with_weight(ChomboWeight::W4).half_points(), 8);
-        assert_eq!(chombo_with_weight(ChomboWeight::W4_5).half_points(), 9);
-        assert_eq!(chombo_with_weight(ChomboWeight::W5).half_points(), 10);
-        assert_eq!(chombo_with_weight(ChomboWeight::W5_5).half_points(), 11);
-        assert_eq!(chombo_with_weight(ChomboWeight::W6).half_points(), 12);
+    fn as_f64() {
+        assert_eq!(ChomboWeight::W1.as_f64(), 1.0);
+        assert_eq!(ChomboWeight::W1_5.as_f64(), 1.5);
+        assert_eq!(ChomboWeight::W2.as_f64(), 2.0);
+        assert_eq!(ChomboWeight::W2_5.as_f64(), 2.5);
+        assert_eq!(ChomboWeight::W3.as_f64(), 3.0);
+        assert_eq!(ChomboWeight::W3_5.as_f64(), 3.5);
+        assert_eq!(ChomboWeight::W4.as_f64(), 4.0);
+        assert_eq!(ChomboWeight::W4_5.as_f64(), 4.5);
+        assert_eq!(ChomboWeight::W5.as_f64(), 5.0);
+        assert_eq!(ChomboWeight::W5_5.as_f64(), 5.5);
+        assert_eq!(ChomboWeight::W6.as_f64(), 6.0);
     }
 
     #[test]

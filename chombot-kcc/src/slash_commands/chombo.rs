@@ -84,14 +84,7 @@ async fn get_chombos_embed_entries(
     Ok(chombo_ranking
         .into_iter()
         .take(DISCORD_EMBED_FIELD_LIMIT)
-        .map(|(player, half_pts)| {
-            let display = if half_pts % 2 == 0 {
-                format!("{}", half_pts / 2)
-            } else {
-                format!("{}.5", half_pts / 2)
-            };
-            (player.short_name(), display, true)
-        }))
+        .map(|(player, score)| (player.short_name(), score.to_string(), true)))
 }
 
 fn create_chombos_embed(entries: impl Iterator<Item = (String, String, bool)>) -> CreateEmbed {
