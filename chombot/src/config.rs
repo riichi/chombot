@@ -32,8 +32,8 @@ impl TournamentWatcherChannelListProvider for ChombotConfig {
         let channel_ids = self
             .config
             .guilds
-            .iter()
-            .filter_map(|(_, config)| config.tournaments_watcher_channel_id);
+            .values()
+            .filter_map(|config| config.tournaments_watcher_channel_id);
 
         channel_ids.collect()
     }

@@ -328,6 +328,7 @@ dependencies = [
  "riichi_hand",
  "scraper",
  "serde",
+ "serde_json",
  "slug",
  "tokio",
 ]
