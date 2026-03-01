@@ -247,7 +247,7 @@ mod tests {
     fn deserialize_chombo_from_api_payload() {
         let json = r#"{
             "id": 229,
-            "timestamp": "2026-02-15T22:09:03.683653Z",
+            "timestamp": "2026-02-15T22:09:03Z",
             "comment": "furiten ron",
             "weight": "1.0",
             "player": "someplayername"
@@ -258,9 +258,13 @@ mod tests {
         assert_eq!(chombo.weight, ChomboWeight::W1);
         assert_eq!(
             chombo.timestamp,
-            "2026-02-15T22:09:03.683653Z"
-                .parse::<DateTime<Utc>>()
-                .unwrap()
+            DateTime::<Utc>::from_naive_utc_and_offset(
+                chrono::NaiveDate::from_ymd_opt(2026, 2, 15)
+                    .unwrap()
+                    .and_hms_opt(22, 9, 3)
+                    .unwrap(),
+                Utc,
+            )
         );
     }
 }
