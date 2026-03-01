@@ -8,7 +8,7 @@ COPY . ./
 
 RUN cargo build --bin chombot --release
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 ARG APP=/app
 
 RUN apt-get update \
