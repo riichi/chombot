@@ -29,13 +29,11 @@ impl TournamentWatcherChannelListProvider for ChombotConfig {
     type TournamentWatcherChannelList = Vec<ChannelId>;
 
     async fn tournament_watcher_channels(&self) -> Self::TournamentWatcherChannelList {
-        let channel_ids = self
-            .config
+        self.config
             .guilds
             .values()
-            .filter_map(|config| config.tournaments_watcher_channel_id);
-
-        channel_ids.collect()
+            .filter_map(|config| config.tournaments_watcher_channel_id)
+            .collect()
     }
 }
 
