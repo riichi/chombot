@@ -25,3 +25,6 @@ num-bigint.workspace = true
 itertools.workspace = true
 poise.workspace = true
 chombot-common = { path = "../chombot-common" }
+
+[dev-dependencies]
+serde_json.workspace = true

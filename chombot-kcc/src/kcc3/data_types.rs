@@ -123,7 +123,8 @@ impl Serialize for ChomboWeight {
 
 impl<'de> Deserialize<'de> for ChomboWeight {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let v = f64::deserialize(deserializer)?;
+        let v = String::deserialize(deserializer)?;
+        let v: f64 = v.parse().map_err(serde::de::Error::custom)?;
         Ok(Self::from_f64(v))
     }
 }
@@ -156,7 +157,9 @@ impl Chombo {
 
 #[cfg(test)]
 mod tests {
-    use crate::kcc3::data_types::{ChomboWeight, DiscordId, Player, PlayerId};
+    use chrono::{DateTime, Utc};
+
+    use crate::kcc3::data_types::{Chombo, ChomboWeight, DiscordId, Player, PlayerId};
 
     #[test]
     fn short_name_should_return_nickname() {
@@ -216,5 +219,52 @@ mod tests {
     fn from_f64_unknown_defaults_to_w1() {
         assert_eq!(ChomboWeight::from_f64(0.0), ChomboWeight::W1);
         assert_eq!(ChomboWeight::from_f64(7.0), ChomboWeight::W1);
+    }
+
+    #[test]
+    fn deserialize_from_string() {
+        assert_eq!(
+            serde_json::from_str::<ChomboWeight>("\"2.5\"").unwrap(),
+            ChomboWeight::W2_5
+        );
+        assert_eq!(
+            serde_json::from_str::<ChomboWeight>("\"1.0\"").unwrap(),
+            ChomboWeight::W1
+        );
+    }
+
+    #[test]
+    fn deserialize_invalid_string() {
+        assert!(serde_json::from_str::<ChomboWeight>("\"abc\"").is_err());
+    }
+
+    #[test]
+    fn deserialize_rejects_number() {
+        assert!(serde_json::from_str::<ChomboWeight>("2.5").is_err());
+    }
+
+    #[test]
+    fn deserialize_chombo_from_api_payload() {
+        let json = r#"{
+            "id": 229,
+            "timestamp": "2026-02-15T22:09:03Z",
+            "comment": "furiten ron",
+            "weight": "1.0",
+            "player": "someplayername"
+        }"#;
+        let chombo: Chombo = serde_json::from_str(json).unwrap();
+        assert_eq!(chombo.player, PlayerId("someplayername".to_string()));
+        assert_eq!(chombo.comment, "furiten ron");
+        assert_eq!(chombo.weight, ChomboWeight::W1);
+        assert_eq!(
+            chombo.timestamp,
+            DateTime::<Utc>::from_naive_utc_and_offset(
+                chrono::NaiveDate::from_ymd_opt(2026, 2, 15)
+                    .unwrap()
+                    .and_hms_opt(22, 9, 3)
+                    .unwrap(),
+                Utc,
+            )
+        );
     }
 }
