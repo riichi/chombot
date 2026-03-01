@@ -7,7 +7,7 @@ use log::error;
 use poise::serenity_prelude::Context;
 use tokio::time::sleep;
 
-const DATA_UPDATE_INTERVAL: Duration = Duration::from_secs(60 * 10);
+const DATA_UPDATE_INTERVAL: Duration = Duration::from_mins(10);
 
 pub trait WatchableData: Sized {
     type Diff;
