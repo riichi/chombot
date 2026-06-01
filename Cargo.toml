@@ -14,16 +14,16 @@ lto = true
 anyhow = "1.0.102"
 async-trait = "0.1.89"
 chrono = { version = "0.4.44", features = ["serde"] }
-reqwest = { version = "0.13.3", features = ["form", "json"] }
+reqwest = { version = "0.13.4", features = ["form", "json"] }
 riichi_hand = "0.7.0"
 scraper = "0.26.0"
 serde = "1.0.228"
-tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
 slug = "0.1.6"
 clap = { version = "4.6.1", features = ["derive", "env"] }
 env_logger = "0.11.10"
-log = "0.4.29"
+log = "0.4.30"
 num-bigint = "0.4.6"
 itertools = "0.14.0"
 poise = "0.6.1"
-serde_json = "1.0.149"
+serde_json = "1.0.150"
