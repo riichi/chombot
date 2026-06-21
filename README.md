@@ -38,8 +38,6 @@ Chombot-kcc requires more config values defined as environment variables. Those 
 * `FEATURE_KCC3` - `true` if you want to enable the integration with [kcc3](https://github.com/riichi/kcc3).
 * `KCC3_URL` - the URL of the [kcc3 instance](https://github.com/riichi/kcc3) that you want to use with Chombot. The official instance is `https://fanpai.chombo.club`.
 * `KCC3_TOKEN` - the API token for kcc3 that can be obtained via kcc3 admin page.
-* `FEATURE_RANKING_WATCHER` - `true` if you want to receive notifications about USMA ranking updates.
-* `RANKING_WATCHER_CHANNEL_ID` - ID of the channel used for notifications about ranking updates.
 * `FEATURE_PASTA` - `true` if you want to enable the `/pasta` command (extremely hermetic!).
 
 Example:
@@ -50,8 +48,6 @@ export GUILD_ID=12345
 export FEATURE_KCC3=true
 export KCC3_URL=https://fanpai.chombo.club
 export KCC3_TOKEN=yourkcc3token
-export FEATURE_RANKING_WATCHER=true
-export RANKING_WATCHER_CHANNEL_ID=54321
 export FEATURE_TOURNAMENTS_WATCHER=true
 export TOURNAMENTS_WATCHER_CHANNEL_ID=98765
 export FEATURE_PASTA=true
