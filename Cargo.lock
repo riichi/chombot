@@ -326,7 +326,6 @@ dependencies = [
  "poise",
  "reqwest 0.13.4",
  "riichi_hand",
- "scraper",
  "serde",
  "serde_json",
  "slug",

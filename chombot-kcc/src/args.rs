@@ -11,13 +11,6 @@ pub struct Arguments {
     #[arg(long, env)]
     pub guild_id: u64,
 
-    /// Enable ranking watcher
-    #[arg(long, env, default_value_t = false)]
-    pub feature_ranking_watcher: bool,
-    /// Ranking watcher channel ID
-    #[arg(long, env)]
-    pub ranking_watcher_channel_id: Option<u64>,
-
     /// Enable tournaments watcher
     #[arg(long, env, default_value_t = false)]
     pub feature_tournaments_watcher: bool,
