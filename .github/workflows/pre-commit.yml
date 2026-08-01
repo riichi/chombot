@@ -2,6 +2,7 @@ name: Pre-commit checks
 
 on:
   push:
+    - master
   pull_request:
 
 jobs:
