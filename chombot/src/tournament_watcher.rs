@@ -14,12 +14,13 @@ pub async fn tournament_watcher(
 
     {
         let mut config = ctx.data().config.write().await;
-        config
-            .config_mut()
-            .guilds
-            .entry(guild)
-            .or_default()
-            .tournaments_watcher_channel_id = channel;
+        config.update(|config| {
+            config
+                .guilds
+                .entry(guild)
+                .or_default()
+                .tournaments_watcher_channel_id = channel;
+        })?;
     }
 
     let reply_content = channel.as_ref().map_or_else(
