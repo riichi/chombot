@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 use std::fs;
-use std::ops::{Deref, DerefMut};
 use std::path::PathBuf;
 
 use async_trait::async_trait;
@@ -29,7 +28,7 @@ impl TournamentWatcherChannelListProvider for ChombotConfig {
     type TournamentWatcherChannelList = Vec<ChannelId>;
 
     async fn tournament_watcher_channels(&self) -> Self::TournamentWatcherChannelList {
-        self.config
+        self.config()
             .guilds
             .values()
             .filter_map(|config| config.tournaments_watcher_channel_id)
@@ -76,40 +75,17 @@ impl ChombotConfig {
         &self.config
     }
 
-    pub const fn config_mut(&mut self) -> ConfigUpdateGuard<'_> {
-        ConfigUpdateGuard::new(self)
-    }
-}
+    /// Mutates the config with `f` and saves it to disk afterwards.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the config could not be serialized or written to
+    /// disk. Note that in that case the mutation is still applied in memory.
+    pub fn update<T>(&mut self, f: impl FnOnce(&mut Config) -> T) -> anyhow::Result<T> {
+        let result = f(&mut self.config);
+        self.save()?;
 
-#[derive(Debug)]
-#[must_use]
-pub struct ConfigUpdateGuard<'a> {
-    config: &'a mut ChombotConfig,
-}
-
-impl<'a> ConfigUpdateGuard<'a> {
-    pub const fn new(config: &'a mut ChombotConfig) -> Self {
-        Self { config }
-    }
-}
-
-impl Drop for ConfigUpdateGuard<'_> {
-    fn drop(&mut self) {
-        self.config.save().expect("Could not save Chombot config");
-    }
-}
-
-impl Deref for ConfigUpdateGuard<'_> {
-    type Target = Config;
-
-    fn deref(&self) -> &Self::Target {
-        &self.config.config
-    }
-}
-
-impl DerefMut for ConfigUpdateGuard<'_> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.config.config
+        Ok(result)
     }
 }
 
@@ -150,9 +126,38 @@ mod tests {
             chombot_config.save().unwrap();
         }
         {
+            let chombot_config = ChombotConfig::load(path.to_path_buf()).unwrap();
+            assert_eq!(*chombot_config.config(), config);
+        }
+
+        path.close().unwrap();
+    }
+
+    #[test]
+    fn test_update_saves_config() {
+        let file = NamedTempFile::new().unwrap();
+        let path = file.into_temp_path();
+
+        {
             let mut chombot_config = ChombotConfig::load(path.to_path_buf()).unwrap();
-            let config_guard = chombot_config.config_mut();
-            assert_eq!(*config_guard, config);
+            let returned = chombot_config
+                .update(|config| {
+                    config
+                        .guilds
+                        .entry(GuildId::new(69))
+                        .or_default()
+                        .tournaments_watcher_channel_id = Some(ChannelId::new(2137));
+                    "returned from the closure"
+                })
+                .unwrap();
+            assert_eq!(returned, "returned from the closure");
+        }
+        {
+            let chombot_config = ChombotConfig::load(path.to_path_buf()).unwrap();
+            assert_eq!(
+                chombot_config.config().guilds[&GuildId::new(69)].tournaments_watcher_channel_id,
+                Some(ChannelId::new(2137)),
+            );
         }
 
         path.close().unwrap();
