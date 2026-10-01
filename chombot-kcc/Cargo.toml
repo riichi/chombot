@@ -12,6 +12,7 @@ categories = ["multimedia::images"]
 anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
+chrono-tz.workspace = true
 reqwest.workspace = true
 riichi_hand.workspace = true
 serde.workspace = true

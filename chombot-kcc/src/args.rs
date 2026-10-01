@@ -18,6 +18,17 @@ pub struct Arguments {
     #[arg(long, env)]
     pub tournaments_watcher_channel_id: Option<u64>,
 
+    /// Enable chombohall reminder (Tuesday before the third Wednesday of the
+    /// month, 20:00)
+    #[arg(long, env, default_value_t = false)]
+    pub feature_chombohall_reminder: bool,
+    /// Chombohall reminder channel ID
+    #[arg(long, env)]
+    pub chombohall_reminder_channel_id: Option<u64>,
+    /// Chombohall reminder message
+    #[arg(long, env)]
+    pub chombohall_reminder_message: Option<String>,
+
     /// Enable KCC3 features
     #[arg(long, env, default_value_t = false)]
     pub feature_kcc3: bool,
