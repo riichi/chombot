@@ -1,8 +1,8 @@
 use std::io::Cursor;
 
 use anyhow::Result;
-use poise::serenity_prelude::{CreateAttachment, CreateMessage};
 use poise::ChoiceParameter;
+use poise::serenity_prelude::{CreateAttachment, CreateMessage};
 use riichi_hand::image::{DynamicImage, ImageFormat};
 
 use crate::chombot::{ChombotBase, TileStyle};

@@ -11,12 +11,10 @@ use anyhow::Error;
 use chombot_common::chombot::ChombotBase;
 use chombot_common::slash_commands::hand::hand;
 use chombot_common::slash_commands::score::score;
-use chombot_common::{start_tournaments_watcher, ChombotPoiseUserData};
+use chombot_common::{ChombotPoiseUserData, start_tournaments_watcher};
 use clap::Parser;
-use log::{error, info, LevelFilter};
-use poise::serenity_prelude::{
-    ChannelId, ClientBuilder, Context as SerenityContext, FullEvent, GatewayIntents,
-};
+use log::{LevelFilter, error, info};
+use poise::serenity_prelude::{ChannelId, ClientBuilder, FullEvent, GatewayIntents};
 use poise::{BoxFuture, Command, Context, Framework, FrameworkContext, FrameworkOptions};
 
 use crate::args::Arguments;
@@ -63,12 +61,11 @@ fn get_kcc3_client(args: &Arguments) -> Kcc3ClientResult<Option<kcc3::Kcc3Client
 }
 
 fn event_handler<'a>(
-    ctx: &'a SerenityContext,
+    framework_ctx: FrameworkContext<'a, PoiseUserData, Error>,
     event: &'a FullEvent,
-    _framework_ctx: FrameworkContext<'a, PoiseUserData, Error>,
-    _user_data: &'a PoiseUserData,
 ) -> BoxFuture<'a, anyhow::Result<()>> {
     if let FullEvent::Message { new_message } = event {
+        let ctx = framework_ctx.serenity_context;
         return Box::pin(async move {
             if !new_message.mention_everyone {
                 return Ok(());

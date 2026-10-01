@@ -49,7 +49,7 @@ pub async fn score<T: ChombotPoiseUserData>(
 
     let han = Han::new(han);
     let fu = Fu::new(fu);
-    let honbas = honbas.map(Honbas::new).unwrap_or_default();
+    let honbas = honbas.map_or_default(Honbas::new);
     let points = Points::from_calculated(points_calculation_mode, han, fu, honbas)?;
     let fields = create_points_embed_fields(&points);
 

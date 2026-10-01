@@ -280,7 +280,7 @@ impl Error for TournamentsFetchError {}
 #[cfg(test)]
 mod tests {
     use crate::tournaments_watcher::ema::{
-        parse_tournaments, tournaments_diff, TournamentChange, TournamentEntry, TournamentStatus,
+        TournamentChange, TournamentEntry, TournamentStatus, parse_tournaments, tournaments_diff,
     };
 
     #[test]

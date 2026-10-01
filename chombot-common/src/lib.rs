@@ -5,8 +5,8 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
-use poise::serenity_prelude::Context as SerenityContext;
 use poise::Context;
+use poise::serenity_prelude::Context as SerenityContext;
 
 use crate::chombot::ChombotBase;
 use crate::data_watcher::DataWatcher;

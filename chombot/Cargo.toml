@@ -1,31 +1,24 @@
 [package]
 name = "chombot"
-version = "0.1.0"
-edition = "2021"
-license-file = "LICENSE"
+version.workspace = true
+edition.workspace = true
+license-file.workspace = true
 description = "Discord bot for Riichi Mahjong servers."
-repository = "https://github.com/riichi/chombot"
-keywords = ["riichi", "mahjong", "discord", "chombo"]
-categories = ["multimedia::images"]
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
-chrono.workspace = true
-reqwest.workspace = true
-riichi_hand.workspace = true
-scraper.workspace = true
+chombot-common.workspace = true
+clap.workspace = true
+env_logger.workspace = true
+log.workspace = true
+poise.workspace = true
 serde.workspace = true
 tokio.workspace = true
-slug.workspace = true
-clap.workspace = true
-log.workspace = true
-env_logger.workspace = true
-num-bigint.workspace = true
-itertools.workspace = true
-poise.workspace = true
-toml = "1.1.2"
-chombot-common = { path = "../chombot-common" }
+toml.workspace = true
 
 [dev-dependencies]
-tempfile = "3.27.0"
+tempfile.workspace = true

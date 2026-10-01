@@ -6,8 +6,8 @@ use chombot_common::scraping_utils::{
     create_chombot_http_client, create_chombot_http_client_insecure,
 };
 use chombot_common::{ChombotPoiseContext, ChombotPoiseUserData};
-use poise::serenity_prelude::{CreateAttachment, CreateMessage};
 use poise::CreateReply;
+use poise::serenity_prelude::{CreateAttachment, CreateMessage};
 
 #[derive(Debug)]
 pub enum FancyTextFetchError {
