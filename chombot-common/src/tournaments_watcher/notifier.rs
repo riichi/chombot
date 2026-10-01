@@ -99,10 +99,10 @@ fn diff_as_message(diff: &TournamentStatus) -> String {
         TournamentStatus::Changed(change) => {
             let _ = write!(str, "**CHANGED**: _{}_; ", change.name);
 
-            if let Some(url) = &change.url {
-                if !url.is_empty() {
-                    let _ = write!(str, "website: {url}; ");
-                }
+            if let Some(url) = &change.url
+                && !url.is_empty()
+            {
+                let _ = write!(str, "website: {url}; ");
             }
             if let Some(date) = &change.date {
                 let _ = write!(str, "date: {date}; ");

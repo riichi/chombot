@@ -1,12 +1,12 @@
 use anyhow::Result;
 use chombot_common::data::{DISCORD_EMBED_FIELD_LIMIT, DISCORD_MESSAGE_SIZE_LIMIT};
-use poise::serenity_prelude::{Color, CreateAllowedMentions, CreateEmbed, User};
 use poise::CreateReply;
+use poise::serenity_prelude::{Color, CreateAllowedMentions, CreateEmbed, User};
 use slug::slugify;
 
+use crate::PoiseContext;
 use crate::chombot::Chombot;
 use crate::kcc3::data_types::{Chombo, ChomboWeight, DiscordId, Player, PlayerId};
-use crate::PoiseContext;
 
 #[poise::command(slash_command, subcommands("ranking", "list", "add"))]
 pub async fn chombo(_: PoiseContext<'_>) -> Result<()> {
@@ -114,6 +114,25 @@ async fn create_chombos_list(chombot: &Chombot) -> Result<String> {
     Ok(result)
 }
 
+fn format_chombo_entry(player: &Player, chombo: &Chombo) -> String {
+    let comment = if chombo.comment.is_empty() {
+        String::new()
+    } else {
+        format!(": *{}*", chombo.comment)
+    };
+    let weight = if chombo.weight == ChomboWeight::default() {
+        String::new()
+    } else {
+        format!(" (x{})", chombo.weight)
+    };
+    let timestamp = chombo.timestamp.format("%A, %Y-%m-%d %H:%M");
+
+    format!(
+        "<@!{}> at {}{}{}\n",
+        player.discord_id, timestamp, weight, comment
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};
@@ -168,23 +187,4 @@ mod tests {
         let result = format_chombo_entry(&test_player(), &test_chombo("", ChomboWeight::W2));
         assert_eq!(result, "<@!123456> at Saturday, 2025-03-15 14:30 (x2)\n");
     }
-}
-
-fn format_chombo_entry(player: &Player, chombo: &Chombo) -> String {
-    let comment = if chombo.comment.is_empty() {
-        String::new()
-    } else {
-        format!(": *{}*", chombo.comment)
-    };
-    let weight = if chombo.weight == ChomboWeight::default() {
-        String::new()
-    } else {
-        format!(" (x{})", chombo.weight)
-    };
-    let timestamp = chombo.timestamp.format("%A, %Y-%m-%d %H:%M");
-
-    format!(
-        "<@!{}> at {}{}{}\n",
-        player.discord_id, timestamp, weight, comment
-    )
 }
