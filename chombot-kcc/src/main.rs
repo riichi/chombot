@@ -20,12 +20,14 @@ use poise::serenity_prelude::{
 use poise::{BoxFuture, Command, Context, Framework, FrameworkContext, FrameworkOptions};
 
 use crate::args::Arguments;
+use crate::chombohall_reminder::start_chombohall_reminder;
 use crate::chombot::Chombot;
 use crate::kcc3::Kcc3ClientResult;
 use crate::slash_commands::chombo::chombo;
 use crate::slash_commands::pasta::pasta;
 
 mod args;
+mod chombohall_reminder;
 mod chombot;
 mod kcc3;
 mod slash_commands;
@@ -133,6 +135,17 @@ async fn main() {
                             "Tournaments watcher feature enabled but no channel ID provided",
                         ));
                     start_tournaments_watcher(tournaments_watcher_channel_id, ctx.clone());
+                }
+                if args.feature_chombohall_reminder {
+                    let channel_id =
+                        ChannelId::from(args.chombohall_reminder_channel_id.expect(
+                            "Chombohall reminder feature enabled but no channel ID provided",
+                        ));
+                    let message = args
+                        .chombohall_reminder_message
+                        .clone()
+                        .expect("Chombohall reminder feature enabled but no message provided");
+                    start_chombohall_reminder(channel_id, message, ctx.clone());
                 }
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 info!("{} is connected!", ready.user.name);

@@ -34,6 +34,9 @@ In addition to the base version of Chombot, there is also an enhanced version ca
 Chombot-kcc requires more config values defined as environment variables. Those are:
 * `FEATURE_TOURNAMENTS_WATCHER` - `true`, if you want to receive the notification about EMA tournament updates.
 * `TOURNAMENTS_WATCHER_CHANNEL_ID` - ID of the channel used for notifications about EMA tournament updates.
+* `FEATURE_CHOMBOHALL_REMINDER` - `true` if you want to post a monthly reminder on the Tuesday before the third Wednesday of the month at 20:00 (Europe/Warsaw time).
+* `CHOMBOHALL_REMINDER_CHANNEL_ID` - ID of the channel used for the monthly reminder.
+* `CHOMBOHALL_REMINDER_MESSAGE` - content of the monthly reminder message.
 * `GUILD_ID` - your guild ID.
 * `FEATURE_KCC3` - `true` if you want to enable the integration with [kcc3](https://github.com/riichi/kcc3).
 * `KCC3_URL` - the URL of the [kcc3 instance](https://github.com/riichi/kcc3) that you want to use with Chombot. The official instance is `https://fanpai.chombo.club`.
@@ -50,6 +53,9 @@ export KCC3_URL=https://fanpai.chombo.club
 export KCC3_TOKEN=yourkcc3token
 export FEATURE_TOURNAMENTS_WATCHER=true
 export TOURNAMENTS_WATCHER_CHANNEL_ID=98765
+export FEATURE_CHOMBOHALL_REMINDER=true
+export CHOMBOHALL_REMINDER_CHANNEL_ID=54321
+export CHOMBOHALL_REMINDER_MESSAGE="Reminder: chombohall tomorrow at 20:00!"
 export FEATURE_PASTA=true
 cargo run --bin chombot-kcc --release
 ```
