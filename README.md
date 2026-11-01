@@ -18,6 +18,7 @@ cargo build --release
 Chombot requires some config values defined as environment variables. These are:
 
 * `DISCORD_TOKEN` - the Discord bot token. You can obtain one by [creating a Discord app](https://discord.com/developers/applications). Make sure to copy your Bot token, not a client secret.
+* `FEATURE_ARCHIVE_VOTES` - `true` if you want to enable [archiving channels](#archiving-channels) by writing `#archiwum`.
 
 Example:
 
@@ -32,6 +33,9 @@ Please note that the working directory serves as a persistence storage for the b
 `/create_channel` creates a text channel in the current channel's category (or a chosen one), if both you and the bot could create it there. Its name suggestions come from the [EMA calendar](http://mahjong-europe.org/ranking/Calendar.html), latest TOURNAMENTS UPDATE first; picking a tournament names the channel like `🏆2026-02-kraków-hatsumi-taikai-2026` and sets the topic to `Kraków :: 14-15 lutego 2026 :: https://...`.
 
 Tournaments in TOURNAMENTS UPDATE posts are numbered with the server's `:1m:` … `:10m:` emotes (or 1️⃣ … 🔟); clicking a number creates that tournament's channel the same way. The bot keeps the posted updates in `tournament_updates.json` in its working directory. `/tournament_update_test` posts a test update.
+
+### Archiving channels
+With `FEATURE_ARCHIVE_VOTES=true`, writing `#archiwum` in a channel is a vote to move it to `Archiwum <year>`, with the year taken from the channel name. It moves once 3 members have voted within a week, including someone from Zarząd (a "Zarząd" role, or permission to manage the channel). This needs the *Message Content* intent enabled in the Discord Developer Portal.
 
 ### chombot-kcc
 In addition to the base version of Chombot, there is also an enhanced version called Chombot-kcc available. This is version tailored for the needs of Krakow Chombo Club and contains a few additional (possibly hermetic) features.
@@ -48,6 +52,7 @@ Chombot-kcc requires more config values defined as environment variables. Those 
 * `KCC3_TOKEN` - the API token for kcc3 that can be obtained via kcc3 admin page.
 * `FEATURE_PASTA` - `true` if you want to enable the `/pasta` command (extremely hermetic!).
 * `FEATURE_CREATE_CHANNEL` - `true` if you want to enable [`/create_channel`](#creating-channels).
+* `FEATURE_ARCHIVE_VOTES` - `true` if you want to enable [archiving channels](#archiving-channels) by writing `#archiwum`.
 
 Example:
 
