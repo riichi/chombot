@@ -10,6 +10,7 @@ extern crate core;
 use std::sync::Arc;
 
 use anyhow::Error;
+use chombot_common::archive_votes::handle_message as handle_archive_vote;
 use chombot_common::chombot::ChombotBase;
 use chombot_common::slash_commands::create_channel::create_channel;
 use chombot_common::slash_commands::hand::hand;
@@ -42,6 +43,7 @@ const TOURNAMENT_UPDATES_PATH: &str = "tournament_updates.json";
 pub struct PoiseUserData {
     pub chombot: ChombotBase,
     pub kcc_chombot: Chombot,
+    pub archive_votes: bool,
 }
 
 impl ChombotPoiseUserData for PoiseUserData {
@@ -81,7 +83,11 @@ fn event_handler<'a>(
     }
     if let FullEvent::Message { new_message } = event {
         let ctx = framework_ctx.serenity_context;
+        let data = framework_ctx.user_data;
         return Box::pin(async move {
+            if data.archive_votes {
+                handle_archive_vote(ctx, new_message, data).await?;
+            }
             if !new_message.mention_everyone {
                 return Ok(());
             }
@@ -133,6 +139,7 @@ async fn main() {
         .init();
 
     let args = Arguments::parse();
+    let archive_votes = args.feature_archive_votes;
     let kcc3_client = get_kcc3_client(&args).unwrap();
     let tournament_updates = Arc::new(TournamentUpdates::load(TOURNAMENT_UPDATES_PATH));
     let chombot = ChombotBase::new(tournament_updates.clone());
@@ -174,12 +181,17 @@ async fn main() {
                 Ok(PoiseUserData {
                     chombot,
                     kcc_chombot,
+                    archive_votes,
                 })
             })
         })
         .build();
 
-    let mut client = ClientBuilder::new(&args.discord_token, GatewayIntents::non_privileged())
+    let mut intents = GatewayIntents::non_privileged();
+    if archive_votes {
+        intents |= GatewayIntents::MESSAGE_CONTENT;
+    }
+    let mut client = ClientBuilder::new(&args.discord_token, intents)
         .framework(framework)
         .await
         .expect("Could not create client");
