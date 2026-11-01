@@ -15,12 +15,14 @@ use crate::tournaments_watcher::notifier::{
     TournamentWatcherChannelListProvider, TournamentsChannelMessageNotifier,
 };
 
+pub mod channel_creator;
 pub mod chombot;
 pub mod data;
 pub mod data_watcher;
 pub mod discord_utils;
 pub mod scraping_utils;
 pub mod slash_commands;
+pub mod tournament_channel;
 pub mod tournaments_watcher;
 
 pub trait ChombotPoiseUserData: Sync {
