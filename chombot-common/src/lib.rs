@@ -15,6 +15,7 @@ use crate::tournaments_watcher::notifier::{
     TournamentWatcherChannelListProvider, TournamentsChannelMessageNotifier,
 };
 
+pub mod channel_creator;
 pub mod chombot;
 pub mod data;
 pub mod data_watcher;

@@ -46,4 +46,8 @@ pub struct Arguments {
     /// Enable fancy text generator slash command
     #[arg(long, env, default_value_t = true)]
     pub feature_fancy_text: bool,
+
+    /// Enable the `/create_channel` command
+    #[arg(long, env, default_value_t = false)]
+    pub feature_create_channel: bool,
 }
