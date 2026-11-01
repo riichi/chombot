@@ -18,4 +18,5 @@ poise.workspace = true
 reqwest.workspace = true
 riichi_hand.workspace = true
 scraper.workspace = true
+slug.workspace = true
 tokio.workspace = true
