@@ -5,6 +5,7 @@ use std::fmt::{Display, Formatter};
 use anyhow::{anyhow, bail};
 use itertools::Itertools;
 use log::info;
+use reqwest::Url;
 use scraper::{ElementRef, Html, Selector};
 
 use crate::data_watcher::WatchableData;
@@ -202,15 +203,11 @@ fn is_header(cells: &[ElementRef]) -> bool {
 }
 
 fn make_entry(last_header: &str, cells: &[ElementRef]) -> anyhow::Result<TournamentEntry> {
-    let url = if let Some(element) = select_all!("a", cells[0]).next() {
-        element
-            .value()
-            .attr("href")
-            .ok_or_else(|| anyhow!("<a> element does not contain a link"))?
-            .to_owned()
-    } else {
-        String::new()
-    };
+    let url = select_all!("a", cells[0])
+        .next()
+        .and_then(|element| element.value().attr("href"))
+        .map(clean_url)
+        .unwrap_or_default();
     let texts = cells.iter().map(cell_text).collect::<Vec<_>>();
     if texts.len() != TABLE_COLUMN_NUM {
         bail!(
@@ -231,6 +228,20 @@ fn make_entry(last_header: &str, cells: &[ElementRef]) -> anyhow::Result<Tournam
         results_status: texts[6].clone(),
     };
     Ok(entry)
+}
+
+/// The calendar's links may contain line breaks or be relative; anything
+/// that isn't a web address becomes an empty string.
+fn clean_url(href: &str) -> String {
+    let href: String = href
+        .chars()
+        .filter(|c| !matches!(c, '\t' | '\n' | '\r'))
+        .collect();
+    let href = href.trim();
+    match Url::parse(CALENDAR_URL).and_then(|base| base.join(href)) {
+        Ok(url) if !href.is_empty() && matches!(url.scheme(), "http" | "https") => url.into(),
+        _ => String::new(),
+    }
 }
 
 pub async fn get_rcr_tournaments() -> Result<Option<Tournaments>, TournamentsFetchError> {
@@ -280,8 +291,23 @@ impl Error for TournamentsFetchError {}
 #[cfg(test)]
 mod tests {
     use crate::tournaments_watcher::ema::{
-        TournamentChange, TournamentEntry, TournamentStatus, parse_tournaments, tournaments_diff,
+        TournamentChange, TournamentEntry, TournamentStatus, clean_url, parse_tournaments,
+        tournaments_diff,
     };
+
+    #[test]
+    fn cleans_links() {
+        assert_eq!(
+            clean_url("https://brusselsmahjongclub.home.blog/2026/04/28/manganneken-pi\n\ns-2026/"),
+            "https://brusselsmahjongclub.home.blog/2026/04/28/manganneken-pis-2026/"
+        );
+        assert_eq!(
+            clean_url("Tournament/Hatsumi_2026.html"),
+            "http://mahjong-europe.org/ranking/Tournament/Hatsumi_2026.html"
+        );
+        assert_eq!(clean_url(" "), "");
+        assert_eq!(clean_url("mailto:info@example.org"), "");
+    }
 
     #[test]
     fn builds_diff_from_real_data() {
@@ -306,7 +332,7 @@ mod tests {
                 }),
                 TournamentStatus::New(TournamentEntry {
                     name: "Krakow Riichi Open".to_owned(),
-                    url: "https://chombo.club".to_owned(),
+                    url: "https://chombo.club/".to_owned(),
                     rules: "Riichi".to_owned(),
                     date: "27-31 November 2023".to_owned(),
                     place: "Krakow".to_owned(),
