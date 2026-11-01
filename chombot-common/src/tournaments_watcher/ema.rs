@@ -34,7 +34,7 @@ impl Tournaments {
     }
 
     #[must_use]
-    fn into_rcr_only(self) -> Self {
+    pub(crate) fn into_rcr_only(self) -> Self {
         let filtered = self
             .0
             .into_iter()

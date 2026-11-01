@@ -308,6 +308,7 @@ dependencies = [
  "reqwest 0.13.5",
  "riichi_hand",
  "scraper",
+ "slug",
  "tokio",
 ]
 

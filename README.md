@@ -29,7 +29,7 @@ cargo run --bin chombot --release
 Please note that the working directory serves as a persistence storage for the bot's state, so the bot process must have write permissions for it.
 
 ### Creating channels
-`/create_channel` creates a text channel in the current channel's category (or a chosen one), if both you and the bot could create it there.
+`/create_channel` creates a text channel in the current channel's category (or a chosen one), if both you and the bot could create it there. Its name suggestions come from the [EMA calendar](http://mahjong-europe.org/ranking/Calendar.html); picking a tournament names the channel like `🏆2026-02-kraków-hatsumi-taikai-2026` and sets the topic to `Kraków :: 14-15 lutego 2026 :: https://...`.
 
 ### chombot-kcc
 In addition to the base version of Chombot, there is also an enhanced version called Chombot-kcc available. This is version tailored for the needs of Krakow Chombo Club and contains a few additional (possibly hermetic) features.
