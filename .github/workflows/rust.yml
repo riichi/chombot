@@ -24,6 +24,10 @@ jobs:
         rust: [stable, nightly]
         os: [ubuntu-latest, macos-latest]
 
+    # A nightly leg failing is tolerated: it does not fail the run and does not
+    # cancel the other legs (see strategy.fail-fast + continue-on-error). Stable
+    # is the channel that actually gates the merge.
+    continue-on-error: ${{ matrix.rust == 'nightly' }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout source
@@ -90,7 +94,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly
+          toolchain: stable
           components: llvm-tools-preview
 
       - name: Install cargo-llvm-cov
