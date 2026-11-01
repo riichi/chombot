@@ -5,15 +5,21 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use log::error;
-use poise::serenity_prelude::{ChannelId, Context};
+use poise::serenity_prelude::{Channel, ChannelId, Context, CreateMessage};
 use tokio::sync::RwLock;
 
+use crate::data::DISCORD_MESSAGE_SIZE_LIMIT;
 use crate::data_watcher::DataUpdateNotifier;
-use crate::discord_utils::send_with_overflow;
 use crate::tournaments_watcher::ema::{TournamentStatus, TournamentStatuses, Tournaments};
+use crate::tournaments_watcher::updates::{
+    NumberMarker, PostedTournament, PostedUpdate, TournamentUpdates, emote_numbering,
+    keycap_numbering,
+};
 
 const MESSAGE_PREFIX: &str =
     "**TOURNAMENTS UPDATE** (http://mahjong-europe.org/ranking/Calendar.html)\n\n";
+pub const TEST_MESSAGE_PREFIX: &str =
+    "**TOURNAMENTS UPDATE** (test; http://mahjong-europe.org/ranking/Calendar.html)\n\n";
 
 #[async_trait]
 pub trait TournamentsUpdateNotifier<R: Send + Sync> {
@@ -49,30 +55,132 @@ impl<T: TournamentWatcherChannelListProvider> TournamentWatcherChannelListProvid
 
 pub struct TournamentsChannelMessageNotifier<T> {
     channel_list_provider: T,
+    updates: Arc<TournamentUpdates>,
+    reactions: bool,
 }
 
 impl<T: TournamentWatcherChannelListProvider> TournamentsChannelMessageNotifier<T> {
     #[must_use]
-    pub const fn new(channel_list_provider: T) -> Self {
+    pub const fn new(
+        channel_list_provider: T,
+        updates: Arc<TournamentUpdates>,
+        reactions: bool,
+    ) -> Self {
         Self {
             channel_list_provider,
+            updates,
+            reactions,
         }
-    }
-
-    #[must_use]
-    fn build_message(tournament_statuses: &TournamentStatuses) -> String {
-        format!("{}{}", MESSAGE_PREFIX, build_message(tournament_statuses))
     }
 }
 
-#[must_use]
-fn build_message(tournaments: &TournamentStatuses) -> String {
-    let mut str = String::new();
-    for diff in &tournaments.0 {
-        let _ = writeln!(str, "* {}", diff_as_message(diff));
+/// Returns whether all reactions could be added.
+///
+/// With `reactions`, each tournament is numbered with the server's `:1m:` …
+/// `:10m:` emotes (or 1️⃣ … 🔟) and gets the matching reaction, which creates
+/// its channel.
+pub async fn post_tournaments_update(
+    ctx: &Context,
+    updates: &TournamentUpdates,
+    channel_id: ChannelId,
+    header: &str,
+    statuses: &TournamentStatuses,
+    reactions: bool,
+) -> anyhow::Result<bool> {
+    let numbering = if reactions {
+        Some(numbering_for(ctx, channel_id).await)
+    } else {
+        None
+    };
+
+    let mut all_reactions_added = true;
+    for message in build_messages(header, statuses, numbering.as_deref()) {
+        let sent = channel_id
+            .send_message(ctx, CreateMessage::new().content(&message.text))
+            .await?;
+        let Some(numbering) = &numbering else {
+            continue;
+        };
+
+        updates.record(PostedUpdate {
+            message_id: sent.id,
+            tournaments: message
+                .statuses
+                .iter()
+                .map(|status| PostedTournament {
+                    name: status.name().to_owned(),
+                    entry: status.new_entry().cloned(),
+                })
+                .collect(),
+        });
+        for marker in &numbering[..message.statuses.len()] {
+            if let Err(why) = sent.react(ctx, marker.reaction.clone()).await {
+                error!("Could not add reactions to a Tournaments update: {why:?}");
+                all_reactions_added = false;
+                break;
+            }
+        }
     }
 
-    str
+    Ok(all_reactions_added)
+}
+
+async fn numbering_for(ctx: &Context, channel_id: ChannelId) -> Vec<NumberMarker> {
+    let emotes = match channel_id.to_channel(ctx).await {
+        Ok(Channel::Guild(channel)) => channel.guild_id.emojis(ctx).await.unwrap_or_default(),
+        _ => Vec::new(),
+    };
+    emote_numbering(
+        emotes
+            .iter()
+            .filter(|emote| emote.available)
+            .map(|emote| (emote.name.as_str(), emote.id, emote.animated)),
+    )
+    .unwrap_or_else(keycap_numbering)
+}
+
+#[derive(Default)]
+struct UpdateMessage<'a> {
+    text: String,
+    statuses: Vec<&'a TournamentStatus>,
+}
+
+/// Splits an update into messages within Discord's size limit and, when
+/// numbered, with at most one tournament per number marker.
+fn build_messages<'a>(
+    header: &str,
+    statuses: &'a TournamentStatuses,
+    numbering: Option<&[NumberMarker]>,
+) -> Vec<UpdateMessage<'a>> {
+    let line = |status: &TournamentStatus, index: usize| {
+        let marker = numbering.map_or("*", |numbering| numbering[index].text.as_str());
+        format!("{marker} {}\n", diff_as_message(status))
+    };
+
+    let mut messages = Vec::new();
+    let mut current = UpdateMessage {
+        text: header.to_owned(),
+        statuses: Vec::new(),
+    };
+    for status in &statuses.0 {
+        if numbering.is_some_and(|numbering| current.statuses.len() == numbering.len()) {
+            messages.push(std::mem::take(&mut current));
+        }
+        let mut text = line(status, current.statuses.len());
+        if current.text.len() + text.len() > DISCORD_MESSAGE_SIZE_LIMIT
+            && !current.statuses.is_empty()
+        {
+            messages.push(std::mem::take(&mut current));
+            text = line(status, 0);
+        }
+        current.text.push_str(&text);
+        current.statuses.push(status);
+    }
+    if !current.statuses.is_empty() {
+        messages.push(current);
+    }
+
+    messages
 }
 
 #[must_use]
@@ -137,8 +245,6 @@ impl<T: TournamentWatcherChannelListProvider> DataUpdateNotifier<Option<Tourname
     for TournamentsChannelMessageNotifier<T>
 {
     async fn notify(&self, diff: TournamentStatuses, ctx: &Context) {
-        let text = Self::build_message(&diff);
-
         let channel_list: Vec<ChannelId> = self
             .channel_list_provider
             .tournament_watcher_channels()
@@ -146,7 +252,16 @@ impl<T: TournamentWatcherChannelListProvider> DataUpdateNotifier<Option<Tourname
             .into_iter()
             .collect();
         for channel_id in channel_list {
-            if let Err(why) = send_with_overflow(channel_id, ctx, &text).await {
+            let result = post_tournaments_update(
+                ctx,
+                &self.updates,
+                channel_id,
+                MESSAGE_PREFIX,
+                &diff,
+                self.reactions,
+            )
+            .await;
+            if let Err(why) = result {
                 error!("Could not send Tournaments update: {why:?}");
             }
         }
@@ -158,7 +273,8 @@ mod tests {
     use crate::tournaments_watcher::ema::{
         TournamentChange, TournamentEntry, TournamentStatus, TournamentStatuses,
     };
-    use crate::tournaments_watcher::notifier::build_message;
+    use crate::tournaments_watcher::notifier::{MESSAGE_PREFIX, build_messages};
+    use crate::tournaments_watcher::updates::keycap_numbering;
 
     #[test]
     fn test() {
@@ -205,9 +321,57 @@ mod tests {
             }),
         ];
 
+        let statuses = TournamentStatuses(diffs);
+        let messages = build_messages(MESSAGE_PREFIX, &statuses, None);
+        assert_eq!(messages.len(), 1);
         assert_eq!(
-            build_message(&TournamentStatuses(diffs)),
-            include_str!("test_data/expected_message.txt")
+            messages[0].text,
+            format!(
+                "{MESSAGE_PREFIX}{}",
+                include_str!("test_data/expected_message.txt")
+            )
+        );
+    }
+
+    #[test]
+    fn splits_long_updates() {
+        let tournaments = |count: usize, name_length: usize| {
+            TournamentStatuses(
+                (1..=count)
+                    .map(|i| {
+                        TournamentStatus::New(TournamentEntry {
+                            name: format!("{} {i}", "x".repeat(name_length)),
+                            url: String::new(),
+                            rules: "Riichi".to_owned(),
+                            date: "1-2 May 2027".to_owned(),
+                            place: "Krakow".to_owned(),
+                            approval_status: "OK".to_owned(),
+                            registration_start: String::new(),
+                            results_status: String::new(),
+                        })
+                    })
+                    .collect(),
+            )
+        };
+
+        let numbering = keycap_numbering();
+        let short = tournaments(12, 1);
+        let numbered = build_messages(MESSAGE_PREFIX, &short, Some(&numbering));
+        assert_eq!(numbered.len(), 2);
+        assert_eq!(numbered[0].statuses.len(), 10);
+        assert!(
+            numbered[1]
+                .text
+                .starts_with("1\u{fe0f}\u{20e3} **NEW**: _x 11_;")
+        );
+
+        let long = tournaments(20, 150);
+        let messages = build_messages(MESSAGE_PREFIX, &long, None);
+        assert!(messages.len() > 1);
+        assert!(
+            messages
+                .iter()
+                .all(|message| message.text.len() <= crate::data::DISCORD_MESSAGE_SIZE_LIMIT)
         );
     }
 }

@@ -7,6 +7,7 @@ use itertools::Itertools;
 use log::info;
 use reqwest::Url;
 use scraper::{ElementRef, Html, Selector};
+use serde::{Deserialize, Serialize};
 
 use crate::data_watcher::WatchableData;
 use crate::scraping_utils::{cell_text, create_chombot_http_client, first_nonempty_text};
@@ -63,7 +64,7 @@ impl WatchableData for Tournaments {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TournamentEntry {
     pub name: String,
     pub url: String,
@@ -97,6 +98,22 @@ pub enum TournamentStatus {
 }
 
 impl TournamentStatus {
+    #[must_use]
+    pub const fn new_entry(&self) -> Option<&TournamentEntry> {
+        match self {
+            Self::New(entry) => Some(entry),
+            Self::Changed(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub fn name(&self) -> &str {
+        match self {
+            Self::New(entry) => &entry.name,
+            Self::Changed(change) => &change.name,
+        }
+    }
+
     #[must_use]
     fn for_entries(
         old_entry: Option<&TournamentEntry>,
