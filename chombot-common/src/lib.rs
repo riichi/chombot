@@ -5,6 +5,8 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
+use std::sync::Arc;
+
 use poise::Context;
 use poise::serenity_prelude::Context as SerenityContext;
 
@@ -14,6 +16,7 @@ use crate::tournaments_watcher::ema::get_rcr_tournaments;
 use crate::tournaments_watcher::notifier::{
     TournamentWatcherChannelListProvider, TournamentsChannelMessageNotifier,
 };
+use crate::tournaments_watcher::updates::TournamentUpdates;
 
 pub mod channel_creator;
 pub mod chombot;
@@ -23,6 +26,7 @@ pub mod discord_utils;
 pub mod scraping_utils;
 pub mod slash_commands;
 pub mod tournament_channel;
+pub mod tournament_reactions;
 pub mod tournaments_watcher;
 
 pub trait ChombotPoiseUserData: Sync {
@@ -31,11 +35,16 @@ pub trait ChombotPoiseUserData: Sync {
 
 pub type ChombotPoiseContext<'a, T> = Context<'a, T, anyhow::Error>;
 
+/// With `reactions`, tournaments in the updates get numbered reactions that
+/// create their channels (see [`tournament_reactions`]).
 pub fn start_tournaments_watcher<T: TournamentWatcherChannelListProvider + 'static>(
     channel_list_provider: T,
+    updates: Arc<TournamentUpdates>,
+    reactions: bool,
     ctx: SerenityContext,
 ) {
-    let notifier = TournamentsChannelMessageNotifier::new(channel_list_provider);
+    let notifier =
+        TournamentsChannelMessageNotifier::new(channel_list_provider, updates, reactions);
     tokio::spawn(async move {
         DataWatcher::new(notifier, get_rcr_tournaments)
             .run(&ctx)

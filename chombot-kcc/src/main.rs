@@ -7,11 +7,16 @@
 
 extern crate core;
 
+use std::sync::Arc;
+
 use anyhow::Error;
 use chombot_common::chombot::ChombotBase;
 use chombot_common::slash_commands::create_channel::create_channel;
 use chombot_common::slash_commands::hand::hand;
 use chombot_common::slash_commands::score::score;
+use chombot_common::slash_commands::tournament_update_test::tournament_update_test;
+use chombot_common::tournament_reactions::handle_reaction_add;
+use chombot_common::tournaments_watcher::updates::TournamentUpdates;
 use chombot_common::{ChombotPoiseUserData, start_tournaments_watcher};
 use clap::Parser;
 use log::{LevelFilter, error, info};
@@ -32,6 +37,7 @@ mod kcc3;
 mod slash_commands;
 
 const AT_EVERYONE_REACTIONS: [&str; 2] = ["Ichiangry", "Mikiknife"];
+const TOURNAMENT_UPDATES_PATH: &str = "tournament_updates.json";
 
 pub struct PoiseUserData {
     pub chombot: ChombotBase,
@@ -65,6 +71,14 @@ fn event_handler<'a>(
     framework_ctx: FrameworkContext<'a, PoiseUserData, Error>,
     event: &'a FullEvent,
 ) -> BoxFuture<'a, anyhow::Result<()>> {
+    if let FullEvent::ReactionAdd { add_reaction } = event {
+        return Box::pin(handle_reaction_add(
+            framework_ctx.serenity_context,
+            add_reaction,
+            framework_ctx.user_data,
+            framework_ctx.bot_id(),
+        ));
+    }
     if let FullEvent::Message { new_message } = event {
         let ctx = framework_ctx.serenity_context;
         return Box::pin(async move {
@@ -106,6 +120,7 @@ fn get_command_list(args: &Arguments) -> Vec<Command<PoiseUserData, Error>> {
     }
     if args.feature_create_channel {
         ret.push(create_channel());
+        ret.push(tournament_update_test());
     }
 
     ret
@@ -119,7 +134,8 @@ async fn main() {
 
     let args = Arguments::parse();
     let kcc3_client = get_kcc3_client(&args).unwrap();
-    let chombot = ChombotBase::new();
+    let tournament_updates = Arc::new(TournamentUpdates::load(TOURNAMENT_UPDATES_PATH));
+    let chombot = ChombotBase::new(tournament_updates.clone());
     let kcc_chombot = Chombot::new(kcc3_client);
 
     let framework = Framework::builder()
@@ -135,7 +151,12 @@ async fn main() {
                         ChannelId::from(args.tournaments_watcher_channel_id.expect(
                             "Tournaments watcher feature enabled but no channel ID provided",
                         ));
-                    start_tournaments_watcher(tournaments_watcher_channel_id, ctx.clone());
+                    start_tournaments_watcher(
+                        tournaments_watcher_channel_id,
+                        tournament_updates,
+                        args.feature_create_channel,
+                        ctx.clone(),
+                    );
                 }
                 if args.feature_chombohall_reminder {
                     let channel_id =

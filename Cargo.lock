@@ -308,7 +308,10 @@ dependencies = [
  "reqwest 0.13.5",
  "riichi_hand",
  "scraper",
+ "serde",
+ "serde_json",
  "slug",
+ "tempfile",
  "tokio",
 ]
 

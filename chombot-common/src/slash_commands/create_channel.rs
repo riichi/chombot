@@ -127,7 +127,12 @@ async fn autocomplete_tournament<T: ChombotPoiseUserData>(
         return CreateAutocompleteResponse::new();
     };
 
-    let choices = matching_tournaments(&tournaments, partial)
+    let recent = ctx
+        .data()
+        .chombot()
+        .tournament_updates()
+        .recent_tournaments();
+    let choices = matching_tournaments(&tournaments, &recent, partial)
         .into_iter()
         .map(|entry| {
             let label = choice_label(entry);
@@ -137,9 +142,11 @@ async fn autocomplete_tournament<T: ChombotPoiseUserData>(
     CreateAutocompleteResponse::new().set_choices(choices)
 }
 
-/// Upcoming tournaments first, then the rest.
+/// Tournaments from the most recent updates (`recent`) first, then upcoming
+/// ones, then the rest.
 fn matching_tournaments<'a>(
     tournaments: &'a Tournaments,
+    recent: &[String],
     partial: &str,
 ) -> Vec<&'a TournamentEntry> {
     let partial = partial.trim().to_lowercase();
@@ -152,7 +159,13 @@ fn matching_tournaments<'a>(
         })
         .unique_by(|entry| (&entry.name, &entry.place, &entry.date))
         .collect();
-    matching.sort_by_key(|entry| !entry.results_status.is_empty());
+    matching.sort_by_key(|entry| {
+        let recent_rank = recent.iter().position(|name| *name == entry.name);
+        (
+            recent_rank.unwrap_or(usize::MAX),
+            !entry.results_status.is_empty(),
+        )
+    });
     matching.truncate(AUTOCOMPLETE_MAX_CHOICES);
     matching
 }
@@ -229,26 +242,27 @@ mod tests {
     }
 
     #[test]
-    fn suggests_upcoming_tournaments_first() {
+    fn suggests_recent_then_upcoming_tournaments() {
         let calendar = calendar();
-        let suggest = |partial: &str| -> Vec<String> {
-            matching_tournaments(&calendar, partial)
+        let suggest = |recent: &[&str], partial: &str| -> Vec<String> {
+            let recent: Vec<String> = recent.iter().map(|&name| name.to_owned()).collect();
+            matching_tournaments(&calendar, &recent, partial)
                 .into_iter()
                 .map(choice_label)
                 .collect()
         };
 
         assert_eq!(
-            suggest(""),
+            suggest(&["Hatsumi Taikai 2027"], ""),
             vec![
+                "Hatsumi Taikai 2027 (13-14 lutego 2027, Kraków)",
                 "Pumpkin Tiles 2026 (31 października 2026, Erywań)",
                 "Warsaw Riichi Cup (5 grudnia 2026, Warszawa)",
-                "Hatsumi Taikai 2027 (13-14 lutego 2027, Kraków)",
                 "Pumpkin Tiles 2026 (10-11 października 2026, Tbilisi)",
             ]
         );
         assert_eq!(
-            suggest("WARSAW"),
+            suggest(&[], "WARSAW"),
             vec!["Warsaw Riichi Cup (5 grudnia 2026, Warszawa)"]
         );
     }
