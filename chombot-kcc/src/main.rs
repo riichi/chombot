@@ -9,6 +9,7 @@ extern crate core;
 
 use anyhow::Error;
 use chombot_common::chombot::ChombotBase;
+use chombot_common::slash_commands::create_channel::create_channel;
 use chombot_common::slash_commands::hand::hand;
 use chombot_common::slash_commands::score::score;
 use chombot_common::{ChombotPoiseUserData, start_tournaments_watcher};
@@ -102,6 +103,9 @@ fn get_command_list(args: &Arguments) -> Vec<Command<PoiseUserData, Error>> {
     }
     if args.feature_fancy_text {
         ret.push(slash_commands::fancy_text::fancy_text());
+    }
+    if args.feature_create_channel {
+        ret.push(create_channel());
     }
 
     ret
