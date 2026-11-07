@@ -22,6 +22,7 @@ pub mod data_watcher;
 pub mod discord_utils;
 pub mod scraping_utils;
 pub mod slash_commands;
+pub mod tournament_channel;
 pub mod tournaments_watcher;
 
 pub trait ChombotPoiseUserData: Sync {
