@@ -57,7 +57,7 @@ const fn is_dropped(c: char) -> bool {
 
 pub struct TextChannelRequest<'a> {
     pub name: ChannelName,
-    pub category: Option<ChannelId>,
+    pub placement: Placement,
     pub topic: Option<String>,
     pub audit_log_reason: &'a str,
 }
@@ -74,15 +74,19 @@ pub async fn create_text_channel(
     guild_id: GuildId,
     request: TextChannelRequest<'_>,
 ) -> Result<ChannelCreation> {
+    let category = match request.placement {
+        Placement::InCategory(category) => Some(category),
+        Placement::OutsideAnyCategory => None,
+    };
     let channels = guild_id.channels(cache_http.http()).await?;
-    if let Some(existing) = find_text_channel(channels.values(), &request.name, request.category) {
+    if let Some(existing) = find_text_channel(channels.values(), &request.name, category) {
         return Ok(ChannelCreation::AlreadyExists(existing.clone()));
     }
 
     let mut builder = CreateChannel::new(request.name.as_str())
         .kind(ChannelType::Text)
         .audit_log_reason(request.audit_log_reason);
-    if let Some(category) = request.category {
+    if let Some(category) = category {
         builder = builder.category(category);
     }
     if let Some(topic) = request.topic {
@@ -126,7 +130,13 @@ fn can_create_channels_in(guild: &Guild, member: &Member, category: Option<&Guil
         .manage_channels()
 }
 
-/// The category for a new channel, `None` meaning outside any category.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Placement {
+    InCategory(ChannelId),
+    OutsideAnyCategory,
+}
+
+/// Where to create a new channel.
 ///
 /// That's `requested`, or else the category of `current_channel`, if both the
 /// member and the bot could create a channel there; otherwise an error
@@ -137,7 +147,7 @@ pub fn decide_placement(
     bot: &Member,
     requested: Option<ChannelId>,
     current_channel: Option<&GuildChannel>,
-) -> Result<Option<ChannelId>, String> {
+) -> Result<Placement, String> {
     let category_id =
         requested.or_else(|| current_channel.and_then(|channel| default_category(guild, channel)));
     let category = match category_id.map(|id| guild.channels.get(&id)) {
@@ -159,7 +169,7 @@ pub fn decide_placement(
             "I don't have the Manage Channels permission {place}."
         ))
     } else {
-        Ok(category_id)
+        Ok(category_id.map_or(Placement::OutsideAnyCategory, Placement::InCategory))
     }
 }
 
@@ -276,7 +286,8 @@ mod tests {
         let thread = channel(12, ChannelType::PublicThread, Some(10));
         let organizer = member(5, &[ORGANIZERS]);
         let bot = member(6, &[ORGANIZERS]);
-        let tournaments = Some(ChannelId::new(TOURNAMENTS));
+        let owner = member(999, &[]);
+        let tournaments = Placement::InCategory(ChannelId::new(TOURNAMENTS));
         let place =
             |author: &Member, bot: &Member, requested: Option<u64>, current: &GuildChannel| {
                 decide_placement(
@@ -301,6 +312,10 @@ mod tests {
                  it for you."
                     .to_owned()
             )
+        );
+        assert_eq!(
+            place(&owner, &owner, None, lobby),
+            Ok(Placement::OutsideAnyCategory)
         );
         assert!(place(&organizer, &bot, Some(MODS), general).is_err());
         assert!(place(&member(7, &[]), &bot, None, general).is_err());
