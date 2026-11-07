@@ -3,8 +3,7 @@ use poise::CreateReply;
 use poise::serenity_prelude::{ChannelId, GuildId};
 
 use crate::channel_creator::{
-    ChannelCreation, ChannelName, Placement, TextChannelRequest, create_text_channel,
-    decide_placement,
+    ChannelCreation, ChannelName, TextChannelRequest, create_text_channel, decide_placement,
 };
 use crate::{ChombotPoiseContext, ChombotPoiseUserData};
 
@@ -37,8 +36,8 @@ pub async fn create_channel<T: ChombotPoiseUserData>(
         return Ok(());
     };
     let category = match placement(ctx, guild_id, category).await? {
-        Placement::Allowed(category) => category,
-        Placement::Denied(reason) => {
+        Ok(category) => category,
+        Err(reason) => {
             ctx.send(CreateReply::default().content(reason).ephemeral(true))
                 .await?;
             return Ok(());
@@ -70,7 +69,7 @@ async fn placement<T: ChombotPoiseUserData>(
     ctx: ChombotPoiseContext<'_, T>,
     guild_id: GuildId,
     requested: Option<ChannelId>,
-) -> Result<Placement> {
+) -> Result<Result<Option<ChannelId>, String>> {
     let author = ctx
         .author_member()
         .await

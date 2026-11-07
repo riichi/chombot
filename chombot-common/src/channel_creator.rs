@@ -39,12 +39,14 @@ impl ChannelName {
     }
 }
 
+/// Whitespace, punctuation and en/em dash (`–`, `—`) characters: become `-`.
 const fn is_separator(c: char) -> bool {
     c.is_whitespace()
         || matches!(c, '-' | '\u{2013}' | '\u{2014}')
         || (c.is_ascii_punctuation() && c != '_' && !is_dropped(c))
 }
 
+/// Control and quote (including `‘`, `’`, `“`, `”`) characters: removed.
 const fn is_dropped(c: char) -> bool {
     c.is_control()
         || matches!(
@@ -124,28 +126,22 @@ fn can_create_channels_in(guild: &Guild, member: &Member, category: Option<&Guil
         .manage_channels()
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum Placement {
-    Allowed(Option<ChannelId>),
-    /// The message explains why to the member.
-    Denied(String),
-}
-
-/// Picks the category for a new channel (`requested`, or else the category of
-/// `current_channel`) and checks that both the member and the bot could create
-/// a channel there.
-#[must_use]
+/// The category for a new channel, `None` meaning outside any category.
+///
+/// That's `requested`, or else the category of `current_channel`, if both the
+/// member and the bot could create a channel there; otherwise an error
+/// explaining to the member why not.
 pub fn decide_placement(
     guild: &Guild,
     author: &Member,
     bot: &Member,
     requested: Option<ChannelId>,
     current_channel: Option<&GuildChannel>,
-) -> Placement {
+) -> Result<Option<ChannelId>, String> {
     let category_id =
         requested.or_else(|| current_channel.and_then(|channel| default_category(guild, channel)));
     let category = match category_id.map(|id| guild.channels.get(&id)) {
-        Some(None) => return Placement::Denied("I couldn't find that category.".to_owned()),
+        Some(None) => return Err("I couldn't find that category.".to_owned()),
         Some(category) => category,
         None => None,
     };
@@ -155,15 +151,15 @@ pub fn decide_placement(
     );
 
     if !can_create_channels_in(guild, author, category) {
-        Placement::Denied(format!(
+        Err(format!(
             "You don't have permission to create channels {place}, so I can't do it for you."
         ))
     } else if !can_create_channels_in(guild, bot, category) {
-        Placement::Denied(format!(
+        Err(format!(
             "I don't have the Manage Channels permission {place}."
         ))
     } else {
-        Placement::Allowed(category_id)
+        Ok(category_id)
     }
 }
 
@@ -292,44 +288,32 @@ mod tests {
                 )
             };
 
-        assert_eq!(
-            place(&organizer, &bot, None, general),
-            Placement::Allowed(tournaments)
-        );
-        assert_eq!(
-            place(&organizer, &bot, None, &thread),
-            Placement::Allowed(tournaments)
-        );
+        assert_eq!(place(&organizer, &bot, None, general), Ok(tournaments));
+        assert_eq!(place(&organizer, &bot, None, &thread), Ok(tournaments));
         assert_eq!(
             place(&organizer, &bot, Some(TOURNAMENTS), lobby),
-            Placement::Allowed(tournaments)
+            Ok(tournaments)
         );
         assert_eq!(
             place(&organizer, &bot, None, lobby),
-            Placement::Denied(
+            Err(
                 "You don't have permission to create channels outside a category, so I can't do \
                  it for you."
                     .to_owned()
             )
         );
-        assert!(matches!(
-            place(&organizer, &bot, Some(MODS), general),
-            Placement::Denied(_)
-        ));
-        assert!(matches!(
-            place(&member(7, &[]), &bot, None, general),
-            Placement::Denied(_)
-        ));
+        assert!(place(&organizer, &bot, Some(MODS), general).is_err());
+        assert!(place(&member(7, &[]), &bot, None, general).is_err());
         assert_eq!(
             place(&organizer, &member(8, &[]), None, general),
-            Placement::Denied(
+            Err(
                 "I don't have the Manage Channels permission in the **Turnieje** category."
                     .to_owned()
             )
         );
         assert_eq!(
             place(&organizer, &bot, Some(999), general),
-            Placement::Denied("I couldn't find that category.".to_owned())
+            Err("I couldn't find that category.".to_owned())
         );
     }
 }
