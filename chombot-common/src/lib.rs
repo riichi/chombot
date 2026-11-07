@@ -18,6 +18,7 @@ use crate::tournaments_watcher::notifier::{
 };
 use crate::tournaments_watcher::updates::TournamentUpdates;
 
+pub mod archive_votes;
 pub mod channel_creator;
 pub mod chombot;
 pub mod data;

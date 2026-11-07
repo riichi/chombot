@@ -50,4 +50,9 @@ pub struct Arguments {
     /// Enable the `/create_channel` command
     #[arg(long, env, default_value_t = false)]
     pub feature_create_channel: bool,
+
+    /// Enable archiving channels by writing `#archiwum` (needs the Message
+    /// Content intent)
+    #[arg(long, env, default_value_t = false)]
+    pub feature_archive_votes: bool,
 }

@@ -10,6 +10,7 @@ use riichi_hand::raster_renderer::fluffy_stuff_tile_sets::{
 use riichi_hand::raster_renderer::martin_persson_tile_sets::MARTIN_PERSSON_TILE_SET;
 use riichi_hand::raster_renderer::{HandRenderError, RasterRenderer, RenderOptions, TileSet};
 
+use crate::archive_votes::ArchiveVotes;
 use crate::tournaments_watcher::cache::TournamentsCache;
 use crate::tournaments_watcher::updates::TournamentUpdates;
 
@@ -62,16 +63,23 @@ pub enum TileStyle {
 pub struct ChombotBase {
     tournaments: TournamentsCache,
     tournament_updates: Arc<TournamentUpdates>,
+    archive_votes: ArchiveVotes,
 }
 
 impl ChombotBase {
     /// `tournament_updates` should be shared with the tournaments watcher.
     #[must_use]
-    pub const fn new(tournament_updates: Arc<TournamentUpdates>) -> Self {
+    pub fn new(tournament_updates: Arc<TournamentUpdates>) -> Self {
         Self {
             tournaments: TournamentsCache::new(),
             tournament_updates,
+            archive_votes: ArchiveVotes::default(),
         }
+    }
+
+    #[must_use]
+    pub const fn archive_votes(&self) -> &ArchiveVotes {
+        &self.archive_votes
     }
 
     #[must_use]
