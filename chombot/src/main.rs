@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use anyhow::Error;
 use chombot_common::chombot::ChombotBase;
+use chombot_common::slash_commands::create_channel::create_channel;
 use chombot_common::slash_commands::hand::hand;
 use chombot_common::slash_commands::score::score;
 use chombot_common::{ChombotPoiseUserData, start_tournaments_watcher};
@@ -40,7 +41,7 @@ impl ChombotPoiseUserData for PoiseUserData {
 pub type PoiseContext<'a> = Context<'a, PoiseUserData, anyhow::Error>;
 
 fn get_command_list() -> Vec<Command<PoiseUserData, Error>> {
-    vec![hand(), score(), tournament_watcher()]
+    vec![hand(), score(), tournament_watcher(), create_channel()]
 }
 
 const CONFIG_DATA_PATH: &str = "data.toml";

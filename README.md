@@ -28,6 +28,9 @@ cargo run --bin chombot --release
 
 Please note that the working directory serves as a persistence storage for the bot's state, so the bot process must have write permissions for it.
 
+### Creating channels
+`/create_channel` creates a text channel in the current channel's category (or a chosen one), if both you and the bot could create it there.
+
 ### chombot-kcc
 In addition to the base version of Chombot, there is also an enhanced version called Chombot-kcc available. This is version tailored for the needs of Krakow Chombo Club and contains a few additional (possibly hermetic) features.
 
@@ -42,6 +45,7 @@ Chombot-kcc requires more config values defined as environment variables. Those 
 * `KCC3_URL` - the URL of the [kcc3 instance](https://github.com/riichi/kcc3) that you want to use with Chombot. The official instance is `https://fanpai.chombo.club`.
 * `KCC3_TOKEN` - the API token for kcc3 that can be obtained via kcc3 admin page.
 * `FEATURE_PASTA` - `true` if you want to enable the `/pasta` command (extremely hermetic!).
+* `FEATURE_CREATE_CHANNEL` - `true` if you want to enable [`/create_channel`](#creating-channels).
 
 Example:
 
@@ -57,6 +61,7 @@ export FEATURE_CHOMBOHALL_REMINDER=true
 export CHOMBOHALL_REMINDER_CHANNEL_ID=54321
 export CHOMBOHALL_REMINDER_MESSAGE="Reminder: chombohall tomorrow at 20:00!"
 export FEATURE_PASTA=true
+export FEATURE_CREATE_CHANNEL=true
 cargo run --bin chombot-kcc --release
 ```
 
