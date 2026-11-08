@@ -4,7 +4,6 @@ use std::fmt::{Display, Formatter};
 
 use anyhow::{anyhow, bail};
 use itertools::Itertools;
-use log::info;
 use reqwest::Url;
 use scraper::{ElementRef, Html, Selector};
 
@@ -242,16 +241,6 @@ fn clean_url(href: &str) -> String {
         Ok(url) if !href.is_empty() && matches!(url.scheme(), "http" | "https") => url.into(),
         _ => String::new(),
     }
-}
-
-pub async fn get_rcr_tournaments() -> Result<Option<Tournaments>, TournamentsFetchError> {
-    let tournaments = get_tournaments().await?.into_rcr_only();
-    info!(
-        "Got {} RCR tournaments: {:?}",
-        tournaments.get().len(),
-        tournaments.get()
-    );
-    Ok(Some(tournaments))
 }
 
 pub async fn get_tournaments() -> Result<Tournaments, TournamentsFetchError> {

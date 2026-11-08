@@ -64,7 +64,11 @@ async fn main() {
         })
         .setup(move |ctx, ready, framework| {
             Box::pin(async move {
-                start_tournaments_watcher(config_ref.clone(), ctx.clone());
+                start_tournaments_watcher(
+                    config_ref.clone(),
+                    ctx.clone(),
+                    chombot.tournaments().clone(),
+                );
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 info!("{} is connected!", ready.user.name);
                 Ok(PoiseUserData {

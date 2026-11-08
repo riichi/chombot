@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use log::warn;
+use log::{info, warn};
 use tokio::sync::Mutex;
 use tokio::time::timeout;
 
@@ -20,14 +20,6 @@ pub struct TournamentsCache {
 }
 
 impl TournamentsCache {
-    #[must_use]
-    pub const fn new() -> Self {
-        Self {
-            cached: Mutex::const_new(None),
-            refreshing: Mutex::const_new(()),
-        }
-    }
-
     /// Falls back to a stale list if refreshing fails.
     pub async fn get(&self) -> Result<Arc<Tournaments>, TournamentsFetchError> {
         if let Some(tournaments) = self.fresh().await {
@@ -41,6 +33,11 @@ impl TournamentsCache {
         match get_tournaments().await {
             Ok(tournaments) => {
                 let tournaments = Arc::new(tournaments.into_rcr_only());
+                info!(
+                    "Got {} RCR tournaments: {:?}",
+                    tournaments.0.len(),
+                    tournaments.0
+                );
                 *self.cached.lock().await = Some((Instant::now(), tournaments.clone()));
                 Ok(tournaments)
             }

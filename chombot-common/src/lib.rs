@@ -5,12 +5,15 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
 
+use std::sync::Arc;
+
 use poise::Context;
 use poise::serenity_prelude::Context as SerenityContext;
 
 use crate::chombot::ChombotBase;
 use crate::data_watcher::DataWatcher;
-use crate::tournaments_watcher::ema::get_rcr_tournaments;
+use crate::tournaments_watcher::cache::TournamentsCache;
+use crate::tournaments_watcher::ema::Tournaments;
 use crate::tournaments_watcher::notifier::{
     TournamentWatcherChannelListProvider, TournamentsChannelMessageNotifier,
 };
@@ -34,11 +37,17 @@ pub type ChombotPoiseContext<'a, T> = Context<'a, T, anyhow::Error>;
 pub fn start_tournaments_watcher<T: TournamentWatcherChannelListProvider + 'static>(
     channel_list_provider: T,
     ctx: SerenityContext,
+    tournaments: Arc<TournamentsCache>,
 ) {
     let notifier = TournamentsChannelMessageNotifier::new(channel_list_provider);
     tokio::spawn(async move {
-        DataWatcher::new(notifier, get_rcr_tournaments)
-            .run(&ctx)
-            .await;
+        DataWatcher::new(notifier, || async {
+            tournaments
+                .get()
+                .await
+                .map(|tournaments| Some(Tournaments::clone(&tournaments)))
+        })
+        .run(&ctx)
+        .await;
     });
 }

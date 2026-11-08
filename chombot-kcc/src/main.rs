@@ -135,7 +135,11 @@ async fn main() {
                         ChannelId::from(args.tournaments_watcher_channel_id.expect(
                             "Tournaments watcher feature enabled but no channel ID provided",
                         ));
-                    start_tournaments_watcher(tournaments_watcher_channel_id, ctx.clone());
+                    start_tournaments_watcher(
+                        tournaments_watcher_channel_id,
+                        ctx.clone(),
+                        chombot.tournaments().clone(),
+                    );
                 }
                 if args.feature_chombohall_reminder {
                     let channel_id =

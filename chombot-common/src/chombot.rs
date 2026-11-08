@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+use std::sync::Arc;
 
 use riichi_hand::image::RgbaImage;
 use riichi_hand::parser::{HandParseError, HandParser};
@@ -58,19 +59,17 @@ pub enum TileStyle {
 
 #[derive(Default)]
 pub struct ChombotBase {
-    tournaments: TournamentsCache,
+    tournaments: Arc<TournamentsCache>,
 }
 
 impl ChombotBase {
     #[must_use]
-    pub const fn new() -> Self {
-        Self {
-            tournaments: TournamentsCache::new(),
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 
     #[must_use]
-    pub const fn tournaments(&self) -> &TournamentsCache {
+    pub const fn tournaments(&self) -> &Arc<TournamentsCache> {
         &self.tournaments
     }
 
