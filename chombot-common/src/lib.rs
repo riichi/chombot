@@ -17,6 +17,7 @@ use crate::tournaments_watcher::ema::Tournaments;
 use crate::tournaments_watcher::notifier::{
     TournamentWatcherChannelListProvider, TournamentsChannelMessageNotifier,
 };
+use crate::tournaments_watcher::updates::TournamentUpdates;
 
 pub mod channel_creator;
 pub mod chombot;
@@ -26,6 +27,7 @@ pub mod discord_utils;
 pub mod scraping_utils;
 pub mod slash_commands;
 pub mod tournament_channel;
+pub mod tournament_reactions;
 pub mod tournaments_watcher;
 
 pub trait ChombotPoiseUserData: Sync {
@@ -34,12 +36,17 @@ pub trait ChombotPoiseUserData: Sync {
 
 pub type ChombotPoiseContext<'a, T> = Context<'a, T, anyhow::Error>;
 
+/// With `reactions`, tournaments in the updates get numbered reactions that
+/// create their channels (see [`tournament_reactions`]).
 pub fn start_tournaments_watcher<T: TournamentWatcherChannelListProvider + 'static>(
     channel_list_provider: T,
+    updates: Arc<TournamentUpdates>,
+    reactions: bool,
     ctx: SerenityContext,
     tournaments: Arc<TournamentsCache>,
 ) {
-    let notifier = TournamentsChannelMessageNotifier::new(channel_list_provider);
+    let notifier =
+        TournamentsChannelMessageNotifier::new(channel_list_provider, updates, reactions);
     tokio::spawn(async move {
         DataWatcher::new(notifier, || async {
             tournaments

@@ -11,6 +11,7 @@ use riichi_hand::raster_renderer::martin_persson_tile_sets::MARTIN_PERSSON_TILE_
 use riichi_hand::raster_renderer::{HandRenderError, RasterRenderer, RenderOptions, TileSet};
 
 use crate::tournaments_watcher::cache::TournamentsCache;
+use crate::tournaments_watcher::updates::TournamentUpdates;
 
 #[derive(Debug)]
 pub enum ChombotBaseError {
@@ -60,17 +61,27 @@ pub enum TileStyle {
 #[derive(Default)]
 pub struct ChombotBase {
     tournaments: Arc<TournamentsCache>,
+    tournament_updates: Arc<TournamentUpdates>,
 }
 
 impl ChombotBase {
+    /// `tournament_updates` should be shared with the tournaments watcher.
     #[must_use]
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(tournament_updates: Arc<TournamentUpdates>) -> Self {
+        Self {
+            tournaments: Arc::default(),
+            tournament_updates,
+        }
     }
 
     #[must_use]
     pub const fn tournaments(&self) -> &Arc<TournamentsCache> {
         &self.tournaments
+    }
+
+    #[must_use]
+    pub fn tournament_updates(&self) -> &TournamentUpdates {
+        &self.tournament_updates
     }
 
     pub fn render_hand(hand: &str, tile_style: &TileStyle) -> ChombotResult<RgbaImage> {

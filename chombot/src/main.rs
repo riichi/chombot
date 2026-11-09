@@ -12,11 +12,14 @@ use chombot_common::chombot::ChombotBase;
 use chombot_common::slash_commands::create_channel::create_channel;
 use chombot_common::slash_commands::hand::hand;
 use chombot_common::slash_commands::score::score;
+use chombot_common::slash_commands::tournament_update_test::tournament_update_test;
+use chombot_common::tournament_reactions::handle_reaction_add;
+use chombot_common::tournaments_watcher::updates::TournamentUpdates;
 use chombot_common::{ChombotPoiseUserData, start_tournaments_watcher};
 use clap::Parser;
 use log::{LevelFilter, error, info};
-use poise::serenity_prelude::{ClientBuilder, GatewayIntents};
-use poise::{Command, Context, Framework, FrameworkOptions};
+use poise::serenity_prelude::{ClientBuilder, FullEvent, GatewayIntents};
+use poise::{BoxFuture, Command, Context, Framework, FrameworkContext, FrameworkOptions};
 use tokio::sync::RwLock;
 
 use crate::args::Arguments;
@@ -41,10 +44,35 @@ impl ChombotPoiseUserData for PoiseUserData {
 pub type PoiseContext<'a> = Context<'a, PoiseUserData, anyhow::Error>;
 
 fn get_command_list() -> Vec<Command<PoiseUserData, Error>> {
-    vec![hand(), score(), tournament_watcher(), create_channel()]
+    vec![
+        hand(),
+        score(),
+        tournament_watcher(),
+        create_channel(),
+        tournament_update_test(),
+    ]
 }
 
 const CONFIG_DATA_PATH: &str = "data.toml";
+const TOURNAMENT_UPDATES_PATH: &str = "tournament_updates.json";
+
+fn event_handler<'a>(
+    framework_ctx: FrameworkContext<'a, PoiseUserData, Error>,
+    event: &'a FullEvent,
+) -> BoxFuture<'a, anyhow::Result<()>> {
+    Box::pin(async move {
+        if let FullEvent::ReactionAdd { add_reaction } = event {
+            handle_reaction_add(
+                framework_ctx.serenity_context,
+                add_reaction,
+                framework_ctx.user_data,
+                framework_ctx.bot_id(),
+            )
+            .await?;
+        }
+        Ok(())
+    })
+}
 
 #[tokio::main]
 async fn main() {
@@ -53,19 +81,23 @@ async fn main() {
         .init();
 
     let args = Arguments::parse();
-    let chombot = ChombotBase::new();
+    let tournament_updates = Arc::new(TournamentUpdates::load(TOURNAMENT_UPDATES_PATH));
+    let chombot = ChombotBase::new(tournament_updates.clone());
     let config = ChombotConfig::load(CONFIG_DATA_PATH.into()).expect("Could not load config");
     let config_ref = Arc::new(RwLock::new(config));
 
     let framework = Framework::builder()
         .options(FrameworkOptions {
             commands: get_command_list(),
+            event_handler,
             ..Default::default()
         })
         .setup(move |ctx, ready, framework| {
             Box::pin(async move {
                 start_tournaments_watcher(
                     config_ref.clone(),
+                    tournament_updates,
+                    true,
                     ctx.clone(),
                     chombot.tournaments().clone(),
                 );
