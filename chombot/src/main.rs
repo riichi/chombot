@@ -8,6 +8,7 @@
 use std::sync::Arc;
 
 use anyhow::Error;
+use chombot_common::archive_votes::handle_message as handle_archive_vote;
 use chombot_common::chombot::ChombotBase;
 use chombot_common::slash_commands::create_channel::create_channel;
 use chombot_common::slash_commands::hand::hand;
@@ -33,6 +34,7 @@ mod tournament_watcher;
 pub struct PoiseUserData {
     pub chombot: ChombotBase,
     pub config: Arc<RwLock<ChombotConfig>>,
+    pub archive_votes: bool,
 }
 
 impl ChombotPoiseUserData for PoiseUserData {
@@ -61,14 +63,25 @@ fn event_handler<'a>(
     event: &'a FullEvent,
 ) -> BoxFuture<'a, anyhow::Result<()>> {
     Box::pin(async move {
-        if let FullEvent::ReactionAdd { add_reaction } = event {
-            handle_reaction_add(
-                framework_ctx.serenity_context,
-                add_reaction,
-                framework_ctx.user_data,
-                framework_ctx.bot_id(),
-            )
-            .await?;
+        match event {
+            FullEvent::ReactionAdd { add_reaction } => {
+                handle_reaction_add(
+                    framework_ctx.serenity_context,
+                    add_reaction,
+                    framework_ctx.user_data,
+                    framework_ctx.bot_id(),
+                )
+                .await?;
+            }
+            FullEvent::Message { new_message } if framework_ctx.user_data.archive_votes => {
+                handle_archive_vote(
+                    framework_ctx.serenity_context,
+                    new_message,
+                    framework_ctx.user_data,
+                )
+                .await?;
+            }
+            _ => {}
         }
         Ok(())
     })
@@ -81,6 +94,7 @@ async fn main() {
         .init();
 
     let args = Arguments::parse();
+    let archive_votes = args.feature_archive_votes;
     let tournament_updates = Arc::new(TournamentUpdates::load(TOURNAMENT_UPDATES_PATH));
     let chombot = ChombotBase::new(tournament_updates.clone());
     let config = ChombotConfig::load(CONFIG_DATA_PATH.into()).expect("Could not load config");
@@ -106,12 +120,17 @@ async fn main() {
                 Ok(PoiseUserData {
                     chombot,
                     config: config_ref,
+                    archive_votes,
                 })
             })
         })
         .build();
 
-    let mut client = ClientBuilder::new(&args.discord_token, GatewayIntents::non_privileged())
+    let mut intents = GatewayIntents::non_privileged();
+    if archive_votes {
+        intents |= GatewayIntents::MESSAGE_CONTENT;
+    }
+    let mut client = ClientBuilder::new(&args.discord_token, intents)
         .framework(framework)
         .await
         .expect("Could not create client");
